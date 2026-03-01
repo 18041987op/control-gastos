@@ -61,7 +61,7 @@ function processFile(f){
 
 function parseCSV(content){
   const lines = content.split(/\r?\n/);
-  let mName = '', mNum = 0, hdrIdx = -1, debIdx = 4, credIdx = -1;
+  let mName = '', mNum = 0, mYear = new Date().getFullYear(), hdrIdx = -1, debIdx = 4, credIdx = -1;
 
   for(let i = 0; i < lines.length; i++){
     if(lines[i].includes('Desde:')){
@@ -71,6 +71,14 @@ function parseCSV(content){
         if(dp.length >= 2){
           const mn = parseInt(dp[1]);
           if(mn >= 1 && mn <= 12){ mNum = mn; mName = MONTHS_ES[mn]; }
+        }
+        // Extraer año — soporta DD/MM/YYYY o YYYY-MM-DD
+        if(dp.length >= 3){
+          const maybeYear = parseInt(dp[2]);
+          if(maybeYear >= 2020 && maybeYear <= 2099) mYear = maybeYear;
+          // también intenta el primer campo si es YYYY-MM-DD
+          const maybeY0 = parseInt(dp[0]);
+          if(maybeY0 >= 2020 && maybeY0 <= 2099) mYear = maybeY0;
         }
       }
       break;
@@ -119,7 +127,7 @@ function parseCSV(content){
           date:fmtDate, description:clean, category:cat,
           cat_label:CAT[cat]?.label||cat,
           month:mName.toLowerCase(), month_display:mName, month_num:mNum,
-          amount:debit, type:'bank', person:'sharelyn', direction:'expense',
+          year:mYear, amount:debit, type:'bank', person:'sharelyn', direction:'expense',
         });
       }
     }
@@ -139,7 +147,7 @@ function parseCSV(content){
           date:fmtDate, description:cleanDesc, category:'ingreso',
           cat_label:'💰 Ingreso',
           month:mName.toLowerCase(), month_display:mName, month_num:mNum,
-          amount:credit, type:'bank', person:'sharelyn', direction:'income',
+          year:mYear, amount:credit, type:'bank', person:'sharelyn', direction:'income',
         });
       }
     }
@@ -177,9 +185,10 @@ function showPreview(txns, filename){
   const importBtn = document.getElementById('importBtn');
   const replaceBtn= document.getElementById('replaceBtn');
   const mName     = txns[0].month;
-  const existing  = allTx.filter(t => t.month === mName && t.type === 'bank');
+  const mYear     = txns[0].year;
+  const existing  = allTx.filter(t => t.month === mName && t.type === 'bank' && (t.year === mYear || (!t.year && !mYear)));
   if(existing.length > 0){
-    showAlert(dupWarn, `⚠️ Ya hay ${existing.length} transacciones del banco de ${txns[0].month_display}. Usa "Borrar e Importar" para reemplazarlas.`, 'error');
+    showAlert(dupWarn, `⚠️ Ya hay ${existing.length} transacciones del banco de ${txns[0].month_display} ${mYear}. Usa "Borrar e Importar" para reemplazarlas.`, 'error');
     importBtn.style.display  = 'none';
     replaceBtn.style.display = 'block';
   } else {
@@ -211,7 +220,9 @@ async function replaceTransactions(){
   if(!pendingTx.length) return;
   btn.disabled    = true;
   btn.textContent = 'Borrando…';
-  await db.from('transactions').delete().eq('month',pendingTx[0].month).eq('type','bank').eq('person','sharelyn');
+  let delQ = db.from('transactions').delete().eq('month',pendingTx[0].month).eq('type','bank').eq('person','sharelyn');
+  if(pendingTx[0].year) delQ = delQ.eq('year', pendingTx[0].year);
+  await delQ;
   const {data} = await db.from('transactions')
     .select('id,date,description,category,cat_label,month,month_display,month_num,amount,type,person,direction,has_receipt')
     .eq('person','sharelyn');

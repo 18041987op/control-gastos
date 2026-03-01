@@ -21,12 +21,12 @@ function switchPerson(p){
 }
 
 // ── DASHBOARD SHARELYN ────────────────────────────────────
-// ── AÑO A PARTIR DE created_at ───────────────────────────
-function txYear(t){ return new Date(t.created_at).getFullYear(); }
+// ── AÑO: usa columna 'year' si existe, si no cae en created_at ───────────
+function txYear(t){ return t.year || new Date(t.created_at).getFullYear(); }
 
 async function loadDashboard(){
   show('dashLoading'); hide('dashContent'); hide('dashEmpty');
-  const COLS = 'id,date,description,category,cat_label,month,month_display,month_num,amount,type,person,direction,payment_method,created_at,has_receipt,edited_at,edited_by';
+  const COLS = 'id,date,description,category,cat_label,month,month_display,month_num,year,amount,type,person,direction,payment_method,created_at,has_receipt,edited_at,edited_by';
   const {data, error} = await db.from('transactions')
     .select(COLS).eq('person','sharelyn')
     .order('month_num').order('date');
@@ -68,7 +68,7 @@ function renderBalanceCards(){
 // ── SELECTOR DE AÑO ──────────────────────────────────────
 function buildYearTabs(years){
   const el = document.getElementById('filterYearRow');
-  if(years.length <= 1){
+  if(!years.length){
     el.style.display = 'none';
   } else {
     el.style.display = 'flex';
