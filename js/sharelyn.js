@@ -21,6 +21,9 @@ function switchPerson(p){
 }
 
 // ── DASHBOARD SHARELYN ────────────────────────────────────
+// ── AÑO A PARTIR DE created_at ───────────────────────────
+function txYear(t){ return new Date(t.created_at).getFullYear(); }
+
 async function loadDashboard(){
   show('dashLoading'); hide('dashContent'); hide('dashEmpty');
   const COLS = 'id,date,description,category,cat_label,month,month_display,month_num,amount,type,person,direction,payment_method,created_at,has_receipt,edited_at,edited_by';
@@ -30,10 +33,14 @@ async function loadDashboard(){
   hide('dashLoading');
   if(error || !data?.length){ show('dashEmpty'); return; }
   allTx = data;
-  const months = uniqSorted(allTx.filter(t => t.direction !== 'income'), 'month');
-  const mDisp  = months.map(m => allTx.find(t => t.month === m)?.month_display || m);
-  document.getElementById('adminHdrSub').textContent = mDisp.join(' · ') + ' · L';
-  buildFilterPills(months, mDisp);
+
+  // Fijar año por defecto al año actual si existe, sino al más reciente
+  const years  = [...new Set(allTx.map(txYear))].sort();
+  const nowY   = new Date().getFullYear();
+  if(!years.includes(currentYear))
+    currentYear = years.includes(nowY) ? nowY : years[years.length - 1];
+
+  buildYearTabs(years);
   renderBalanceCards();
   show('dashContent');
   renderDashboard();
@@ -58,6 +65,42 @@ function renderBalanceCards(){
   }
 }
 
+// ── SELECTOR DE AÑO ──────────────────────────────────────
+function buildYearTabs(years){
+  const el = document.getElementById('filterYearRow');
+  if(years.length <= 1){
+    el.style.display = 'none';
+  } else {
+    el.style.display = 'flex';
+    el.innerHTML = years.map(y =>
+      `<button class="year-tab${currentYear===y?' active':''}" onclick="setYear(${y})">${y}</button>`
+    ).join('');
+  }
+  _rebuildMonthPills();
+}
+
+function setYear(year){
+  currentYear   = year;
+  currentFilter = 'all';
+  document.querySelectorAll('.year-tab').forEach(t =>
+    t.classList.toggle('active', +t.textContent === year)
+  );
+  _rebuildMonthPills();
+  renderDashboard();
+}
+
+// ── PILLS DE MES ─────────────────────────────────────────
+function _rebuildMonthPills(){
+  const yearTx = allTx.filter(t => txYear(t) === currentYear);
+  const months  = uniqSorted(yearTx.filter(t => t.direction !== 'income'), 'month');
+  const displays = months.map(m => yearTx.find(t => t.month === m)?.month_display || m);
+
+  // actualizar header
+  document.getElementById('adminHdrSub').textContent = displays.join(' · ') + ' · L';
+
+  buildFilterPills(months, displays);
+}
+
 function buildFilterPills(months, displays){
   document.getElementById('filterRow').innerHTML =
     `<button class="pill admin${currentFilter==='all'?' active':''}" onclick="setFilter('all')">Todos</button>` +
@@ -68,18 +111,18 @@ function buildFilterPills(months, displays){
 
 function setFilter(f){
   currentFilter = f;
-  const months = uniqSorted(allTx.filter(t => t.direction !== 'income'), 'month');
-  buildFilterPills(months, months.map(m => allTx.find(t => t.month === m)?.month_display || m));
+  _rebuildMonthPills();
   renderDashboard();
 }
 
 function filteredS(){
-  const expense = allTx.filter(t => t.direction !== 'income');
+  const expense = allTx.filter(t => t.direction !== 'income' && txYear(t) === currentYear);
   return currentFilter === 'all' ? expense : expense.filter(t => t.month === currentFilter);
 }
 
 function filteredAll(){
-  return currentFilter === 'all' ? allTx : allTx.filter(t => t.month === currentFilter);
+  const yearly = allTx.filter(t => txYear(t) === currentYear);
+  return currentFilter === 'all' ? yearly : yearly.filter(t => t.month === currentFilter);
 }
 
 function renderDashboard(){
@@ -128,7 +171,7 @@ function renderDonut(tx){
 }
 
 function renderBar(){
-  const expenseTx = allTx.filter(t => t.direction !== 'income');
+  const expenseTx = allTx.filter(t => t.direction !== 'income' && txYear(t) === currentYear);
   const months    = uniqSorted(expenseTx, 'month');
   const mDisp     = months.map(m => expenseTx.find(t => t.month === m)?.month_display || m);
   const catKeys   = Object.keys(CAT).filter(k => expenseTx.some(t => t.category === k));
