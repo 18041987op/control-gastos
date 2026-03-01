@@ -285,8 +285,9 @@ input:focus,select:focus{border-color:var(--purple);}
       <div id="previewSection" style="display:none">
         <div class="section-title" id="previewTitle"></div>
         <div class="preview-box" id="previewBox"></div>
-        <div id="dupWarning" class="alert alert-info"></div>
-        <button class="btn btn-success" id="importBtn" onclick="importTransactions()">Importar Transacciones</button>
+        <div id="dupWarning" class="alert"></div>
+        <button class="btn btn-success" id="importBtn" onclick="importTransactions()">✅ Importar Transacciones</button>
+        <button class="btn" id="replaceBtn" onclick="replaceTransactions()" style="display:none;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;margin-top:0">🔄 Borrar mes anterior e Importar</button>
         <button class="btn btn-danger btn-sm" style="width:100%;margin-top:8px" onclick="cancelUpload()">Cancelar</button>
       </div>
     </div>
@@ -645,14 +646,25 @@ function showPreview(txns, filename){
       <tbody>${txns.map(t=>`<tr style="border-bottom:1px solid #eee"><td style="padding:4px 8px">${t.date}</td><td style="padding:4px 8px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description}</td><td style="padding:4px 8px">${CAT[t.category]?.emoji||'📦'}</td><td style="padding:4px 8px;text-align:right;color:#e74c3c;font-weight:600">${fmt(t.amount)}</td></tr>`).join('')}</tbody>
     </table>`;
 
-  // Check for existing data from same month
+  // Check for existing bank data from same month — block duplicate import
+  const dupWarn = document.getElementById('dupWarning');
+  const importBtn = document.getElementById('importBtn');
+  const replaceBtn = document.getElementById('replaceBtn');
   if(txns.length>0){
-    const mName=txns[0].month;
-    const existing=allTx.filter(t=>t.month===mName&&t.type==='bank');
-    const dupWarn=document.getElementById('dupWarning');
+    const mName = txns[0].month;
+    const existing = allTx.filter(t=>t.month===mName&&t.type==='bank');
     if(existing.length>0){
-      showAlert(dupWarn,`⚠️ Ya existen ${existing.length} transacciones bancarias de ${txns[0].month_display}. Si importas de nuevo se duplicarán. Considera eliminar las anteriores primero desde el dashboard.`,'info');
-    } else { hideAlert(dupWarn); }
+      showAlert(dupWarn,`⚠️ Ya hay ${existing.length} transacciones del banco de ${txns[0].month_display}. Usa "Borrar e Importar" para reemplazarlas sin duplicar.`,'error');
+      importBtn.style.display = 'none';
+      replaceBtn.style.display = 'block';
+    } else {
+      hideAlert(dupWarn);
+      importBtn.style.display = 'block';
+      replaceBtn.style.display = 'none';
+    }
+  } else {
+    importBtn.style.display = 'block';
+    replaceBtn.style.display = 'none';
   }
   sec.style.display='block';
 }
@@ -670,10 +682,29 @@ async function importTransactions(){
   await loadDashboard();
 }
 
+async function replaceTransactions(){
+  if(!pendingTx.length) return;
+  const btn = document.getElementById('replaceBtn');
+  const alert = document.getElementById('uploadAlert');
+  const monthKey = pendingTx[0].month;
+  const monthDisplay = pendingTx[0].month_display;
+  btn.disabled=true; btn.textContent='Borrando datos anteriores…';
+  const {error:delErr} = await db.from('transactions').delete().eq('month',monthKey).eq('type','bank');
+  if(delErr){ showAlert(alert,'Error al borrar datos anteriores: '+delErr.message,'error'); btn.disabled=false; btn.textContent='🔄 Borrar mes anterior e Importar'; return; }
+  // Reload allTx so importTransactions sees 0 existing rows for this month
+  const {data} = await db.from('transactions').select('*');
+  allTx = data||[];
+  btn.textContent='Importando…';
+  await importTransactions();
+  btn.disabled=false; btn.textContent='🔄 Borrar mes anterior e Importar';
+}
+
 function cancelUpload(){
   pendingTx=[];
   document.getElementById('previewSection').style.display='none';
   document.getElementById('csvFileInput').value='';
+  document.getElementById('importBtn').style.display='block';
+  document.getElementById('replaceBtn').style.display='none';
 }
 
 // ── ALERTS ───────────────────────────────────────────────
