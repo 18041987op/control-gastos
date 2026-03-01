@@ -222,6 +222,28 @@ input:focus,select:focus{border-color:var(--purple);}
 .m-ingreso{background:#e8f5e9;color:#2e7d32;}
 
 @media(min-width:600px){.view,.balance-banner{max-width:600px;margin-left:auto;margin-right:auto;} .hdr{justify-content:center;gap:14px;}}
+
+/* ── EDIT MODAL ── */
+#editModal{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:350;display:none;align-items:flex-end;justify-content:center;}
+.edit-sheet{background:#fff;border-radius:22px 22px 0 0;padding:20px 18px 38px;width:100%;max-width:520px;max-height:94vh;overflow-y:auto;}
+.edit-sheet-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.edit-sheet-hdr h3{font-size:1rem;font-weight:700;}
+.edit-close{background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;line-height:1;}
+.edit-pdots{display:flex;justify-content:center;gap:10px;margin:8px 0 10px;}
+.edit-pdot{width:12px;height:12px;border-radius:50%;border:2px solid #ddd;transition:all .2s;}
+.edit-pdot.ep-admin{background:var(--admin);border-color:var(--admin);}
+.edit-pdot.ep-purple{background:var(--purple);border-color:var(--purple);}
+.edit-pdot.ep-teal{background:var(--teal);border-color:var(--teal);}
+.edit-pin-box{background:#f9f7ff;border-radius:14px;padding:14px 12px 10px;margin-top:14px;}
+.edit-pin-box p{font-size:.75rem;font-weight:700;color:var(--muted);text-align:center;margin-bottom:6px;}
+.mini-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:230px;margin:0 auto;}
+.mini-btn{padding:11px;border:none;background:#eee;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:all .15s;}
+.mini-btn:active{transform:scale(.94);}
+.ep-err{color:var(--red);font-size:.74rem;text-align:center;min-height:14px;margin-top:5px;}
+.ep-ok{color:var(--green);font-size:.74rem;text-align:center;margin-top:5px;}
+/* Edited-row indicator */
+.edited-mark{font-size:.58rem;color:#bbb;margin-left:3px;cursor:default;}
+tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
 </style>
 </head>
 <body>
@@ -301,7 +323,10 @@ input:focus,select:focus{border-color:var(--purple);}
         <div class="chart-card">
           <div class="chart-hdr">
             <h3>📋 Transacciones</h3>
-            <button class="tx-toggle-btn" id="txToggleBtn" onclick="toggleTxList('txListWrap','txToggleBtn')">Ver lista ▼</button>
+            <div style="display:flex;gap:6px;align-items:center">
+              <button class="tx-toggle-btn" onclick="downloadCSV(filteredAll(),'sharelyn_gastos.csv')" title="Descargar CSV">📥 CSV</button>
+              <button class="tx-toggle-btn" id="txToggleBtn" onclick="toggleTxList('txListWrap','txToggleBtn')">Ver lista ▼</button>
+            </div>
           </div>
           <div id="txListWrap" style="display:none">
             <div class="tx-wrap"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Cat.</th><th>Mes</th><th>Tipo</th><th>Monto</th><th></th></tr></thead><tbody id="txBody"></tbody></table></div>
@@ -362,7 +387,10 @@ input:focus,select:focus{border-color:var(--purple);}
         <div class="chart-card">
           <div class="chart-hdr">
             <h3>📋 Movimientos de Teresa</h3>
-            <button class="tx-toggle-btn teal-toggle" id="taTxToggleBtn" onclick="toggleTxList('taTxListWrap','taTxToggleBtn')">Ver lista ▼</button>
+            <div style="display:flex;gap:6px;align-items:center">
+              <button class="tx-toggle-btn teal-toggle" onclick="downloadCSVTeresa('teresa_movimientos.csv')" title="Descargar CSV">📥 CSV</button>
+              <button class="tx-toggle-btn teal-toggle" id="taTxToggleBtn" onclick="toggleTxList('taTxListWrap','taTxToggleBtn')">Ver lista ▼</button>
+            </div>
           </div>
           <div class="filter-row" id="taDirFilter">
             <button class="pill teal active" onclick="setTaFilter('all')">Todos</button>
@@ -449,7 +477,10 @@ input:focus,select:focus{border-color:var(--purple);}
     <div class="chart-card">
       <div class="chart-hdr">
         <h3>📋 Mis Movimientos</h3>
-        <button class="tx-toggle-btn teal-toggle" id="tHistToggleBtn" onclick="toggleTxList('tHistListWrap','tHistToggleBtn')">Ver lista ▼</button>
+        <div style="display:flex;gap:6px;align-items:center">
+          <button class="tx-toggle-btn teal-toggle" onclick="downloadCSVTeresa('mis_movimientos.csv')" title="Descargar CSV">📥 CSV</button>
+          <button class="tx-toggle-btn teal-toggle" id="tHistToggleBtn" onclick="toggleTxList('tHistListWrap','tHistToggleBtn')">Ver lista ▼</button>
+        </div>
       </div>
       <div id="tHistListWrap" style="display:none">
         <div class="tx-wrap"><table><thead class="teal"><tr><th>Fecha</th><th>Descripción</th><th>Dir.</th><th>Método</th><th>Monto</th><th>Recibo</th><th></th></tr></thead><tbody id="tHistBody"></tbody></table></div>
@@ -462,6 +493,48 @@ input:focus,select:focus{border-color:var(--purple);}
     <button class="nav-btn" onclick="teresaShow('Gasto')" id="tnGasto"><span class="nav-icon">💸</span><span class="nav-label">Gasto</span></button>
     <button class="nav-btn" onclick="teresaShow('Historial')" id="tnHistorial"><span class="nav-icon">📋</span><span class="nav-label">Historial</span></button>
   </nav>
+</div>
+
+<!-- ══ EDIT MODAL (bottom sheet) ════════════════════════ -->
+<div id="editModal" onclick="if(event.target===this)closeEditModal()">
+  <div class="edit-sheet">
+    <div class="edit-sheet-hdr">
+      <h3>✏️ Editar Transacción</h3>
+      <button class="edit-close" onclick="closeEditModal()">✕</button>
+    </div>
+    <label>Fecha</label><input type="date" id="editDate">
+    <label>Descripción</label><input type="text" id="editDesc" maxlength="80">
+    <label>Monto (L)</label><input type="number" id="editAmt" step="0.01" min="0.01">
+    <label>Categoría</label><div class="opt-grid cols3" id="editCatGrid"></div>
+    <label>Nota de edición <span style="font-weight:400;font-size:.72rem">(opcional — queda en el registro)</span></label>
+    <input type="text" id="editNote" placeholder="Ej: monto incorrecto, descripción mal escrita…" maxlength="120">
+    <!-- PIN verification -->
+    <div class="edit-pin-box">
+      <p>🔐 Confirma con tu PIN</p>
+      <div class="edit-pdots" id="editPdots">
+        <div class="edit-pdot"></div><div class="edit-pdot"></div>
+        <div class="edit-pdot"></div><div class="edit-pdot"></div>
+      </div>
+      <div class="mini-pad" id="editPinPad">
+        <button class="mini-btn" onclick="ePinPress('1')">1</button>
+        <button class="mini-btn" onclick="ePinPress('2')">2</button>
+        <button class="mini-btn" onclick="ePinPress('3')">3</button>
+        <button class="mini-btn" onclick="ePinPress('4')">4</button>
+        <button class="mini-btn" onclick="ePinPress('5')">5</button>
+        <button class="mini-btn" onclick="ePinPress('6')">6</button>
+        <button class="mini-btn" onclick="ePinPress('7')">7</button>
+        <button class="mini-btn" onclick="ePinPress('8')">8</button>
+        <button class="mini-btn" onclick="ePinPress('9')">9</button>
+        <button class="mini-btn" style="font-size:.85rem" onclick="ePinClear()">⌫</button>
+        <button class="mini-btn" onclick="ePinPress('0')">0</button>
+        <button class="mini-btn" style="background:#f5f5f5" onclick="">□</button>
+      </div>
+      <div id="ePinMsg" class="ep-err"></div>
+    </div>
+    <button class="btn" id="editSaveBtn" disabled
+      style="background:#ccc;color:#fff;cursor:not-allowed;margin-top:14px"
+      onclick="saveEdit()">Guardar Cambios</button>
+  </div>
 </div>
 
 <!-- ══ RECEIPT MODAL ══════════════════════════════════════ -->
@@ -664,7 +737,7 @@ function buildMethodGrid(containerId, methods, selClass, onSelect){
 // ── SHARELYN DASHBOARD ───────────────────────────────────
 async function loadDashboard(){
   show('dashLoading'); hide('dashContent'); hide('dashEmpty');
-  const COLS='id,date,description,category,cat_label,month,month_display,month_num,amount,type,person,direction,payment_method,created_at,has_receipt';
+  const COLS='id,date,description,category,cat_label,month,month_display,month_num,amount,type,person,direction,payment_method,created_at,has_receipt,edited_at,edited_by';
   const {data,error}=await db.from('transactions').select(COLS).eq('person','sharelyn').order('month_num').order('date');
   hide('dashLoading');
   if(error||!data?.length){ show('dashEmpty'); return; }
@@ -783,14 +856,17 @@ function renderTopPlaces(tx){
 function renderSTable(tx){
   if(!tx.length){document.getElementById('txBody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:18px;color:#aaa">Sin resultados</td></tr>';return;}
   document.getElementById('txBody').innerHTML=[...tx].reverse().map(t=>`
-    <tr>
-      <td>${t.date}</td>
+    <tr${t.edited_at?' class="was-edited"':''}>
+      <td>${t.date}${t.edited_at?`<span class="edited-mark" title="Editado por ${t.edited_by||'?'}">✏️</span>`:''}</td>
       <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.description}">${t.description}</td>
       <td><span class="badge ${t.direction==='income'?'b-income':'b-cat-admin'}">${t.direction==='income'?'💰':''}${ALL_CATS[t.category]?.emoji||'📦'}</span></td>
       <td><span class="badge m-${t.month||'otros'}">${t.month_display||t.month}</span></td>
       <td><span class="badge ${t.direction==='income'?'b-income':t.type==='cash'?'b-cash':'b-bank'}">${t.direction==='income'?'💰 Ingreso':t.type==='cash'?'💵':'🏦'}</span></td>
       <td class="${t.direction==='income'?'amount-pos':'amount-neg'}">${fmt(t.amount)}</td>
-      <td><button class="del-btn" onclick="deleteTx('${t.id}','sharelyn')">🗑</button></td>
+      <td style="white-space:nowrap">
+        ${t.direction!=='income'?`<button class="del-btn" title="Editar" style="color:#b3c6e8" onclick="openEditModal('${t.id}','sharelyn')">✏️</button>`:''}
+        <button class="del-btn" onclick="deleteTx('${t.id}','sharelyn')">🗑</button>
+      </td>
     </tr>`).join('');
 }
 
@@ -1097,7 +1173,7 @@ async function saveGasto(){
 
 // ── TERESA: LOAD DATA ────────────────────────────────────
 async function loadTeresaData(){
-  const COLS='id,date,description,category,cat_label,month,month_display,amount,direction,payment_method,has_receipt,created_at';
+  const COLS='id,date,description,category,cat_label,month,month_display,amount,direction,payment_method,has_receipt,created_at,edited_at,edited_by';
   const {data}=await db.from('transactions').select(COLS).eq('person','teresa').order('created_at',{ascending:false});
   teresaTx=data||[];
   renderTeresaBanner();
@@ -1124,21 +1200,24 @@ function renderTHistorial(){
   const tx=tHistFilter==='all'?teresaTx:teresaTx.filter(t=>t.direction===tHistFilter);
   if(!tx.length){document.getElementById('tHistBody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:16px;color:#aaa">Sin movimientos</td></tr>';return;}
   document.getElementById('tHistBody').innerHTML=tx.map(t=>`
-    <tr>
-      <td>${t.date}</td>
+    <tr${t.edited_at?' class="was-edited"':''}>
+      <td>${t.date}${t.edited_at?`<span class="edited-mark" title="Editado">✏️</span>`:''}</td>
       <td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description}</td>
       <td><span class="badge ${t.direction==='income'?'b-income':'b-expense'}">${t.direction==='income'?'📥 Ingreso':'💸 Gasto'}</span></td>
       <td>${t.payment_method?`<span class="badge b-method">${METHOD_LABEL[t.payment_method]||t.payment_method}</span>`:'—'}</td>
       <td class="${t.direction==='income'?'amount-pos':'amount-neg'}">${fmt(t.amount)}</td>
-      <td>${t.has_receipt?`<img src="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=" class="receipt-thumb" onclick="openReceipt('${t.id}')" title="Ver recibo" style="opacity:.7">📸`:'—'}</td>
-      <td><button class="del-btn" onclick="deleteTx('${t.id}','teresa')">🗑</button></td>
+      <td>${t.has_receipt?`<span style="cursor:pointer;font-size:1.2rem" onclick="openReceipt('${t.id}')" title="Ver recibo">📸</span>`:'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="del-btn" title="Editar" style="color:#b2dfdb" onclick="openEditModal('${t.id}','teresa')">✏️</button>
+        <button class="del-btn" onclick="deleteTx('${t.id}','teresa')">🗑</button>
+      </td>
     </tr>`).join('');
 }
 
 // ── ADMIN: TERESA VIEW ───────────────────────────────────
 async function loadTeresaAdminView(){
   show('taLoading'); hide('taContent'); hide('taEmpty');
-  const COLS='id,date,description,category,cat_label,month,month_display,amount,direction,payment_method,has_receipt,created_at';
+  const COLS='id,date,description,category,cat_label,month,month_display,amount,direction,payment_method,has_receipt,created_at,edited_at,edited_by';
   const {data}=await db.from('transactions').select(COLS).eq('person','teresa').order('created_at',{ascending:false});
   hide('taLoading');
   if(!data?.length){show('taEmpty');return;}
@@ -1182,16 +1261,174 @@ function renderTaTable(){
   const tx=taFilter==='all'?teresaTx:teresaTx.filter(t=>t.direction===taFilter);
   if(!tx.length){document.getElementById('taTxBody').innerHTML='<tr><td colspan="8" style="text-align:center;padding:14px;color:#aaa">Sin movimientos</td></tr>';return;}
   document.getElementById('taTxBody').innerHTML=tx.map(t=>`
-    <tr>
-      <td>${t.date}</td>
+    <tr${t.edited_at?' class="was-edited"':''}>
+      <td>${t.date}${t.edited_at?`<span class="edited-mark" title="Editado por ${t.edited_by||'?'}">✏️</span>`:''}</td>
       <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description}</td>
       <td><span class="badge ${t.direction==='income'?'b-income':'b-expense'}">${t.direction==='income'?'📥':'💸'}</span></td>
       <td>${t.payment_method?`<span class="badge b-method">${METHOD_LABEL[t.payment_method]||t.payment_method}</span>`:'—'}</td>
       <td><span class="badge b-cat">${t.category?TERESA_CAT[t.category]?.emoji||'📦':'—'}</span></td>
       <td class="${t.direction==='income'?'amount-pos':'amount-neg'}">${fmt(t.amount)}</td>
       <td>${t.has_receipt?`<span style="cursor:pointer;font-size:1.2rem" onclick="openReceipt('${t.id}')" title="Ver recibo">📸</span>`:'—'}</td>
-      <td><button class="del-btn" onclick="deleteTx('${t.id}','teresa')">🗑</button></td>
+      <td style="white-space:nowrap">
+        <button class="del-btn" title="Editar" style="color:#b2dfdb" onclick="openEditModal('${t.id}','teresa')">✏️</button>
+        <button class="del-btn" onclick="deleteTx('${t.id}','teresa')">🗑</button>
+      </td>
     </tr>`).join('');
+}
+
+// ── EDIT MODAL ───────────────────────────────────────────
+let editingTx    = null;
+let editCatKey   = '';
+let ePinBuf      = '';
+let ePinOk       = false;
+let editPerson   = '';
+
+function openEditModal(txId, person){
+  const src = person==='sharelyn' ? allTx : teresaTx;
+  const tx  = src.find(t=>String(t.id)===String(txId));
+  if(!tx) return;
+  editingTx  = {...tx};
+  editPerson = person;
+  editCatKey = tx.category || '';
+  ePinBuf=''; ePinOk=false;
+
+  // Convert "DD/MM" → "YYYY-MM-DD" for date input
+  let dVal='';
+  if(tx.date && tx.date.includes('/')){
+    const [dd,mm]=tx.date.split('/');
+    const yr=new Date().getFullYear();
+    dVal=`${yr}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
+  } else { dVal=tx.date||''; }
+  document.getElementById('editDate').value=dVal;
+  document.getElementById('editDesc').value=tx.description||'';
+  document.getElementById('editAmt').value=parseFloat(tx.amount||0).toFixed(2);
+  document.getElementById('editNote').value='';
+
+  // Build category grid
+  const cats   = person==='teresa' ? Object.entries(TERESA_CAT) : Object.entries(CAT);
+  const selCls = person==='teresa' ? 'sel-teal' : currentUser==='admin' ? 'sel-admin' : 'sel';
+  buildCatGrid('editCatGrid','opt-btn',selCls,cats,(k)=>editCatKey=k);
+  // Pre-select current category
+  setTimeout(()=>{
+    const btns=document.querySelectorAll('#editCatGrid .opt-btn');
+    cats.forEach(([k],i)=>{ if(k===editCatKey && btns[i]) btns[i].click(); });
+  },30);
+
+  // Reset PIN UI
+  updateEPinDots();
+  const msg=document.getElementById('ePinMsg');
+  msg.textContent=''; msg.className='ep-err';
+  document.getElementById('editPinPad')?.querySelectorAll('.mini-btn').forEach(b=>{b.style.opacity='';b.style.pointerEvents='';});
+  const btn=document.getElementById('editSaveBtn');
+  btn.disabled=true; btn.style.background='#ccc'; btn.style.cursor='not-allowed'; btn.textContent='Guardar Cambios';
+
+  document.getElementById('editModal').style.display='flex';
+}
+
+function closeEditModal(){
+  document.getElementById('editModal').style.display='none';
+  editingTx=null; editCatKey=''; ePinBuf=''; ePinOk=false; editPerson='';
+}
+
+function ePinPress(d){
+  if(ePinOk||ePinBuf.length>=4) return;
+  ePinBuf+=d; updateEPinDots();
+  if(ePinBuf.length===4) setTimeout(verifyEditPin,120);
+}
+function ePinClear(){
+  if(ePinOk) return;
+  ePinBuf=ePinBuf.slice(0,-1); updateEPinDots();
+}
+function updateEPinDots(){
+  const cls = currentUser==='teresa'?'ep-teal':currentUser==='sharelyn'?'ep-purple':'ep-admin';
+  document.querySelectorAll('.edit-pdot').forEach((d,i)=>{
+    d.classList.remove('ep-admin','ep-purple','ep-teal');
+    if(i<ePinBuf.length) d.classList.add(cls);
+  });
+}
+function verifyEditPin(){
+  const correct = currentUser==='admin'?ADMIN_PIN:currentUser==='sharelyn'?SHARELYN_PIN:TERESA_PIN;
+  const msg=document.getElementById('ePinMsg');
+  if(ePinBuf===correct){
+    ePinOk=true;
+    msg.textContent='✅ PIN verificado — puedes guardar'; msg.className='ep-ok';
+    // Disable mini pad
+    document.querySelectorAll('.mini-btn').forEach(b=>{b.style.opacity='.35';b.style.pointerEvents='none';});
+    const btn=document.getElementById('editSaveBtn');
+    btn.disabled=false; btn.style.background=''; btn.style.cursor='';
+    btn.className=`btn ${currentUser==='teresa'?'btn-t':currentUser==='sharelyn'?'btn-p':'btn-a'}`;
+  } else {
+    msg.textContent='PIN incorrecto, intenta de nuevo.'; msg.className='ep-err';
+    ePinBuf=''; updateEPinDots();
+  }
+}
+
+async function saveEdit(){
+  if(!editingTx||!ePinOk) return;
+  const newDate=document.getElementById('editDate').value;
+  const newDesc=document.getElementById('editDesc').value.trim();
+  const newAmt =parseFloat(document.getElementById('editAmt').value);
+  const note   =document.getElementById('editNote').value.trim();
+  if(!newDate||!newDesc||!newAmt||newAmt<=0){alert('Completa fecha, descripción y monto.');return;}
+
+  const dp=newDate.split('-');
+  const fmtDate=`${dp[2]}/${dp[1]}`;
+  const mn=parseInt(dp[1]);
+
+  const btn=document.getElementById('editSaveBtn');
+  btn.textContent='Guardando…'; btn.disabled=true;
+
+  // 1) Write audit log
+  await db.from('transaction_edits').insert([{
+    transaction_id:editingTx.id,
+    old_date:editingTx.date, old_description:editingTx.description,
+    old_amount:editingTx.amount, old_category:editingTx.category,
+    new_date:fmtDate, new_description:newDesc,
+    new_amount:newAmt, new_category:editCatKey||editingTx.category,
+    edited_by:currentUser, note:note||null
+  }]);
+
+  // 2) Update transaction row
+  const upd={
+    date:fmtDate, description:newDesc, amount:newAmt,
+    category:editCatKey||editingTx.category,
+    month:MONTHS_ES[mn].toLowerCase(), month_display:MONTHS_ES[mn], month_num:mn,
+    edited_at:new Date().toISOString(), edited_by:currentUser
+  };
+  if(editCatKey && ALL_CATS[editCatKey]) upd.cat_label=ALL_CATS[editCatKey].label;
+
+  const {error}=await db.from('transactions').update(upd).eq('id',editingTx.id);
+  if(error){alert('Error al guardar: '+error.message); btn.textContent='Guardar Cambios'; btn.disabled=false; return;}
+
+  closeEditModal();
+  if(editPerson==='sharelyn'){ await loadDashboard(); await loadRecentCash(); }
+  else { await loadTeresaData(); if(currentUser==='admin') await loadTeresaAdminView(); }
+}
+
+// ── CSV DOWNLOAD ─────────────────────────────────────────
+function downloadCSV(rows, filename){
+  const hdrs=['Fecha','Descripción','Categoría','Mes','Tipo','Dirección','Monto (L)','Editado Por','Editado En'];
+  const esc=v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`;
+  const lines=[hdrs.map(esc).join(',')];
+  [...rows].forEach(t=>{
+    const cat=ALL_CATS[t.category]?.label||t.category||'';
+    const editedAt=t.edited_at?new Date(t.edited_at).toLocaleDateString('es-HN'):'';
+    lines.push([
+      t.date, t.description, cat,
+      t.month_display||t.month||'',
+      t.type||'bank', t.direction||'expense',
+      parseFloat(t.amount||0).toFixed(2),
+      t.edited_by||'', editedAt
+    ].map(esc).join(','));
+  });
+  const blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download=filename; a.click();
+  URL.revokeObjectURL(url);
+}
+
+function downloadCSVTeresa(filename){
+  downloadCSV(teresaTx, filename);
 }
 
 // ── UTILS ────────────────────────────────────────────────
