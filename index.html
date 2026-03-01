@@ -6,245 +6,7 @@
 <title>💳 Control de Gastos</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-:root{
-  --admin:#1b3a5c;--admin-light:#2d5986;
-  --purple:#764ba2;--purple-light:#667eea;
-  --teal:#00b09b;--teal-light:#43c6ac;--teal-dark:#00695c;
-  --gold:#f7971e;--red:#e74c3c;--green:#2e7d32;
-  --bg:#f4f3ff;--card:#fff;--text:#1a1a2e;--muted:#888;
-  --radius:16px;--shadow:0 4px 24px rgba(0,0,0,.10);
-}
-body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
-
-/* ── LOGIN ── */
-#loginScreen{position:fixed;inset:0;background:linear-gradient(135deg,var(--admin-light),var(--admin));display:flex;align-items:center;justify-content:center;z-index:200;}
-.login-box{background:#fff;border-radius:24px;padding:36px 32px;text-align:center;width:310px;box-shadow:0 20px 60px rgba(0,0,0,.2);}
-.login-logo{font-size:2.2rem;margin-bottom:6px;}
-.login-box h1{font-size:1.3rem;margin-bottom:3px;color:var(--admin);}
-.login-box p{color:var(--muted);font-size:.85rem;margin-bottom:22px;}
-.pin-dots{display:flex;justify-content:center;gap:12px;margin-bottom:20px;}
-.pin-dot{width:15px;height:15px;border-radius:50%;border:2px solid #ddd;transition:all .2s;}
-.pin-dot.filled{background:var(--admin);border-color:var(--admin);}
-.pin-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}
-.pin-btn{padding:15px;border:none;background:var(--bg);border-radius:12px;font-size:1.15rem;font-weight:600;cursor:pointer;transition:all .15s;color:var(--text);}
-.pin-btn:active{background:var(--admin);color:#fff;transform:scale(.95);}
-.pin-error{color:var(--red);font-size:.8rem;margin-top:10px;min-height:16px;}
-
-/* ── SHELLS ── */
-.shell{display:none;flex-direction:column;min-height:100vh;}
-.shell.visible{display:flex;}
-
-/* ── HEADERS ── */
-.hdr{padding:14px 18px 12px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;}
-.hdr-admin{background:linear-gradient(135deg,var(--admin-light),var(--admin));}
-.hdr-sharelyn{background:linear-gradient(135deg,var(--purple-light),var(--purple));}
-.hdr-teresa{background:linear-gradient(135deg,var(--teal-light),var(--teal));}
-.hdr h1{color:#fff;font-size:1rem;font-weight:700;}
-.hdr .sub{color:rgba(255,255,255,.75);font-size:.72rem;margin-top:1px;}
-.hdr-right{display:flex;align-items:center;gap:8px;}
-.exit-btn{background:rgba(255,255,255,.2);border:none;color:#fff;padding:6px 13px;border-radius:20px;cursor:pointer;font-size:.78rem;font-weight:600;}
-
-/* ── PERSON SWITCHER ── */
-.person-tabs{display:flex;background:rgba(255,255,255,.15);border-radius:20px;padding:3px;gap:2px;}
-.p-tab{padding:5px 14px;border:none;background:transparent;color:rgba(255,255,255,.75);border-radius:16px;cursor:pointer;font-size:.8rem;font-weight:600;transition:all .2s;}
-.p-tab.active{background:#fff;color:var(--admin);}
-.p-tab.teresa.active{color:var(--teal-dark);}
-.p-tab.sharelyn.active{color:var(--purple);}
-
-/* ── BALANCE BANNER ── */
-.balance-banner{padding:18px 18px 16px;color:#fff;text-align:center;}
-.bal-admin-sly{background:linear-gradient(135deg,var(--purple-light),var(--purple));}
-.bal-teresa{background:linear-gradient(135deg,#00897b,var(--teal-dark));}
-.balance-banner .bal-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.8;margin-bottom:4px;}
-.balance-banner .bal-amount{font-size:2.2rem;font-weight:800;}
-.balance-banner .bal-sub{font-size:.75rem;opacity:.75;margin-top:4px;}
-.bal-row{display:flex;justify-content:center;gap:24px;margin-top:12px;}
-.bal-chip{background:rgba(255,255,255,.2);border-radius:12px;padding:8px 14px;text-align:center;}
-.bal-chip .bc-label{font-size:.68rem;opacity:.8;}
-.bal-chip .bc-val{font-size:.95rem;font-weight:700;margin-top:1px;}
-
-/* ── BOTTOM NAV ── */
-.bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;border-top:1px solid #eee;z-index:10;box-shadow:0 -4px 16px rgba(0,0,0,.06);}
-.nav-btn{flex:1;padding:9px 0 11px;border:none;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:3px;color:var(--muted);transition:color .2s;}
-.nav-btn.active{color:var(--admin);}
-.nav-btn.s-active{color:var(--purple);}
-.nav-btn.t-active{color:var(--teal);}
-.nav-icon{font-size:1.3rem;}
-.nav-label{font-size:.65rem;font-weight:600;}
-
-/* ── VIEWS ── */
-.view{display:none;flex:1;overflow-y:auto;padding:14px 15px 88px;}
-.view.active{display:block;}
-
-/* ── CARDS ── */
-.cards-row{display:grid;grid-template-columns:repeat(2,1fr);gap:11px;margin-bottom:14px;}
-.stat-card{background:var(--card);border-radius:var(--radius);padding:15px;box-shadow:var(--shadow);}
-.stat-card.hl{background:linear-gradient(135deg,var(--purple-light),var(--purple));}
-.stat-card.hl .lbl,.stat-card.hl .val,.stat-card.hl .sub{color:#fff;}
-.stat-card.hl-admin{background:linear-gradient(135deg,var(--admin-light),var(--admin));}
-.stat-card.hl-admin .lbl,.stat-card.hl-admin .val,.stat-card.hl-admin .sub{color:#fff;}
-.stat-card.hl-teal{background:linear-gradient(135deg,var(--teal-light),var(--teal));}
-.stat-card.hl-teal .lbl,.stat-card.hl-teal .val,.stat-card.hl-teal .sub{color:#fff;}
-.stat-card.hl-green{background:linear-gradient(135deg,#43a047,#1b5e20);}
-.stat-card.hl-green .lbl,.stat-card.hl-green .val,.stat-card.hl-green .sub{color:#fff;}
-.stat-card.gd{background:linear-gradient(135deg,var(--gold),#ffd200);}
-.lbl{font-size:.67rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-bottom:3px;}
-.val{font-size:1.2rem;font-weight:800;line-height:1.1;}
-.sub{font-size:.68rem;color:var(--muted);margin-top:2px;}
-.span2{grid-column:span 2;}
-
-/* ── CHART ── */
-.chart-card{background:var(--card);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow);margin-bottom:13px;}
-.chart-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid #f0f0f0;}
-.chart-hdr h3{font-size:.88rem;font-weight:700;color:#555;}
-.chart-wrap{position:relative;height:210px;}
-
-/* ── TX TOGGLE ── */
-.tx-toggle-btn{background:transparent;border:2px solid #e0d9f7;color:var(--purple);padding:4px 12px;border-radius:16px;cursor:pointer;font-size:.75rem;font-weight:700;transition:all .2s;}
-.tx-toggle-btn:hover,.tx-toggle-btn.teal-toggle{border-color:#b2dfdb;color:var(--teal);}
-
-/* ── FILTERS ── */
-.filter-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;scrollbar-width:none;}
-.filter-row::-webkit-scrollbar{display:none;}
-.pill{padding:5px 14px;border:2px solid #e0d9f7;background:#fff;color:var(--purple);border-radius:20px;cursor:pointer;font-size:.78rem;font-weight:600;white-space:nowrap;transition:all .2s;}
-.pill.active{background:var(--purple);color:#fff;border-color:var(--purple);}
-.pill.admin{border-color:#c5d5e8;color:var(--admin);}
-.pill.admin.active{background:var(--admin);color:#fff;border-color:var(--admin);}
-.pill.teal{border-color:#b2dfdb;color:var(--teal);}
-.pill.teal.active{background:var(--teal);color:#fff;border-color:var(--teal);}
-
-/* ── TOP BARS ── */
-.top-item{display:flex;align-items:center;gap:9px;margin-bottom:7px;}
-.top-lbl{font-size:.78rem;color:var(--text);width:150px;flex-shrink:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.top-track{flex:1;background:#f0f0f0;border-radius:20px;height:9px;overflow:hidden;}
-.top-fill{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--purple-light),var(--purple));}
-.top-fill.admin{background:linear-gradient(90deg,var(--admin-light),var(--admin));}
-.top-fill.teal{background:linear-gradient(90deg,var(--teal-light),var(--teal));}
-.top-amt{font-size:.76rem;font-weight:700;color:var(--purple);width:88px;text-align:right;flex-shrink:0;}
-.top-amt.admin{color:var(--admin);}
-.top-amt.teal{color:var(--teal);}
-
-/* ── TABLES ── */
-.tx-wrap{overflow-x:auto;}
-table{width:100%;border-collapse:collapse;font-size:.78rem;}
-thead th{background:#f8f7ff;color:var(--purple);font-weight:700;padding:7px 9px;text-align:left;white-space:nowrap;}
-thead.admin th{background:#eef2f8;color:var(--admin);}
-thead.teal th{background:#e0f2f1;color:var(--teal);}
-tbody tr{border-bottom:1px solid #f5f5f5;}
-tbody tr:hover{background:#fafeff;}
-tbody td{padding:7px 9px;vertical-align:middle;}
-.badge{display:inline-block;padding:2px 7px;border-radius:11px;font-size:.68rem;font-weight:700;}
-.b-cat{background:#f0ecff;color:var(--purple);}
-.b-cat-admin{background:#e8eef6;color:var(--admin);}
-.b-bank{background:#e0f7fa;color:#00838f;}
-.b-cash{background:#fff8e1;color:#f57f17;}
-.b-income{background:#e8f5e9;color:#2e7d32;}
-.b-expense{background:#fce4ec;color:#880e4f;}
-.b-method{background:#f3f3f3;color:#555;}
-.amount-neg{color:var(--red);font-weight:700;}
-.amount-pos{color:var(--green);font-weight:700;}
-.del-btn{background:none;border:none;cursor:pointer;color:#ffb3b3;font-size:.95rem;padding:2px 4px;border-radius:5px;}
-.del-btn:hover{color:var(--red);}
-.receipt-thumb{width:38px;height:38px;object-fit:cover;border-radius:7px;cursor:pointer;border:2px solid #e0f2f1;vertical-align:middle;}
-
-/* ── FORM ── */
-.form-card{background:var(--card);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow);margin-bottom:14px;}
-.form-card h2{font-size:.95rem;font-weight:700;margin-bottom:16px;}
-label{display:block;font-size:.75rem;font-weight:700;color:var(--muted);margin-bottom:4px;margin-top:13px;}
-label:first-of-type{margin-top:0;}
-input,select{width:100%;padding:11px 13px;border:2px solid #e8e4f8;border-radius:10px;font-size:.92rem;color:var(--text);background:#fff;transition:border .2s;outline:none;}
-input:focus,select:focus{border-color:var(--purple);}
-.teal-form input:focus,.teal-form select:focus{border-color:var(--teal);}
-.admin-form input:focus,.admin-form select:focus{border-color:var(--admin);}
-
-/* ── CAT / METHOD GRID ── */
-.opt-grid{display:grid;gap:7px;margin-top:4px;}
-.opt-grid.cols3{grid-template-columns:repeat(3,1fr);}
-.opt-grid.cols4{grid-template-columns:repeat(4,1fr);}
-.opt-btn{padding:9px 5px;border:2px solid #e8e4f8;background:#fff;border-radius:10px;cursor:pointer;text-align:center;font-size:.7rem;font-weight:600;color:var(--text);transition:all .2s;line-height:1.4;}
-.opt-btn:hover{border-color:var(--purple);}
-.opt-btn.sel{background:var(--purple);color:#fff;border-color:var(--purple);}
-.opt-btn.sel-admin{background:var(--admin);color:#fff;border-color:var(--admin);}
-.opt-btn.sel-teal{background:var(--teal);color:#fff;border-color:var(--teal);}
-.opt-icon{display:block;font-size:1.2rem;margin-bottom:2px;}
-
-/* ── RECEIPT UPLOAD ── */
-.receipt-drop{border:2px dashed #b2dfdb;border-radius:12px;padding:16px;text-align:center;cursor:pointer;background:#f0fafa;transition:all .2s;margin-top:6px;}
-.receipt-drop:hover{border-color:var(--teal);}
-.receipt-drop p{color:var(--muted);font-size:.8rem;margin-top:5px;}
-.receipt-preview-img{max-width:100%;max-height:200px;border-radius:10px;margin-top:8px;display:none;}
-
-/* ── BUTTONS ── */
-.btn{width:100%;padding:13px;border:none;border-radius:12px;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;margin-top:16px;}
-.btn-a{background:linear-gradient(135deg,var(--admin-light),var(--admin));color:#fff;}
-.btn-p{background:linear-gradient(135deg,var(--purple-light),var(--purple));color:#fff;}
-.btn-t{background:linear-gradient(135deg,var(--teal-light),var(--teal));color:#fff;}
-.btn-s{background:linear-gradient(135deg,#43a047,#00c853);color:#fff;}
-.btn-d{background:#fff0f0;color:var(--red);border:2px solid #ffd0d0;}
-.btn:active{transform:scale(.98);}
-
-/* ── UPLOAD ── */
-.upload-area{border:2px dashed #c9bff0;border-radius:var(--radius);padding:28px 18px;text-align:center;cursor:pointer;transition:all .2s;background:#f9f7ff;margin-bottom:14px;}
-.upload-area:hover,.upload-area.drag{border-color:var(--purple);background:#f0ecff;}
-.upload-icon{font-size:2.2rem;margin-bottom:7px;}
-.upload-area p{color:var(--muted);font-size:.85rem;}
-.upload-area strong{color:var(--purple);}
-#csvFileInput{display:none;}
-.preview-box{background:#f9f7ff;border-radius:12px;padding:12px;margin-bottom:12px;max-height:240px;overflow-y:auto;}
-
-/* ── ALERTS ── */
-.alert{padding:11px 14px;border-radius:10px;font-size:.82rem;margin-bottom:11px;display:none;}
-.alert.show{display:block;}
-.alert-success{background:#e8fdf0;color:#2e7d32;border:1px solid #a5d6a7;}
-.alert-error{background:#fff0f0;color:#c62828;border:1px solid #ffcdd2;}
-.alert-info{background:#e8f4fd;color:#0277bd;border:1px solid #b3d9f7;}
-
-/* ── LOADING / EMPTY ── */
-.loading{text-align:center;padding:36px;color:var(--muted);font-size:.87rem;}
-.spinner{display:inline-block;width:26px;height:26px;border:3px solid #e0d9f7;border-top-color:var(--admin);border-radius:50%;animation:spin .7s linear infinite;margin-bottom:7px;}
-.empty{text-align:center;padding:36px 18px;color:var(--muted);}
-.empty-icon{font-size:2.6rem;margin-bottom:7px;}
-@keyframes spin{to{transform:rotate(360deg);}}
-
-/* ── RECEIPT MODAL ── */
-#receiptModal{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:400;display:none;align-items:center;justify-content:center;padding:16px;}
-#receiptModal img{max-width:100%;max-height:90vh;border-radius:12px;}
-
-/* ── MONTH BADGES ── */
-.m-enero{background:#e8f4fd;color:#1565c0;}
-.m-febrero{background:#fef3e2;color:#e65100;}
-.m-marzo{background:#e8fdf2;color:#2e7d32;}
-.m-abril{background:#fce4ec;color:#880e4f;}
-.m-mayo{background:#f3e5f5;color:#6a1b9a;}
-.m-otros{background:#f5f5f5;color:#555;}
-.m-ingreso{background:#e8f5e9;color:#2e7d32;}
-
-@media(min-width:600px){.view,.balance-banner{max-width:600px;margin-left:auto;margin-right:auto;} .hdr{justify-content:center;gap:14px;}}
-
-/* ── EDIT MODAL ── */
-#editModal{position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:350;display:none;align-items:flex-end;justify-content:center;}
-.edit-sheet{background:#fff;border-radius:22px 22px 0 0;padding:20px 18px 38px;width:100%;max-width:520px;max-height:94vh;overflow-y:auto;}
-.edit-sheet-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
-.edit-sheet-hdr h3{font-size:1rem;font-weight:700;}
-.edit-close{background:none;border:none;font-size:1.4rem;cursor:pointer;color:#888;line-height:1;}
-.edit-pdots{display:flex;justify-content:center;gap:10px;margin:8px 0 10px;}
-.edit-pdot{width:12px;height:12px;border-radius:50%;border:2px solid #ddd;transition:all .2s;}
-.edit-pdot.ep-admin{background:var(--admin);border-color:var(--admin);}
-.edit-pdot.ep-purple{background:var(--purple);border-color:var(--purple);}
-.edit-pdot.ep-teal{background:var(--teal);border-color:var(--teal);}
-.edit-pin-box{background:#f9f7ff;border-radius:14px;padding:14px 12px 10px;margin-top:14px;}
-.edit-pin-box p{font-size:.75rem;font-weight:700;color:var(--muted);text-align:center;margin-bottom:6px;}
-.mini-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:230px;margin:0 auto;}
-.mini-btn{padding:11px;border:none;background:#eee;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer;transition:all .15s;}
-.mini-btn:active{transform:scale(.94);}
-.ep-err{color:var(--red);font-size:.74rem;text-align:center;min-height:14px;margin-top:5px;}
-.ep-ok{color:var(--green);font-size:.74rem;text-align:center;margin-top:5px;}
-/* Edited-row indicator */
-.edited-mark{font-size:.58rem;color:#bbb;margin-left:3px;cursor:default;}
-tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
-</style>
+<link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
 
@@ -276,7 +38,7 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
   </div>
 </div>
 
-<!-- ══ ADMIN SHELL ═══════════════════════════════════════ -->
+<!-- ══ ADMIN / SHARELYN SHELL ═════════════════════════════ -->
 <div class="shell" id="adminShell">
   <div class="hdr hdr-admin" id="adminHdr">
     <div>
@@ -286,16 +48,16 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
     <div class="hdr-right">
       <div class="person-tabs" id="adminPersonTabs">
         <button class="p-tab sharelyn active" id="tabSharelyn" onclick="switchPerson('sharelyn')">💜 Sharelyn</button>
-        <button class="p-tab teresa" id="tabTeresa" onclick="switchPerson('teresa')">🏠 Teresa</button>
+        <button class="p-tab teresa"           id="tabTeresa"   onclick="switchPerson('teresa')">🏠 Teresa</button>
       </div>
       <button class="exit-btn" onclick="logout()">Salir</button>
     </div>
   </div>
 
-  <!-- ── Sharelyn Section ── -->
+  <!-- ── Sección de Sharelyn ── -->
   <div id="sharelySection">
 
-    <!-- Balance banner for Sharelyn (shown when Sharelyn PIN logs in) -->
+    <!-- Balance banner (visible cuando Sharelyn inicia sesión) -->
     <div id="slyBalBanner" class="balance-banner bal-admin-sly" style="display:none">
       <div class="bal-label">Balance Disponible — Sharelyn</div>
       <div class="bal-amount" id="slyBannerBalance">L 0.00</div>
@@ -305,21 +67,29 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
       </div>
     </div>
 
-    <!-- Dashboard -->
+    <!-- Vista: Dashboard -->
     <div class="view active" id="viewDashboard">
       <div id="dashLoading" class="loading"><div class="spinner"></div><br>Cargando…</div>
       <div id="dashContent" style="display:none">
         <div class="filter-row" id="filterRow"></div>
-        <!-- Balance cards (shown when income data exists) -->
         <div id="balanceCards" class="cards-row" style="display:none">
           <div class="stat-card hl-green"><div class="lbl">💰 Dado a Sharelyn</div><div class="val" id="bc_received">L 0.00</div></div>
           <div class="stat-card hl"><div class="lbl">💸 Gastado</div><div class="val" id="bc_spent">L 0.00</div></div>
           <div class="stat-card hl-admin span2"><div class="lbl">✅ Balance Disponible</div><div class="val" id="bc_balance">L 0.00</div><div class="sub" id="bc_sub"></div></div>
         </div>
         <div class="cards-row" id="summaryCards"></div>
-        <div class="chart-card"><div class="chart-hdr"><h3>🥧 Por Categoría</h3></div><div class="chart-wrap"><canvas id="donutChart"></canvas></div></div>
-        <div class="chart-card"><div class="chart-hdr"><h3>📊 Comparación Mensual</h3></div><div class="chart-wrap"><canvas id="barChart"></canvas></div></div>
-        <div class="chart-card"><div class="chart-hdr"><h3>🏆 ¿Dónde Gasta Más?</h3></div><div id="topPlaces"></div></div>
+        <div class="chart-card">
+          <div class="chart-hdr"><h3>🥧 Por Categoría</h3></div>
+          <div class="chart-wrap"><canvas id="donutChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-hdr"><h3>📊 Comparación Mensual</h3></div>
+          <div class="chart-wrap"><canvas id="barChart"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-hdr"><h3>🏆 ¿Dónde Gasta Más?</h3></div>
+          <div id="topPlaces"></div>
+        </div>
         <div class="chart-card">
           <div class="chart-hdr">
             <h3>📋 Transacciones</h3>
@@ -329,14 +99,19 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
             </div>
           </div>
           <div id="txListWrap" style="display:none">
-            <div class="tx-wrap"><table><thead><tr><th>Fecha</th><th>Descripción</th><th>Cat.</th><th>Mes</th><th>Tipo</th><th>Monto</th><th></th></tr></thead><tbody id="txBody"></tbody></table></div>
+            <div class="tx-wrap">
+              <table>
+                <thead><tr><th>Fecha</th><th>Descripción</th><th>Cat.</th><th>Mes</th><th>Tipo</th><th>Monto</th><th></th></tr></thead>
+                <tbody id="txBody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
       <div id="dashEmpty" class="empty" style="display:none"><div class="empty-icon">📭</div><p>Sin transacciones aún.</p></div>
     </div>
 
-    <!-- Add Cash -->
+    <!-- Vista: Agregar Gasto Efectivo -->
     <div class="view" id="viewAdd">
       <div class="form-card admin-form">
         <h2>➕ Gasto en Efectivo — Sharelyn</h2>
@@ -347,15 +122,22 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
         <label>Categoría</label><div class="opt-grid cols3" id="catGrid"></div>
         <button class="btn btn-a" onclick="saveCash()">Guardar Gasto</button>
       </div>
-      <div class="chart-card"><div class="chart-hdr"><h3>🕐 Últimos Gastos en Efectivo</h3></div><div id="recentCash"><div class="loading"><div class="spinner"></div></div></div></div>
+      <div class="chart-card">
+        <div class="chart-hdr"><h3>🕐 Últimos Gastos en Efectivo</h3></div>
+        <div id="recentCash"><div class="loading"><div class="spinner"></div></div></div>
+      </div>
     </div>
 
-    <!-- Upload CSV -->
+    <!-- Vista: Subir CSV -->
     <div class="view" id="viewUpload">
       <div class="form-card">
         <h2>📤 Subir Estado de Cuenta</h2>
         <div id="uploadAlert" class="alert"></div>
-        <div class="upload-area" id="uploadArea" onclick="document.getElementById('csvFileInput').click()" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+        <div class="upload-area" id="uploadArea"
+             onclick="document.getElementById('csvFileInput').click()"
+             ondragover="handleDragOver(event)"
+             ondragleave="handleDragLeave(event)"
+             ondrop="handleDrop(event)">
           <div class="upload-icon">📄</div>
           <p><strong>Haz clic</strong> o arrastra el CSV aquí</p>
           <p style="margin-top:5px;font-size:.76rem">Cualquier nombre de archivo</p>
@@ -366,14 +148,32 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
           <div class="preview-box" id="previewBox"></div>
           <div id="dupWarning" class="alert"></div>
           <button class="btn btn-s" id="importBtn" onclick="importTransactions()">✅ Importar Transacciones</button>
-          <button class="btn" id="replaceBtn" onclick="replaceTransactions()" style="display:none;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;margin-top:6px">🔄 Borrar mes anterior e Importar</button>
+          <button class="btn" id="replaceBtn" onclick="replaceTransactions()"
+                  style="display:none;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;margin-top:6px">
+            🔄 Borrar mes anterior e Importar
+          </button>
           <button class="btn btn-d" style="margin-top:8px" onclick="cancelUpload()">Cancelar</button>
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- ── Teresa Admin View ── -->
+    <!-- Vista: Tareas (Sharelyn) -->
+    <div class="view" id="viewTodo">
+      <div class="form-card admin-form">
+        <h2>✅ Mis Tareas — Sharelyn</h2>
+        <div id="todoAlertS" class="alert"></div>
+        <label>¿Qué necesitas hacer?</label>
+        <input type="text" id="todoTitleS" placeholder="Ej: Estudiar para parcial, comprar libros…" maxlength="100">
+        <label>Categoría</label>
+        <div class="opt-grid cols4" id="todoCatGridS"></div>
+        <button class="btn btn-p" onclick="saveTodo()" style="margin-top:14px">➕ Agregar Tarea</button>
+      </div>
+      <div id="todoListS"></div>
+    </div>
+
+  </div><!-- fin sharelySection -->
+
+  <!-- ── Sección Admin: vista de Teresa ── -->
   <div id="teresaSection" style="display:none">
     <div class="view active" id="viewTeresaAdmin">
       <div id="taLoading" class="loading"><div class="spinner"></div><br>Cargando…</div>
@@ -398,23 +198,29 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
             <button class="pill teal" onclick="setTaFilter('expense')">💸 Gastos</button>
           </div>
           <div id="taTxListWrap" style="display:none">
-            <div class="tx-wrap"><table><thead class="teal"><tr><th>Fecha</th><th>Descripción</th><th>Dir.</th><th>Método</th><th>Cat.</th><th>Monto</th><th>Recibo</th><th></th></tr></thead><tbody id="taTxBody"></tbody></table></div>
+            <div class="tx-wrap">
+              <table>
+                <thead class="teal"><tr><th>Fecha</th><th>Descripción</th><th>Dir.</th><th>Método</th><th>Cat.</th><th>Monto</th><th>Recibo</th><th></th></tr></thead>
+                <tbody id="taTxBody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
       <div id="taEmpty" class="empty" style="display:none"><div class="empty-icon">📭</div><p>Teresa aún no tiene movimientos.</p></div>
     </div>
-  </div>
+  </div><!-- fin teresaSection -->
 
-  <!-- Admin Bottom Nav -->
+  <!-- Nav inferior (Admin / Sharelyn) -->
   <nav class="bottom-nav" id="adminNav">
     <button class="nav-btn active" onclick="adminShowView('Dashboard')" id="navDashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></button>
-    <button class="nav-btn" onclick="adminShowView('Add')" id="navAdd"><span class="nav-icon">➕</span><span class="nav-label">Efectivo</span></button>
-    <button class="nav-btn" onclick="adminShowView('Upload')" id="navUpload"><span class="nav-icon">📤</span><span class="nav-label">CSV</span></button>
+    <button class="nav-btn"       onclick="adminShowView('Add')"       id="navAdd">      <span class="nav-icon">➕</span><span class="nav-label">Efectivo</span></button>
+    <button class="nav-btn"       onclick="adminShowView('Upload')"    id="navUpload">   <span class="nav-icon">📤</span><span class="nav-label">CSV</span></button>
+    <button class="nav-btn"       onclick="adminShowView('Todo')"      id="navTodo">     <span class="nav-icon">✅</span><span class="nav-label">Tareas</span></button>
   </nav>
 </div>
 
-<!-- ══ TERESA SHELL ══════════════════════════════════════ -->
+<!-- ══ TERESA SHELL ════════════════════════════════════════ -->
 <div class="shell" id="teresaShell">
   <div class="hdr hdr-teresa">
     <div><h1>🏠 Teresa</h1><div class="sub" id="teresaHdrSub">Control de Movimientos</div></div>
@@ -430,7 +236,7 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
     </div>
   </div>
 
-  <!-- Ingreso -->
+  <!-- Vista: Registrar Ingreso -->
   <div class="view active" id="tvIngreso">
     <div class="form-card teal-form">
       <h2 style="color:var(--teal)">📥 Registrar Ingreso</h2>
@@ -444,7 +250,7 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
     </div>
   </div>
 
-  <!-- Gasto -->
+  <!-- Vista: Registrar Gasto -->
   <div class="view" id="tvGasto">
     <div class="form-card teal-form">
       <h2 style="color:var(--teal)">💸 Registrar Gasto</h2>
@@ -467,7 +273,7 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
     </div>
   </div>
 
-  <!-- Historial -->
+  <!-- Vista: Historial -->
   <div class="view" id="tvHistorial">
     <div class="filter-row" id="tHistFilter">
       <button class="pill teal active" onclick="setTHistFilter('all')">Todos</button>
@@ -483,19 +289,40 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
         </div>
       </div>
       <div id="tHistListWrap" style="display:none">
-        <div class="tx-wrap"><table><thead class="teal"><tr><th>Fecha</th><th>Descripción</th><th>Dir.</th><th>Método</th><th>Monto</th><th>Recibo</th><th></th></tr></thead><tbody id="tHistBody"></tbody></table></div>
+        <div class="tx-wrap">
+          <table>
+            <thead class="teal"><tr><th>Fecha</th><th>Descripción</th><th>Dir.</th><th>Método</th><th>Monto</th><th>Recibo</th><th></th></tr></thead>
+            <tbody id="tHistBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- Vista: Tareas (Teresa) -->
+  <div class="view" id="tvTodo">
+    <div class="form-card teal-form">
+      <h2 style="color:var(--teal)">✅ Mis Tareas — Obra</h2>
+      <div id="todoAlertT" class="alert"></div>
+      <label>¿Qué necesitas hacer?</label>
+      <input type="text" id="todoTitleT" placeholder="Ej: Comprar cemento, llamar electricista…" maxlength="100">
+      <label>Categoría</label>
+      <div class="opt-grid cols4" id="todoCatGridT"></div>
+      <button class="btn btn-t" onclick="saveTodo()" style="margin-top:14px">➕ Agregar Tarea</button>
+    </div>
+    <div id="todoListT"></div>
+  </div>
+
+  <!-- Nav inferior (Teresa) -->
   <nav class="bottom-nav">
-    <button class="nav-btn t-active" onclick="teresaShow('Ingreso')" id="tnIngreso"><span class="nav-icon">📥</span><span class="nav-label">Ingreso</span></button>
-    <button class="nav-btn" onclick="teresaShow('Gasto')" id="tnGasto"><span class="nav-icon">💸</span><span class="nav-label">Gasto</span></button>
-    <button class="nav-btn" onclick="teresaShow('Historial')" id="tnHistorial"><span class="nav-icon">📋</span><span class="nav-label">Historial</span></button>
+    <button class="nav-btn t-active" onclick="teresaShow('Ingreso')"  id="tnIngreso"> <span class="nav-icon">📥</span><span class="nav-label">Ingreso</span></button>
+    <button class="nav-btn"          onclick="teresaShow('Gasto')"    id="tnGasto">   <span class="nav-icon">💸</span><span class="nav-label">Gasto</span></button>
+    <button class="nav-btn"          onclick="teresaShow('Historial')" id="tnHistorial"><span class="nav-icon">📋</span><span class="nav-label">Historial</span></button>
+    <button class="nav-btn"          onclick="teresaShow('Todo')"      id="tnTodo">    <span class="nav-icon">✅</span><span class="nav-label">Tareas</span></button>
   </nav>
 </div>
 
-<!-- ══ EDIT MODAL (bottom sheet) ════════════════════════ -->
+<!-- ══ MODAL: EDITAR TRANSACCIÓN ══════════════════════════ -->
 <div id="editModal" onclick="if(event.target===this)closeEditModal()">
   <div class="edit-sheet">
     <div class="edit-sheet-hdr">
@@ -508,7 +335,6 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
     <label>Categoría</label><div class="opt-grid cols3" id="editCatGrid"></div>
     <label>Nota de edición <span style="font-weight:400;font-size:.72rem">(opcional — queda en el registro)</span></label>
     <input type="text" id="editNote" placeholder="Ej: monto incorrecto, descripción mal escrita…" maxlength="120">
-    <!-- PIN verification -->
     <div class="edit-pin-box">
       <p>🔐 Confirma con tu PIN</p>
       <div class="edit-pdots" id="editPdots">
@@ -537,909 +363,21 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
   </div>
 </div>
 
-<!-- ══ RECEIPT MODAL ══════════════════════════════════════ -->
+<!-- ══ MODAL: VER RECIBO ══════════════════════════════════ -->
 <div id="receiptModal" onclick="this.style.display='none'">
   <img id="receiptModalImg" src="" alt="Recibo">
 </div>
 
 <!-- ══ JAVASCRIPT ═════════════════════════════════════════ -->
-<script>
-// ── CONFIG ───────────────────────────────────────────────
-const SUPABASE_URL      = 'https://ozfmydiutupboupttkmz.supabase.co';
-const SUPABASE_ANON_KEY = 'sb_publishable_TcG2qZdwO5PQuJAJ701xtg_XArHPpsG';
-const ADMIN_PIN         = '1340';
-const SHARELYN_PIN      = '1804';
-const TERESA_PIN        = '2026';
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/csv.js"></script>
+<script src="js/edit.js"></script>
+<script src="js/sharelyn.js"></script>
+<script src="js/teresa.js"></script>
+<script src="js/admin.js"></script>
+<script src="js/todos.js"></script>
+<script src="js/auth.js"></script>
 
-const { createClient } = supabase;
-const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
-// ── SHARELYN SPENDING CATEGORIES ─────────────────────────
-const CAT = {
-  cafeteria:    {label:'☕ Cafeterías',     color:'#667eea',emoji:'☕'},
-  restaurante:  {label:'🍔 Restaurantes',   color:'#f7971e',emoji:'🍔'},
-  universidad:  {label:'📚 Universidad',    color:'#00b09b',emoji:'📚'},
-  ropa:         {label:'👗 Ropa y Moda',    color:'#e040fb',emoji:'👗'},
-  telefono:     {label:'📱 Teléfono',       color:'#26c6da',emoji:'📱'},
-  suscripcion:  {label:'🎵 Suscripciones',  color:'#ff7043',emoji:'🎵'},
-  supermercado: {label:'🛒 Supermercado',   color:'#66bb6a',emoji:'🛒'},
-  seguros:      {label:'🏢 Seguros/Otros',  color:'#bdbdbd',emoji:'🏢'},
-  efectivo:     {label:'💵 Efectivo ATM',   color:'#ffd740',emoji:'💵'},
-  otros:        {label:'📦 Otros',          color:'#90a4ae',emoji:'📦'},
-};
-
-// ── TERESA CONSTRUCTION CATEGORIES ───────────────────────
-const TERESA_CAT = {
-  zinc:         {label:'🪟 Láminas Zinc',   color:'#546e7a',emoji:'🪟'},
-  escalera:     {label:'🪜 Escalera',       color:'#607d8b',emoji:'🪜'},
-  cemento:      {label:'🧱 Cemento',        color:'#8d6e63',emoji:'🧱'},
-  bloques:      {label:'🔲 Bloques',        color:'#795548',emoji:'🔲'},
-  combustible:  {label:'⛽ Combustible',    color:'#f57c00',emoji:'⛽'},
-  arena:        {label:'🏖️ Arena',          color:'#f9a825',emoji:'🏖️'},
-  electricista: {label:'⚡ Electricista',   color:'#fdd835',emoji:'⚡'},
-  albanil:      {label:'👷 Albañil',        color:'#ff8f00',emoji:'👷'},
-  pintura:      {label:'🎨 Pintura',        color:'#ab47bc',emoji:'🎨'},
-  herramientas: {label:'🔧 Herramientas',   color:'#455a64',emoji:'🔧'},
-  otros:        {label:'📦 Otros',          color:'#90a4ae',emoji:'📦'},
-};
-
-const ALL_CATS = {...CAT, ...TERESA_CAT};
-
-const INCOME_METHODS = [
-  {k:'cash',    label:'Efectivo',      icon:'💵'},
-  {k:'transfer',label:'Transferencia', icon:'📱'},
-  {k:'check',   label:'Cheque',        icon:'📝'},
-];
-const EXPENSE_METHODS = [
-  {k:'cash',    label:'Efectivo',      icon:'💵'},
-  {k:'card',    label:'Tarjeta',       icon:'💳'},
-  {k:'transfer',label:'Transferencia', icon:'📱'},
-  {k:'check',   label:'Cheque',        icon:'📝'},
-];
-const METHOD_LABEL = {cash:'💵 Efectivo',card:'💳 Tarjeta',transfer:'📱 Transferencia',check:'📝 Cheque'};
-
-const MONTH_ORDER  = {enero:1,febrero:2,marzo:3,abril:4,mayo:5,junio:6,julio:7,agosto:8,septiembre:9,octubre:10,noviembre:11,diciembre:12};
-const MONTHS_ES    = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
-
-// ── STATE ────────────────────────────────────────────────
-let currentUser   = null; // 'admin' | 'sharelyn' | 'teresa'
-let currentPerson = 'sharelyn';
-let allTx         = [];   // Sharelyn all transactions
-let teresaTx      = [];
-let currentFilter = 'all';
-let taFilter      = 'all';
-let tHistFilter   = 'all';
-let donutChart    = null;
-let barChart      = null;
-let pendingTx     = [];
-let selectedCat   = '';
-let selectedIngresoMethod = '';
-let selectedGastoCat      = '';
-let selectedGastoMethod   = '';
-let currentReceiptData    = null;
-
-// ── PIN ──────────────────────────────────────────────────
-let pinBuf = '';
-function pinPress(d){ if(pinBuf.length>=4) return; pinBuf+=d; updateDots(); if(pinBuf.length===4) setTimeout(pinSubmit,120); }
-function pinClear(){ pinBuf=pinBuf.slice(0,-1); updateDots(); }
-function updateDots(){ document.querySelectorAll('.pin-dot').forEach((d,i)=>d.classList.toggle('filled',i<pinBuf.length)); }
-function pinSubmit(){
-  if(pinBuf===ADMIN_PIN){ sessionStorage.setItem('auth','admin'); unlockAdmin(); }
-  else if(pinBuf===SHARELYN_PIN){ sessionStorage.setItem('auth','sharelyn'); unlockSharelyn(); }
-  else if(pinBuf===TERESA_PIN){ sessionStorage.setItem('auth','teresa'); unlockTeresa(); }
-  else{ document.getElementById('pinError').textContent='PIN incorrecto.'; pinBuf=''; updateDots(); setTimeout(()=>document.getElementById('pinError').textContent='',2000); }
-}
-function logout(){ sessionStorage.clear(); location.reload(); }
-
-window.addEventListener('DOMContentLoaded',()=>{
-  const a=sessionStorage.getItem('auth');
-  if(a==='admin') unlockAdmin();
-  else if(a==='sharelyn') unlockSharelyn();
-  else if(a==='teresa') unlockTeresa();
-});
-
-// ── UNLOCK FUNCTIONS ─────────────────────────────────────
-function unlockAdmin(){
-  currentUser='admin';
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('adminShell').classList.add('visible');
-  // Admin header = navy
-  document.getElementById('adminHdr').className='hdr hdr-admin';
-  document.getElementById('adminHdrTitle').textContent='💳 Control de Gastos';
-  document.getElementById('adminPersonTabs').style.display='flex';
-  buildCatGrid('catGrid','opt-btn','sel-admin',Object.entries(CAT),(k)=>selectedCat=k);
-  setTodayDate('cashDate');
-  loadDashboard();
-}
-
-function unlockSharelyn(){
-  currentUser='sharelyn';
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('adminShell').classList.add('visible');
-  // Change admin shell to purple for Sharelyn
-  document.getElementById('adminHdr').className='hdr hdr-sharelyn';
-  document.getElementById('adminHdrTitle').textContent='💜 Sharelyn';
-  document.getElementById('adminPersonTabs').style.display='none';
-  document.getElementById('slyBalBanner').style.display='block';
-  buildCatGrid('catGrid','opt-btn','sel',Object.entries(CAT),(k)=>selectedCat=k);
-  setTodayDate('cashDate');
-  loadDashboard();
-}
-
-function unlockTeresa(){
-  currentUser='teresa';
-  document.getElementById('loginScreen').style.display='none';
-  document.getElementById('teresaShell').classList.add('visible');
-  buildMethodGrid('ingresoMethodGrid',INCOME_METHODS,'sel-teal',(k)=>selectedIngresoMethod=k);
-  buildMethodGrid('gastoMethodGrid',EXPENSE_METHODS,'sel-teal',(k)=>selectedGastoMethod=k);
-  buildCatGrid('gastoCatGrid','opt-btn','sel-teal',Object.entries(TERESA_CAT),(k)=>selectedGastoCat=k);
-  setTodayDate('ingresoDate');
-  setTodayDate('gastoDate');
-  loadTeresaData();
-}
-
-// ── ADMIN NAVIGATION ─────────────────────────────────────
-function adminShowView(name){
-  if(currentPerson!=='sharelyn') return;
-  document.querySelectorAll('#sharelySection .view').forEach(v=>v.classList.remove('active'));
-  document.querySelectorAll('#adminNav .nav-btn').forEach(b=>b.classList.remove('active'));
-  document.getElementById('view'+name).classList.add('active');
-  document.getElementById('nav'+name).classList.add('active');
-  if(name==='Dashboard') loadDashboard();
-  if(name==='Add') loadRecentCash();
-}
-
-function switchPerson(p){
-  currentPerson=p;
-  document.getElementById('tabSharelyn').classList.toggle('active',p==='sharelyn');
-  document.getElementById('tabTeresa').classList.toggle('active',p==='teresa');
-  document.getElementById('sharelySection').style.display=p==='sharelyn'?'':'none';
-  document.getElementById('teresaSection').style.display=p==='teresa'?'':'none';
-  document.getElementById('adminNav').style.display=p==='sharelyn'?'':'none';
-  if(p==='teresa') loadTeresaAdminView();
-}
-
-// ── TERESA NAVIGATION ────────────────────────────────────
-function teresaShow(name){
-  document.querySelectorAll('#teresaShell .view').forEach(v=>v.classList.remove('active'));
-  document.querySelectorAll('#teresaShell .nav-btn').forEach(b=>b.classList.remove('active','t-active'));
-  document.getElementById('tv'+name).classList.add('active');
-  const btn=document.getElementById('tn'+name); if(btn) btn.classList.add('t-active');
-}
-
-// ── TRANSACTION LIST TOGGLE ───────────────────────────────
-function toggleTxList(wrapperId,btnId){
-  const wrap=document.getElementById(wrapperId);
-  const btn=document.getElementById(btnId);
-  const open=wrap.style.display!=='none';
-  wrap.style.display=open?'none':'block';
-  btn.textContent=open?'Ver lista ▼':'Ocultar ▲';
-}
-
-// ── HELPERS ──────────────────────────────────────────────
-function fmt(n){ return 'L '+parseFloat(n||0).toLocaleString('es-HN',{minimumFractionDigits:2,maximumFractionDigits:2}); }
-function setTodayDate(id){ const el=document.getElementById(id); if(el) el.value=new Date().toISOString().split('T')[0]; }
-
-function buildCatGrid(containerId, btnClass, selClass, entries, onSelect){
-  document.getElementById(containerId).innerHTML=entries.map(([k,v])=>
-    `<button class="${btnClass}" onclick="this.parentElement.querySelectorAll('.${btnClass}').forEach(b=>b.classList.remove('sel','sel-admin','sel-teal'));this.classList.add('${selClass}');(${onSelect.toString()})('${k}')">
-    <span class="opt-icon">${v.emoji}</span>${v.label.replace(/^[^\s]+\s/,'')}</button>`
-  ).join('');
-}
-
-function buildMethodGrid(containerId, methods, selClass, onSelect){
-  document.getElementById(containerId).innerHTML=methods.map(m=>
-    `<button class="opt-btn" onclick="this.parentElement.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('sel','sel-admin','sel-teal'));this.classList.add('${selClass}');(${onSelect.toString()})('${m.k}')">
-    <span class="opt-icon">${m.icon}</span>${m.label}</button>`
-  ).join('');
-}
-
-// ── SHARELYN DASHBOARD ───────────────────────────────────
-async function loadDashboard(){
-  show('dashLoading'); hide('dashContent'); hide('dashEmpty');
-  const COLS='id,date,description,category,cat_label,month,month_display,month_num,amount,type,person,direction,payment_method,created_at,has_receipt,edited_at,edited_by';
-  const {data,error}=await db.from('transactions').select(COLS).eq('person','sharelyn').order('month_num').order('date');
-  hide('dashLoading');
-  if(error||!data?.length){ show('dashEmpty'); return; }
-  allTx=data;
-  const months=uniqSorted(allTx.filter(t=>t.direction!=='income'),'month');
-  const mDisp=months.map(m=>allTx.find(t=>t.month===m)?.month_display||m);
-  document.getElementById('adminHdrSub').textContent=mDisp.join(' · ')+' · L';
-  buildFilterPills(months,mDisp);
-  // Balance data
-  renderBalanceCards();
-  show('dashContent');
-  renderDashboard();
-}
-
-function renderBalanceCards(){
-  const income=sumAmt(allTx.filter(t=>t.direction==='income'));
-  const spent =sumAmt(allTx.filter(t=>t.direction!=='income'));
-  const bal=income-spent;
-  const hasIncome=income>0;
-  document.getElementById('balanceCards').style.display=hasIncome?'grid':'none';
-  if(hasIncome){
-    document.getElementById('bc_received').textContent=fmt(income);
-    document.getElementById('bc_spent').textContent=fmt(spent);
-    document.getElementById('bc_balance').textContent=fmt(bal);
-    document.getElementById('bc_sub').textContent=`${fmt(income)} recibido — ${fmt(spent)} gastado`;
-  }
-  // Update Sharelyn banner (shown when Sharelyn PIN is used)
-  if(currentUser==='sharelyn'){
-    document.getElementById('slyBannerBalance').textContent=fmt(bal);
-    document.getElementById('slyBannerReceived').textContent=fmt(income);
-    document.getElementById('slyBannerSpent').textContent=fmt(spent);
-  }
-}
-
-function buildFilterPills(months,displays){
-  document.getElementById('filterRow').innerHTML=
-    `<button class="pill admin${currentFilter==='all'?' active':''}" onclick="setFilter('all')">Todos</button>`+
-    months.map((m,i)=>`<button class="pill admin${currentFilter===m?' active':''}" onclick="setFilter('${m}')">${displays[i]}</button>`).join('');
-}
-function setFilter(f){
-  currentFilter=f;
-  const months=uniqSorted(allTx.filter(t=>t.direction!=='income'),'month');
-  buildFilterPills(months,months.map(m=>allTx.find(t=>t.month===m)?.month_display||m));
-  renderDashboard();
-}
-function filteredS(){
-  const expense=allTx.filter(t=>t.direction!=='income');
-  return currentFilter==='all'?expense:expense.filter(t=>t.month===currentFilter);
-}
-function filteredAll(){
-  return currentFilter==='all'?allTx:allTx.filter(t=>t.month===currentFilter);
-}
-
-function renderDashboard(){
-  const tx=filteredS();
-  renderSCards(tx);
-  renderDonut(tx);
-  renderBar();
-  renderTopPlaces(tx);
-  renderSTable(filteredAll());
-}
-
-function renderSCards(tx){
-  const total=sumAmt(tx);
-  const cats=groupSum(tx,'category');
-  const top=topEntry(cats);
-  const bankT=sumAmt(tx.filter(t=>t.type==='bank'));
-  const cashT=sumAmt(tx.filter(t=>t.type==='cash'));
-  document.getElementById('summaryCards').innerHTML=`
-    <div class="stat-card hl span2"><div class="lbl">💸 Total Gastado</div><div class="val">${fmt(total)}</div><div class="sub">${tx.length} movimientos</div></div>
-    <div class="stat-card gd"><div class="lbl">🔥 Mayor Cat.</div><div class="val" style="font-size:.88rem">${top?ALL_CATS[top[0]]?.label||top[0]:'—'}</div><div class="sub">${top?fmt(top[1]):''}</div></div>
-    <div class="stat-card"><div class="lbl">🏦 Banco</div><div class="val">${fmt(bankT)}</div></div>`;
-}
-
-function renderDonut(tx){
-  const cats=groupSum(tx,'category');
-  const sorted=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
-  const total=sorted.reduce((s,[,v])=>s+v,0);
-  if(donutChart) donutChart.destroy();
-  donutChart=new Chart(document.getElementById('donutChart'),{
-    type:'doughnut',
-    data:{labels:sorted.map(([k])=>ALL_CATS[k]?.label||k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:sorted.map(([k])=>ALL_CATS[k]?.color||'#ccc'),borderWidth:2,borderColor:'#fff'}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',
-      plugins:{legend:{position:'right',labels:{font:{size:9},padding:7,boxWidth:11}},
-        tooltip:{callbacks:{label:c=>` ${fmt(c.raw)} (${((c.raw/total)*100).toFixed(1)}%)`}}}}
-  });
-}
-
-function renderBar(){
-  const expenseTx=allTx.filter(t=>t.direction!=='income');
-  const months=uniqSorted(expenseTx,'month');
-  const mDisp=months.map(m=>expenseTx.find(t=>t.month===m)?.month_display||m);
-  const catKeys=Object.keys(CAT).filter(k=>expenseTx.some(t=>t.category===k));
-  if(barChart) barChart.destroy();
-  barChart=new Chart(document.getElementById('barChart'),{
-    type:'bar',
-    data:{labels:mDisp,datasets:catKeys.map(k=>({label:CAT[k].label,data:months.map(m=>sumAmt(expenseTx.filter(t=>t.month===m&&t.category===k))),backgroundColor:CAT[k].color,borderRadius:4}))},
-    options:{responsive:true,maintainAspectRatio:false,
-      plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.dataset.label}: ${fmt(c.raw)}`}}},
-      scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,ticks:{callback:v=>'L '+(v/1000).toFixed(0)+'k'}}}}
-  });
-}
-
-function renderTopPlaces(tx){
-  const places=groupSum(tx,'description');
-  const sorted=Object.entries(places).sort((a,b)=>b[1]-a[1]).slice(0,10);
-  const max=sorted[0]?.[1]||1;
-  document.getElementById('topPlaces').innerHTML=sorted.map(([n,a])=>`
-    <div class="top-item">
-      <div class="top-lbl" title="${n}">${n}</div>
-      <div class="top-track"><div class="top-fill admin" style="width:${(a/max*100).toFixed(1)}%"></div></div>
-      <div class="top-amt admin">${fmt(a)}</div>
-    </div>`).join('');
-}
-
-function renderSTable(tx){
-  if(!tx.length){document.getElementById('txBody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:18px;color:#aaa">Sin resultados</td></tr>';return;}
-  document.getElementById('txBody').innerHTML=[...tx].reverse().map(t=>`
-    <tr${t.edited_at?' class="was-edited"':''}>
-      <td>${t.date}${t.edited_at?`<span class="edited-mark" title="Editado por ${t.edited_by||'?'}">✏️</span>`:''}</td>
-      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.description}">${t.description}</td>
-      <td><span class="badge ${t.direction==='income'?'b-income':'b-cat-admin'}">${t.direction==='income'?'💰':''}${ALL_CATS[t.category]?.emoji||'📦'}</span></td>
-      <td><span class="badge m-${t.month||'otros'}">${t.month_display||t.month}</span></td>
-      <td><span class="badge ${t.direction==='income'?'b-income':t.type==='cash'?'b-cash':'b-bank'}">${t.direction==='income'?'💰 Ingreso':t.type==='cash'?'💵':'🏦'}</span></td>
-      <td class="${t.direction==='income'?'amount-pos':'amount-neg'}">${fmt(t.amount)}</td>
-      <td style="white-space:nowrap">
-        ${t.direction!=='income'?`<button class="del-btn" title="Editar" style="color:#b3c6e8" onclick="openEditModal('${t.id}','sharelyn')">✏️</button>`:''}
-        <button class="del-btn" onclick="deleteTx('${t.id}','sharelyn')">🗑</button>
-      </td>
-    </tr>`).join('');
-}
-
-// ── SHARELYN: ADD CASH ───────────────────────────────────
-async function saveCash(){
-  const date=document.getElementById('cashDate').value;
-  const desc=document.getElementById('cashDesc').value.trim();
-  const amt=parseFloat(document.getElementById('cashAmt').value);
-  const al=document.getElementById('addAlert');
-  if(!date||!desc||!amt||amt<=0||!selectedCat){showAlert(al,'Completa todos los campos.','error');return;}
-  const dp=date.split('-'); const mn=parseInt(dp[1]);
-  const {error}=await db.from('transactions').insert([{
-    date:`${dp[2]}/${dp[1]}`,description:desc,category:selectedCat,cat_label:CAT[selectedCat]?.label||selectedCat,
-    month:MONTHS_ES[mn].toLowerCase(),month_display:MONTHS_ES[mn],month_num:mn,
-    amount:amt,type:'cash',person:'sharelyn',direction:'expense'
-  }]);
-  if(error){showAlert(al,'Error: '+error.message,'error');return;}
-  showAlert(al,'✅ Guardado','success');
-  document.getElementById('cashDesc').value=''; document.getElementById('cashAmt').value='';
-  selectedCat=''; document.querySelectorAll('#catGrid .opt-btn').forEach(b=>b.classList.remove('sel','sel-admin','sel-teal'));
-  loadRecentCash();
-}
-
-async function loadRecentCash(){
-  const {data}=await db.from('transactions').select('id,date,description,category,month,month_display,amount,type').eq('person','sharelyn').eq('type','cash').eq('direction','expense').order('created_at',{ascending:false}).limit(8);
-  const box=document.getElementById('recentCash');
-  if(!data?.length){box.innerHTML='<p style="color:var(--muted);font-size:.82rem;text-align:center;padding:10px">Sin gastos en efectivo aún.</p>';return;}
-  box.innerHTML=`<table style="width:100%;font-size:.78rem;border-collapse:collapse">${data.map(t=>`
-    <tr style="border-bottom:1px solid #f0f0f0">
-      <td style="padding:6px 5px">${ALL_CATS[t.category]?.emoji||'📦'}</td>
-      <td style="padding:6px 4px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description}</td>
-      <td style="padding:6px 4px"><span class="badge m-${t.month||'otros'}">${t.month_display}</span></td>
-      <td style="padding:6px 4px;color:var(--red);font-weight:700">${fmt(t.amount)}</td>
-      <td><button class="del-btn" onclick="deleteTx('${t.id}','sharelyn')">🗑</button></td>
-    </tr>`).join('')}</table>`;
-}
-
-// ── SHARED DELETE ────────────────────────────────────────
-async function deleteTx(id,person){
-  if(!confirm('¿Eliminar esta transacción?')) return;
-  await db.from('transactions').delete().eq('id',id);
-  if(person==='sharelyn'){ loadDashboard(); loadRecentCash(); }
-  else { loadTeresaData(); if(currentUser==='admin') loadTeresaAdminView(); }
-}
-
-// ── CSV UPLOAD ───────────────────────────────────────────
-function handleDragOver(e){e.preventDefault();document.getElementById('uploadArea').classList.add('drag');}
-function handleDragLeave(){document.getElementById('uploadArea').classList.remove('drag');}
-function handleDrop(e){e.preventDefault();handleDragLeave();const f=e.dataTransfer.files[0];if(f)processFile(f);}
-function handleFileSelect(e){const f=e.target.files[0];if(f)processFile(f);}
-
-function categorize(desc){
-  const d=desc.toUpperCase();
-  if(/UNICAFE|ESPRESSO|VERSAILLES COFFEE/.test(d)) return 'cafeteria';
-  if(/PAPA JOHN|TAMALITO|REPOSTERIA|DOLMO|DELICATO|POPEYE|DENNY|PEDIDOSYA|PIZZA|BURGER/.test(d)) return 'restaurante';
-  if(/UNIVERSIDAD|UNIV |UNICAH|INNOVACI CIENT|UTILES DE HONDURAS/.test(d)) return 'universidad';
-  if(/CALZADORA|LA MODERNA|DISTEFANO|NUEVO MUNDO|DIUNSA|ZARA/.test(d)) return 'ropa';
-  if(/TIGO|CLARO|HONDUTEL/.test(d)) return 'telefono';
-  if(/APPLEACOM|APPLE|SPOTIFY|NETFLIX|AMAZON/.test(d)) return 'suscripcion';
-  if(/ESTELINA|SUPERMERCADO|MAXI|PRICESMART|WALMART/.test(d)) return 'supermercado';
-  if(/MUNDIAL|SEGURO/.test(d)) return 'seguros';
-  if(/ATM|RETIRO/.test(d)) return 'efectivo';
-  if(/TRANSFERENCIA|DEPOSITO|INTERES|CREDITOS VARIOS/.test(d)) return 'SKIP';
-  return 'otros';
-}
-
-function categorizeIncome(desc){
-  const d=desc.toUpperCase();
-  if(/INTERES|FIDEICOMISO/.test(d)) return 'SKIP'; // skip tiny bank interest
-  return 'ingreso'; // transfers, deposits = money given to Sharelyn
-}
-
-// Proper CSV parser — handles quoted fields like "7,585.00"
-function splitCSVLine(line){
-  const cols=[];let cur='',inQ=false;
-  for(let i=0;i<line.length;i++){
-    const c=line[i];
-    if(c==='"'){inQ=!inQ;}
-    else if(c===','&&!inQ){cols.push(cur.trim());cur='';}
-    else{cur+=c;}
-  }
-  cols.push(cur.trim());
-  return cols;
-}
-
-function processFile(f){
-  const reader=new FileReader();
-  reader.onload=e=>{ pendingTx=parseCSV(e.target.result); showPreview(pendingTx,f.name); };
-  reader.readAsText(f,'windows-1252');
-}
-
-function parseCSV(content){
-  const lines=content.split(/\r?\n/);
-  let mName='',mNum=0,hdrIdx=-1,debIdx=4,credIdx=-1;
-  for(let i=0;i<lines.length;i++){
-    if(lines[i].includes('Desde:')){
-      const p=lines[i].split(',');
-      if(p.length>=2){const dp=(p[1]||'').trim().split(/[\/\-]/);if(dp.length>=2){const mn=parseInt(dp[1]);if(mn>=1&&mn<=12){mNum=mn;mName=MONTHS_ES[mn];}}}
-      break;
-    }
-  }
-  for(let i=0;i<lines.length;i++){
-    if(/^Fecha,/i.test(lines[i])){
-      hdrIdx=i;
-      const c=lines[i].split(',');
-      for(let j=0;j<c.length;j++){
-        if(/[Dd].?bito/.test(c[j])) debIdx=j;
-        if(/[Cc]r.?dito/.test(c[j])) credIdx=j;
-      }
-      break;
-    }
-  }
-  if(hdrIdx<0) return [];
-  const txns=[];
-  for(let i=hdrIdx+1;i<lines.length;i++){
-    const line=lines[i].trim();
-    if(!line||!/^\d/.test(line)) continue;
-    const cols=splitCSVLine(line);
-    if(cols.length<3) continue;
-    const dateVal=cols[0], descVal=cols[1]||'';
-    const dp2=dateVal.split(/[\/\-]/);
-    const fmtDate=dp2.length>=2?`${dp2[0]}/${dp2[1]}`:dateVal;
-
-    // ── DEBIT (expense) ──────────────────────
-    let debit=0;
-    if(debIdx<cols.length){const raw=cols[debIdx].replace(/,/g,'');debit=parseFloat(raw)||0;}
-    if(debit>0){
-      const cat=categorize(descVal);
-      if(cat!=='SKIP'){
-        let clean=descVal.replace(/Compras Tarjeta de Debito - /gi,'').replace(/Compras Tarjeta de Debito-/gi,'').replace(/Retiro de Efectivo - /gi,'ATM ').replace(/\s{2,}/g,' ').replace(/\s+(HN|US|SE)\s*$/i,'').trim();
-        clean=clean.split('  ')[0].trim();
-        txns.push({date:fmtDate,description:clean,category:cat,cat_label:CAT[cat]?.label||cat,month:mName.toLowerCase(),month_display:mName,month_num:mNum,amount:debit,type:'bank',person:'sharelyn',direction:'expense'});
-      }
-    }
-
-    // ── CREDIT (income) ──────────────────────
-    let credit=0;
-    if(credIdx>=0&&credIdx<cols.length){const raw=cols[credIdx].replace(/,/g,'');credit=parseFloat(raw)||0;}
-    if(credit>1){ // skip tiny bank interest (e.g., 0.43)
-      const catInc=categorizeIncome(descVal);
-      if(catInc!=='SKIP'){
-        let cleanDesc=descVal.replace(/\s{2,}/g,' ').trim();
-        // Simplify transfer descriptions
-        if(/Transferencia entre Cuentas/i.test(cleanDesc)){
-          const parts=cleanDesc.split('-');
-          cleanDesc='Transferencia de '+(parts[1]||'').trim().split(' ')[0];
-        }
-        txns.push({date:fmtDate,description:cleanDesc,category:'ingreso',cat_label:'💰 Ingreso',month:mName.toLowerCase(),month_display:mName,month_num:mNum,amount:credit,type:'bank',person:'sharelyn',direction:'income'});
-      }
-    }
-  }
-  return txns;
-}
-
-function showPreview(txns,filename){
-  const al=document.getElementById('uploadAlert');
-  if(!txns.length){showAlert(al,'No se encontraron transacciones en este archivo.','error');return;}
-  hideAlert(al);
-  const expenses=txns.filter(t=>t.direction!=='income');
-  const incomes =txns.filter(t=>t.direction==='income');
-  document.getElementById('previewTitle').textContent=`Vista previa: ${expenses.length} gastos + ${incomes.length} ingresos de "${filename}"`;
-  document.getElementById('previewBox').innerHTML=`<table style="width:100%;font-size:.76rem;border-collapse:collapse">
-    <thead><tr style="background:#eef2f8"><th style="padding:4px 7px;text-align:left">Fecha</th><th style="padding:4px 7px;text-align:left">Descripción</th><th style="padding:4px 7px;text-align:left">Tipo</th><th style="padding:4px 7px;text-align:right">Monto</th></tr></thead>
-    <tbody>${txns.map(t=>`<tr style="border-bottom:1px solid #eee"><td style="padding:3px 7px">${t.date}</td><td style="padding:3px 7px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description}</td><td style="padding:3px 7px"><span class="badge ${t.direction==='income'?'b-income':'b-bank'}">${t.direction==='income'?'💰':'💳'}</span></td><td style="padding:3px 7px;text-align:right;color:${t.direction==='income'?'var(--green)':'var(--red)'};font-weight:600">${fmt(t.amount)}</td></tr>`).join('')}</tbody></table>`;
-  const dupWarn=document.getElementById('dupWarning');
-  const importBtn=document.getElementById('importBtn');
-  const replaceBtn=document.getElementById('replaceBtn');
-  const mName=txns[0].month;
-  const existing=allTx.filter(t=>t.month===mName&&t.type==='bank');
-  if(existing.length>0){
-    showAlert(dupWarn,`⚠️ Ya hay ${existing.length} transacciones del banco de ${txns[0].month_display}. Usa "Borrar e Importar" para reemplazarlas.`,'error');
-    importBtn.style.display='none'; replaceBtn.style.display='block';
-  } else { hideAlert(dupWarn); importBtn.style.display='block'; replaceBtn.style.display='none'; }
-  document.getElementById('previewSection').style.display='block';
-}
-
-async function importTransactions(){
-  const btn=document.getElementById('importBtn'),al=document.getElementById('uploadAlert');
-  if(!pendingTx.length) return;
-  btn.disabled=true; btn.textContent='Importando…';
-  const {error}=await db.from('transactions').insert(pendingTx);
-  btn.disabled=false; btn.textContent='✅ Importar Transacciones';
-  if(error){showAlert(al,'Error: '+error.message,'error');return;}
-  showAlert(al,`✅ ${pendingTx.length} transacciones importadas.`,'success');
-  cancelUpload(); await loadDashboard();
-}
-
-async function replaceTransactions(){
-  const btn=document.getElementById('replaceBtn'),al=document.getElementById('uploadAlert');
-  if(!pendingTx.length) return;
-  btn.disabled=true; btn.textContent='Borrando…';
-  await db.from('transactions').delete().eq('month',pendingTx[0].month).eq('type','bank').eq('person','sharelyn');
-  const {data}=await db.from('transactions').select('id,date,description,category,cat_label,month,month_display,month_num,amount,type,person,direction,has_receipt').eq('person','sharelyn');
-  allTx=data||[];
-  btn.textContent='Importando…';
-  await importTransactions();
-  btn.disabled=false; btn.textContent='🔄 Borrar mes anterior e Importar';
-}
-
-function cancelUpload(){
-  pendingTx=[];
-  document.getElementById('previewSection').style.display='none';
-  document.getElementById('csvFileInput').value='';
-  document.getElementById('importBtn').style.display='block';
-  document.getElementById('replaceBtn').style.display='none';
-}
-
-// ── TERESA: RECEIPT IMAGE ─────────────────────────────────
-function handleReceiptSelect(e){
-  const file=e.target.files[0]; if(!file) return;
-  compressImage(file,150,dataUrl=>{
-    currentReceiptData=dataUrl;
-    document.getElementById('receiptPreviewImg').src=dataUrl;
-    document.getElementById('receiptPreviewImg').style.display='block';
-    document.getElementById('receiptPlaceholderTxt').textContent='Foto seleccionada ✓';
-    document.getElementById('receiptClearBtn').style.display='block';
-    document.getElementById('receiptDrop').style.borderColor='var(--teal)';
-  });
-}
-function clearReceipt(){
-  currentReceiptData=null;
-  document.getElementById('receiptInput').value='';
-  document.getElementById('receiptPreviewImg').style.display='none';
-  document.getElementById('receiptPreviewImg').src='';
-  document.getElementById('receiptPlaceholderTxt').textContent='Toca para agregar foto del recibo';
-  document.getElementById('receiptClearBtn').style.display='none';
-  document.getElementById('receiptDrop').style.borderColor='';
-}
-function compressImage(file,maxKB,callback){
-  const reader=new FileReader();
-  reader.onload=e=>{
-    const img=new Image();
-    img.onload=()=>{
-      const canvas=document.createElement('canvas');
-      let w=img.width,h=img.height;
-      const maxDim=1000;
-      if(w>maxDim||h>maxDim){const r=Math.min(maxDim/w,maxDim/h);w=Math.round(w*r);h=Math.round(h*r);}
-      canvas.width=w; canvas.height=h;
-      canvas.getContext('2d').drawImage(img,0,0,w,h);
-      let q=0.7,dataUrl=canvas.toDataURL('image/jpeg',q);
-      while(dataUrl.length>maxKB*1024*1.37&&q>0.2){q=Math.max(0.2,q-0.15);dataUrl=canvas.toDataURL('image/jpeg',q);}
-      callback(dataUrl);
-    };
-    img.src=e.target.result;
-  };
-  reader.readAsDataURL(file);
-}
-async function openReceipt(id){
-  const modal=document.getElementById('receiptModal');
-  const img=document.getElementById('receiptModalImg');
-  img.src=''; modal.style.display='flex';
-  const {data}=await db.from('transactions').select('receipt_image').eq('id',id).single();
-  if(data?.receipt_image){ img.src=data.receipt_image; }
-  else{ modal.style.display='none'; alert('No se encontró la imagen.'); }
-}
-
-// ── TERESA: SAVE INGRESO ─────────────────────────────────
-async function saveIngreso(){
-  const date=document.getElementById('ingresoDate').value;
-  const desc=document.getElementById('ingresoDesc').value.trim();
-  const amt=parseFloat(document.getElementById('ingresoAmt').value);
-  const al=document.getElementById('ingresoAlert');
-  if(!date||!desc||!amt||amt<=0||!selectedIngresoMethod){showAlert(al,'Completa todos los campos.','error');return;}
-  const dp=date.split('-'); const mn=parseInt(dp[1]);
-  const {error}=await db.from('transactions').insert([{
-    date:`${dp[2]}/${dp[1]}`,description:desc,category:'otros',cat_label:'Ingreso',
-    month:MONTHS_ES[mn].toLowerCase(),month_display:MONTHS_ES[mn],month_num:mn,
-    amount:amt,type:'cash',person:'teresa',direction:'income',payment_method:selectedIngresoMethod
-  }]);
-  if(error){showAlert(al,'Error: '+error.message,'error');return;}
-  showAlert(al,'✅ Ingreso guardado.','success');
-  document.getElementById('ingresoDesc').value=''; document.getElementById('ingresoAmt').value='';
-  selectedIngresoMethod=''; document.querySelectorAll('#ingresoMethodGrid .opt-btn').forEach(b=>b.classList.remove('sel','sel-teal'));
-  loadTeresaData();
-}
-
-// ── TERESA: SAVE GASTO ───────────────────────────────────
-async function saveGasto(){
-  const date=document.getElementById('gastoDate').value;
-  const desc=document.getElementById('gastoDesc').value.trim();
-  const amt=parseFloat(document.getElementById('gastoAmt').value);
-  const al=document.getElementById('gastoAlert');
-  if(!date||!desc||!amt||amt<=0||!selectedGastoCat||!selectedGastoMethod){showAlert(al,'Completa todos los campos incluyendo categoría y método de pago.','error');return;}
-  const dp=date.split('-'); const mn=parseInt(dp[1]);
-  const row={
-    date:`${dp[2]}/${dp[1]}`,description:desc,
-    category:selectedGastoCat,cat_label:TERESA_CAT[selectedGastoCat]?.label||selectedGastoCat,
-    month:MONTHS_ES[mn].toLowerCase(),month_display:MONTHS_ES[mn],month_num:mn,
-    amount:amt,type:'cash',person:'teresa',direction:'expense',payment_method:selectedGastoMethod
-  };
-  if(currentReceiptData){
-    row.receipt_image=currentReceiptData;
-    row.has_receipt=true;
-  }
-  const {error}=await db.from('transactions').insert([row]);
-  if(error){showAlert(al,'Error: '+error.message,'error');return;}
-  showAlert(al,'✅ Gasto guardado.','success');
-  document.getElementById('gastoDesc').value=''; document.getElementById('gastoAmt').value='';
-  selectedGastoCat=''; selectedGastoMethod='';
-  document.querySelectorAll('#gastoCatGrid .opt-btn,#gastoMethodGrid .opt-btn').forEach(b=>b.classList.remove('sel','sel-teal'));
-  clearReceipt();
-  loadTeresaData();
-}
-
-// ── TERESA: LOAD DATA ────────────────────────────────────
-async function loadTeresaData(){
-  const COLS='id,date,description,category,cat_label,month,month_display,amount,direction,payment_method,has_receipt,created_at,edited_at,edited_by';
-  const {data}=await db.from('transactions').select(COLS).eq('person','teresa').order('created_at',{ascending:false});
-  teresaTx=data||[];
-  renderTeresaBanner();
-  renderTHistorial();
-}
-
-function renderTeresaBanner(){
-  const income=sumAmt(teresaTx.filter(t=>t.direction==='income'));
-  const spent =sumAmt(teresaTx.filter(t=>t.direction==='expense'));
-  const bal=income-spent;
-  document.getElementById('teresaBalance').textContent=fmt(bal);
-  document.getElementById('teresaReceived').textContent=fmt(income);
-  document.getElementById('teresaSpent').textContent=fmt(spent);
-  document.getElementById('teresaHdrSub').textContent=`Balance: ${fmt(bal)}`;
-}
-
-function setTHistFilter(f){
-  tHistFilter=f;
-  document.querySelectorAll('#tHistFilter .pill').forEach((p,i)=>p.classList.toggle('active',['all','income','expense'][i]===f));
-  renderTHistorial();
-}
-
-function renderTHistorial(){
-  const tx=tHistFilter==='all'?teresaTx:teresaTx.filter(t=>t.direction===tHistFilter);
-  if(!tx.length){document.getElementById('tHistBody').innerHTML='<tr><td colspan="7" style="text-align:center;padding:16px;color:#aaa">Sin movimientos</td></tr>';return;}
-  document.getElementById('tHistBody').innerHTML=tx.map(t=>`
-    <tr${t.edited_at?' class="was-edited"':''}>
-      <td>${t.date}${t.edited_at?`<span class="edited-mark" title="Editado">✏️</span>`:''}</td>
-      <td style="max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description}</td>
-      <td><span class="badge ${t.direction==='income'?'b-income':'b-expense'}">${t.direction==='income'?'📥 Ingreso':'💸 Gasto'}</span></td>
-      <td>${t.payment_method?`<span class="badge b-method">${METHOD_LABEL[t.payment_method]||t.payment_method}</span>`:'—'}</td>
-      <td class="${t.direction==='income'?'amount-pos':'amount-neg'}">${fmt(t.amount)}</td>
-      <td>${t.has_receipt?`<span style="cursor:pointer;font-size:1.2rem" onclick="openReceipt('${t.id}')" title="Ver recibo">📸</span>`:'—'}</td>
-      <td style="white-space:nowrap">
-        <button class="del-btn" title="Editar" style="color:#b2dfdb" onclick="openEditModal('${t.id}','teresa')">✏️</button>
-        <button class="del-btn" onclick="deleteTx('${t.id}','teresa')">🗑</button>
-      </td>
-    </tr>`).join('');
-}
-
-// ── ADMIN: TERESA VIEW ───────────────────────────────────
-async function loadTeresaAdminView(){
-  show('taLoading'); hide('taContent'); hide('taEmpty');
-  const COLS='id,date,description,category,cat_label,month,month_display,amount,direction,payment_method,has_receipt,created_at,edited_at,edited_by';
-  const {data}=await db.from('transactions').select(COLS).eq('person','teresa').order('created_at',{ascending:false});
-  hide('taLoading');
-  if(!data?.length){show('taEmpty');return;}
-  teresaTx=data;
-  renderTeresaAdminCards();
-  renderTaTopPlaces();
-  renderTaTable();
-  show('taContent');
-}
-
-function renderTeresaAdminCards(){
-  const income=sumAmt(teresaTx.filter(t=>t.direction==='income'));
-  const spent =sumAmt(teresaTx.filter(t=>t.direction==='expense'));
-  const bal=income-spent;
-  document.getElementById('taBal').textContent=fmt(bal);
-  document.getElementById('taBalSub').textContent=`Recibió ${fmt(income)} · Gastó ${fmt(spent)}`;
-  document.getElementById('taIncome').textContent=fmt(income);
-  document.getElementById('taSpent').textContent=fmt(spent);
-}
-
-function renderTaTopPlaces(){
-  const expenses=teresaTx.filter(t=>t.direction==='expense');
-  const places=groupSum(expenses,'description');
-  const sorted=Object.entries(places).sort((a,b)=>b[1]-a[1]).slice(0,8);
-  const max=sorted[0]?.[1]||1;
-  document.getElementById('taTopPlaces').innerHTML=sorted.length?sorted.map(([n,a])=>`
-    <div class="top-item">
-      <div class="top-lbl" title="${n}">${n}</div>
-      <div class="top-track"><div class="top-fill teal" style="width:${(a/max*100).toFixed(1)}%"></div></div>
-      <div class="top-amt teal">${fmt(a)}</div>
-    </div>`).join(''):'<p style="color:var(--muted);font-size:.82rem;text-align:center;padding:10px">Sin gastos aún.</p>';
-}
-
-function setTaFilter(f){
-  taFilter=f;
-  document.querySelectorAll('#taDirFilter .pill').forEach((p,i)=>p.classList.toggle('active',['all','income','expense'][i]===f));
-  renderTaTable();
-}
-
-function renderTaTable(){
-  const tx=taFilter==='all'?teresaTx:teresaTx.filter(t=>t.direction===taFilter);
-  if(!tx.length){document.getElementById('taTxBody').innerHTML='<tr><td colspan="8" style="text-align:center;padding:14px;color:#aaa">Sin movimientos</td></tr>';return;}
-  document.getElementById('taTxBody').innerHTML=tx.map(t=>`
-    <tr${t.edited_at?' class="was-edited"':''}>
-      <td>${t.date}${t.edited_at?`<span class="edited-mark" title="Editado por ${t.edited_by||'?'}">✏️</span>`:''}</td>
-      <td style="max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description}</td>
-      <td><span class="badge ${t.direction==='income'?'b-income':'b-expense'}">${t.direction==='income'?'📥':'💸'}</span></td>
-      <td>${t.payment_method?`<span class="badge b-method">${METHOD_LABEL[t.payment_method]||t.payment_method}</span>`:'—'}</td>
-      <td><span class="badge b-cat">${t.category?TERESA_CAT[t.category]?.emoji||'📦':'—'}</span></td>
-      <td class="${t.direction==='income'?'amount-pos':'amount-neg'}">${fmt(t.amount)}</td>
-      <td>${t.has_receipt?`<span style="cursor:pointer;font-size:1.2rem" onclick="openReceipt('${t.id}')" title="Ver recibo">📸</span>`:'—'}</td>
-      <td style="white-space:nowrap">
-        <button class="del-btn" title="Editar" style="color:#b2dfdb" onclick="openEditModal('${t.id}','teresa')">✏️</button>
-        <button class="del-btn" onclick="deleteTx('${t.id}','teresa')">🗑</button>
-      </td>
-    </tr>`).join('');
-}
-
-// ── EDIT MODAL ───────────────────────────────────────────
-let editingTx    = null;
-let editCatKey   = '';
-let ePinBuf      = '';
-let ePinOk       = false;
-let editPerson   = '';
-
-function openEditModal(txId, person){
-  const src = person==='sharelyn' ? allTx : teresaTx;
-  const tx  = src.find(t=>String(t.id)===String(txId));
-  if(!tx) return;
-  editingTx  = {...tx};
-  editPerson = person;
-  editCatKey = tx.category || '';
-  ePinBuf=''; ePinOk=false;
-
-  // Convert "DD/MM" → "YYYY-MM-DD" for date input
-  let dVal='';
-  if(tx.date && tx.date.includes('/')){
-    const [dd,mm]=tx.date.split('/');
-    const yr=new Date().getFullYear();
-    dVal=`${yr}-${mm.padStart(2,'0')}-${dd.padStart(2,'0')}`;
-  } else { dVal=tx.date||''; }
-  document.getElementById('editDate').value=dVal;
-  document.getElementById('editDesc').value=tx.description||'';
-  document.getElementById('editAmt').value=parseFloat(tx.amount||0).toFixed(2);
-  document.getElementById('editNote').value='';
-
-  // Build category grid
-  const cats   = person==='teresa' ? Object.entries(TERESA_CAT) : Object.entries(CAT);
-  const selCls = person==='teresa' ? 'sel-teal' : currentUser==='admin' ? 'sel-admin' : 'sel';
-  buildCatGrid('editCatGrid','opt-btn',selCls,cats,(k)=>editCatKey=k);
-  // Pre-select current category
-  setTimeout(()=>{
-    const btns=document.querySelectorAll('#editCatGrid .opt-btn');
-    cats.forEach(([k],i)=>{ if(k===editCatKey && btns[i]) btns[i].click(); });
-  },30);
-
-  // Reset PIN UI
-  updateEPinDots();
-  const msg=document.getElementById('ePinMsg');
-  msg.textContent=''; msg.className='ep-err';
-  document.getElementById('editPinPad')?.querySelectorAll('.mini-btn').forEach(b=>{b.style.opacity='';b.style.pointerEvents='';});
-  const btn=document.getElementById('editSaveBtn');
-  btn.disabled=true; btn.style.background='#ccc'; btn.style.cursor='not-allowed'; btn.textContent='Guardar Cambios';
-
-  document.getElementById('editModal').style.display='flex';
-}
-
-function closeEditModal(){
-  document.getElementById('editModal').style.display='none';
-  editingTx=null; editCatKey=''; ePinBuf=''; ePinOk=false; editPerson='';
-}
-
-function ePinPress(d){
-  if(ePinOk||ePinBuf.length>=4) return;
-  ePinBuf+=d; updateEPinDots();
-  if(ePinBuf.length===4) setTimeout(verifyEditPin,120);
-}
-function ePinClear(){
-  if(ePinOk) return;
-  ePinBuf=ePinBuf.slice(0,-1); updateEPinDots();
-}
-function updateEPinDots(){
-  const cls = currentUser==='teresa'?'ep-teal':currentUser==='sharelyn'?'ep-purple':'ep-admin';
-  document.querySelectorAll('.edit-pdot').forEach((d,i)=>{
-    d.classList.remove('ep-admin','ep-purple','ep-teal');
-    if(i<ePinBuf.length) d.classList.add(cls);
-  });
-}
-function verifyEditPin(){
-  const correct = currentUser==='admin'?ADMIN_PIN:currentUser==='sharelyn'?SHARELYN_PIN:TERESA_PIN;
-  const msg=document.getElementById('ePinMsg');
-  if(ePinBuf===correct){
-    ePinOk=true;
-    msg.textContent='✅ PIN verificado — puedes guardar'; msg.className='ep-ok';
-    // Disable mini pad
-    document.querySelectorAll('.mini-btn').forEach(b=>{b.style.opacity='.35';b.style.pointerEvents='none';});
-    const btn=document.getElementById('editSaveBtn');
-    btn.disabled=false; btn.style.background=''; btn.style.cursor='';
-    btn.className=`btn ${currentUser==='teresa'?'btn-t':currentUser==='sharelyn'?'btn-p':'btn-a'}`;
-  } else {
-    msg.textContent='PIN incorrecto, intenta de nuevo.'; msg.className='ep-err';
-    ePinBuf=''; updateEPinDots();
-  }
-}
-
-async function saveEdit(){
-  if(!editingTx||!ePinOk) return;
-  const newDate=document.getElementById('editDate').value;
-  const newDesc=document.getElementById('editDesc').value.trim();
-  const newAmt =parseFloat(document.getElementById('editAmt').value);
-  const note   =document.getElementById('editNote').value.trim();
-  if(!newDate||!newDesc||!newAmt||newAmt<=0){alert('Completa fecha, descripción y monto.');return;}
-
-  const dp=newDate.split('-');
-  const fmtDate=`${dp[2]}/${dp[1]}`;
-  const mn=parseInt(dp[1]);
-
-  const btn=document.getElementById('editSaveBtn');
-  btn.textContent='Guardando…'; btn.disabled=true;
-
-  // 1) Write audit log
-  await db.from('transaction_edits').insert([{
-    transaction_id:editingTx.id,
-    old_date:editingTx.date, old_description:editingTx.description,
-    old_amount:editingTx.amount, old_category:editingTx.category,
-    new_date:fmtDate, new_description:newDesc,
-    new_amount:newAmt, new_category:editCatKey||editingTx.category,
-    edited_by:currentUser, note:note||null
-  }]);
-
-  // 2) Update transaction row
-  const upd={
-    date:fmtDate, description:newDesc, amount:newAmt,
-    category:editCatKey||editingTx.category,
-    month:MONTHS_ES[mn].toLowerCase(), month_display:MONTHS_ES[mn], month_num:mn,
-    edited_at:new Date().toISOString(), edited_by:currentUser
-  };
-  if(editCatKey && ALL_CATS[editCatKey]) upd.cat_label=ALL_CATS[editCatKey].label;
-
-  const {error}=await db.from('transactions').update(upd).eq('id',editingTx.id);
-  if(error){alert('Error al guardar: '+error.message); btn.textContent='Guardar Cambios'; btn.disabled=false; return;}
-
-  closeEditModal();
-  if(editPerson==='sharelyn'){ await loadDashboard(); await loadRecentCash(); }
-  else { await loadTeresaData(); if(currentUser==='admin') await loadTeresaAdminView(); }
-}
-
-// ── CSV DOWNLOAD ─────────────────────────────────────────
-function downloadCSV(rows, filename){
-  const hdrs=['Fecha','Descripción','Categoría','Mes','Tipo','Dirección','Monto (L)','Editado Por','Editado En'];
-  const esc=v=>`"${String(v==null?'':v).replace(/"/g,'""')}"`;
-  const lines=[hdrs.map(esc).join(',')];
-  [...rows].forEach(t=>{
-    const cat=ALL_CATS[t.category]?.label||t.category||'';
-    const editedAt=t.edited_at?new Date(t.edited_at).toLocaleDateString('es-HN'):'';
-    lines.push([
-      t.date, t.description, cat,
-      t.month_display||t.month||'',
-      t.type||'bank', t.direction||'expense',
-      parseFloat(t.amount||0).toFixed(2),
-      t.edited_by||'', editedAt
-    ].map(esc).join(','));
-  });
-  const blob=new Blob(['\uFEFF'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
-  const url=URL.createObjectURL(blob);
-  const a=document.createElement('a'); a.href=url; a.download=filename; a.click();
-  URL.revokeObjectURL(url);
-}
-
-function downloadCSVTeresa(filename){
-  downloadCSV(teresaTx, filename);
-}
-
-// ── UTILS ────────────────────────────────────────────────
-function sumAmt(arr){ return arr.reduce((s,t)=>s+parseFloat(t.amount||0),0); }
-function groupSum(arr,key){ const r={}; arr.forEach(t=>{r[t[key]]=(r[t[key]]||0)+parseFloat(t.amount||0);}); return r; }
-function topEntry(obj){ const e=Object.entries(obj).sort((a,b)=>b[1]-a[1]); return e[0]||null; }
-function uniqSorted(arr,key){ return [...new Set(arr.map(t=>t[key]))].sort((a,b)=>(MONTH_ORDER[a]||99)-(MONTH_ORDER[b]||99)); }
-function show(id){document.getElementById(id).style.display='block';}
-function hide(id){document.getElementById(id).style.display='none';}
-function showAlert(el,msg,type){el.textContent=msg;el.className=`alert alert-${type} show`;}
-function hideAlert(el){el.className='alert';}
-</script>
 </body>
 </html>
