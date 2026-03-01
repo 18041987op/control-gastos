@@ -6,6 +6,7 @@
 <title>💳 Control de Gastos</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -258,7 +259,11 @@
       <h2 style="color:var(--teal)">💸 Registrar Gasto</h2>
       <div id="gastoAlert" class="alert"></div>
       <label>Fecha</label><input type="date" id="gastoDate">
-      <label>Descripción</label><input type="text" id="gastoDesc" placeholder="Ej: Cemento, bloques…" maxlength="80">
+      <label>Descripción</label>
+      <div class="desc-scan-row">
+        <input type="text" id="gastoDesc" placeholder="Ej: Cemento, bloques…" maxlength="80">
+        <button type="button" class="scan-btn" onclick="openScanner()" title="Escanear código de barras">📷</button>
+      </div>
       <label>Monto (L)</label><input type="number" id="gastoAmt" placeholder="0.00" min="0.01" step="0.01">
       <label>Categoría</label><div class="opt-grid cols3" id="gastoCatGrid"></div>
       <label>¿Cómo pagaste?</label>
@@ -372,6 +377,28 @@
   <img id="receiptModalImg" src="" alt="Recibo">
 </div>
 
+<!-- ══ MODAL: ESCÁNER DE CÓDIGO DE BARRAS ════════════════ -->
+<div id="scannerModal" onclick="if(event.target===this)closeScanner()">
+  <div class="scanner-sheet">
+    <div class="scanner-hdr">
+      <h3>📷 Escanear Código de Barras</h3>
+      <button class="edit-close" onclick="closeScanner()">✕</button>
+    </div>
+    <p class="scanner-hint">Apunta la cámara al código de barras del producto</p>
+    <div id="scannerView"></div>
+
+    <div id="scanResult" style="display:none">
+      <div class="scanned-code-label">Código detectado:</div>
+      <div id="scannedCodeDisplay" class="scanned-code-val"></div>
+      <div id="productInfo"></div>
+      <button class="btn" onclick="searchOnWeb()"
+        style="background:#f0f4ff;color:#1565c0;border:2px solid #c5d5e8;margin-top:10px;">
+        🔍 Buscar en Google
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- ══ JAVASCRIPT ═════════════════════════════════════════ -->
 <script src="js/config.js"></script>
 <script src="js/utils.js"></script>
@@ -381,6 +408,7 @@
 <script src="js/teresa.js"></script>
 <script src="js/admin.js"></script>
 <script src="js/todos.js"></script>
+<script src="js/scanner.js"></script>
 <script src="js/auth.js"></script>
 
 </body>
