@@ -70,6 +70,7 @@ function unlockTeresa(){
   setTodayDate('ingresoDate');
   setTodayDate('gastoDate');
   loadTeresaData();
+  teresaShow('Dashboard');
 }
 
 // ── RESTAURAR SESIÓN ──────────────────────────────────────

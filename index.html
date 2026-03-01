@@ -228,7 +228,10 @@
 <div class="shell" id="teresaShell">
   <div class="hdr hdr-teresa">
     <div><h1>🏠 Teresa</h1><div class="sub" id="teresaHdrSub">Control de Movimientos</div></div>
-    <button class="exit-btn" onclick="logout()">Salir</button>
+    <div class="hdr-right">
+      <button class="scan-hdr-btn" onclick="openScanner()" title="Escanear código de barras">📷</button>
+      <button class="exit-btn" onclick="logout()">Salir</button>
+    </div>
   </div>
 
   <div class="balance-banner bal-teresa" id="teresaBanner">
@@ -240,8 +243,24 @@
     </div>
   </div>
 
+  <!-- Vista: Dashboard Teresa -->
+  <div class="view active" id="tvDashboard">
+    <div id="tDashLoading" class="loading"><div class="spinner"></div><br>Cargando…</div>
+    <div id="tDashContent" style="display:none">
+      <div class="cards-row" id="tDashCards"></div>
+      <div class="chart-card">
+        <div class="chart-hdr"><h3>🔥 Gastos Más Grandes</h3></div>
+        <div id="tDashTopExpenses"></div>
+      </div>
+      <div class="chart-card">
+        <div class="chart-hdr"><h3>🕐 Últimos Movimientos</h3></div>
+        <div id="tDashRecent"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Vista: Registrar Ingreso -->
-  <div class="view active" id="tvIngreso">
+  <div class="view" id="tvIngreso">
     <div class="form-card teal-form">
       <h2 style="color:var(--teal)">📥 Registrar Ingreso</h2>
       <div id="ingresoAlert" class="alert"></div>
@@ -325,10 +344,11 @@
 
   <!-- Nav inferior (Teresa) -->
   <nav class="bottom-nav">
-    <button class="nav-btn t-active" onclick="teresaShow('Ingreso')"  id="tnIngreso"> <span class="nav-icon">📥</span><span class="nav-label">Ingreso</span></button>
-    <button class="nav-btn"          onclick="teresaShow('Gasto')"    id="tnGasto">   <span class="nav-icon">💸</span><span class="nav-label">Gasto</span></button>
-    <button class="nav-btn"          onclick="teresaShow('Historial')" id="tnHistorial"><span class="nav-icon">📋</span><span class="nav-label">Historial</span></button>
-    <button class="nav-btn"          onclick="teresaShow('Todo')"      id="tnTodo">    <span class="nav-icon">✅</span><span class="nav-label">Tareas</span></button>
+    <button class="nav-btn t-active"  onclick="teresaShow('Dashboard')" id="tnDashboard"><span class="nav-icon">📊</span><span class="nav-label">Inicio</span></button>
+    <button class="nav-btn"           onclick="teresaShow('Gasto')"     id="tnGasto">    <span class="nav-icon">💸</span><span class="nav-label">Gasto</span></button>
+    <button class="nav-btn"           onclick="teresaShow('Ingreso')"   id="tnIngreso">  <span class="nav-icon">📥</span><span class="nav-label">Ingreso</span></button>
+    <button class="nav-btn"           onclick="teresaShow('Historial')" id="tnHistorial"><span class="nav-icon">📋</span><span class="nav-label">Historial</span></button>
+    <button class="nav-btn"           onclick="teresaShow('Todo')"      id="tnTodo">     <span class="nav-icon">✅</span><span class="nav-label">Tareas</span></button>
   </nav>
 </div>
 

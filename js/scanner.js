@@ -91,6 +91,7 @@ async function onBarcodeDetected(code){
 function useProductName(){
   if(lastProductName) document.getElementById('gastoDesc').value = lastProductName;
   closeScanner();
+  teresaShow('Gasto');
 }
 
 function searchOnWeb(){

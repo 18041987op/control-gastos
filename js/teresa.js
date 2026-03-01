@@ -5,7 +5,73 @@ function teresaShow(name){
   document.getElementById('tv' + name).classList.add('active');
   const btn = document.getElementById('tn' + name);
   if(btn) btn.classList.add('t-active');
-  if(name === 'Todo') { buildTodoCatGrid(); loadTodos(); }
+  if(name === 'Dashboard') loadTeresaDashboard();
+  if(name === 'Todo')      { buildTodoCatGrid(); loadTodos(); }
+}
+
+// ── DASHBOARD TERESA ──────────────────────────────────────
+async function loadTeresaDashboard(){
+  show('tDashLoading'); hide('tDashContent');
+
+  const COLS = 'id,date,description,category,amount,direction,month_display,has_receipt,created_at';
+  const [txRes, todoRes] = await Promise.all([
+    db.from('transactions').select(COLS).eq('person','teresa').order('created_at',{ascending:false}).limit(60),
+    db.from('todos').select('id,completed').eq('person','teresa'),
+  ]);
+
+  const tx       = txRes.data  || [];
+  const todos    = todoRes.data || [];
+  const expenses = tx.filter(t => t.direction === 'expense');
+  const pending  = todos.filter(t => !t.completed).length;
+
+  // Totales
+  const totalIncome = sumAmt(tx.filter(t => t.direction === 'income'));
+  const totalSpent  = sumAmt(expenses);
+  const balance     = totalIncome - totalSpent;
+
+  // Cards
+  document.getElementById('tDashCards').innerHTML = `
+    <div class="stat-card hl-teal span2" style="cursor:pointer" onclick="teresaShow('Todo')">
+      <div class="lbl">✅ Tareas Pendientes</div>
+      <div class="val">${pending}</div>
+      <div class="sub">Toca para ver las tareas →</div>
+    </div>
+    <div class="stat-card hl-green">
+      <div class="lbl">📥 Balance</div>
+      <div class="val">${fmt(balance)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="lbl">💸 Gastado</div>
+      <div class="val amount-neg">${fmt(totalSpent)}</div>
+    </div>`;
+
+  // Top gastos por monto
+  const topExp = [...expenses].sort((a,b) => b.amount - a.amount).slice(0, 6);
+  const maxAmt = topExp[0]?.amount || 1;
+  document.getElementById('tDashTopExpenses').innerHTML = topExp.length
+    ? topExp.map(t => `
+      <div class="top-item">
+        <div class="top-lbl" title="${t.description}">${TERESA_CAT[t.category]?.emoji||'📦'} ${t.description}</div>
+        <div class="top-track"><div class="top-fill teal" style="width:${(t.amount/maxAmt*100).toFixed(1)}%"></div></div>
+        <div class="top-amt teal">${fmt(t.amount)}</div>
+      </div>`).join('')
+    : '<p style="color:var(--muted);font-size:.82rem;text-align:center;padding:12px">Sin gastos aún.</p>';
+
+  // Últimos 6 movimientos
+  const recent = tx.slice(0, 6);
+  document.getElementById('tDashRecent').innerHTML = recent.length
+    ? `<table style="width:100%;font-size:.78rem;border-collapse:collapse">
+        ${recent.map(t => `
+        <tr style="border-bottom:1px solid #f0f0f0">
+          <td style="padding:6px 5px">${TERESA_CAT[t.category]?.emoji || (t.direction==='income'?'📥':'📦')}</td>
+          <td style="padding:6px 4px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description}</td>
+          <td style="padding:6px 4px"><span class="badge m-${t.month_display?.toLowerCase()||'otros'}">${t.month_display||''}</span></td>
+          <td style="padding:6px 4px;font-weight:700;${t.direction==='income'?'color:var(--green)':'color:var(--red)'}">${fmt(t.amount)}</td>
+        </tr>`).join('')}
+      </table>`
+    : '<p style="color:var(--muted);font-size:.82rem;text-align:center;padding:12px">Sin movimientos aún.</p>';
+
+  hide('tDashLoading'); show('tDashContent');
 }
 
 // ── FOTO DE RECIBO ────────────────────────────────────────
