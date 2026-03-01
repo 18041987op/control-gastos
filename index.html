@@ -700,6 +700,19 @@ function processFile(f){
   reader.onload=e=>{ pendingTx=parseCSV(e.target.result); showPreview(pendingTx,f.name); };
   reader.readAsText(f,'windows-1252');
 }
+// Proper CSV parser that handles quoted fields like "7,585.00"
+function splitCSVLine(line){
+  const cols=[];let cur='',inQ=false;
+  for(let i=0;i<line.length;i++){
+    const c=line[i];
+    if(c==='"'){inQ=!inQ;}
+    else if(c===','&&!inQ){cols.push(cur.trim());cur='';}
+    else{cur+=c;}
+  }
+  cols.push(cur.trim());
+  return cols;
+}
+
 function parseCSV(content){
   const lines=content.split(/\r?\n/);
   let mName='',mNum=0,hdrIdx=-1,debIdx=4;
@@ -718,11 +731,11 @@ function parseCSV(content){
   for(let i=hdrIdx+1;i<lines.length;i++){
     const line=lines[i].trim();
     if(!line||!/^\d/.test(line)) continue;
-    const cols=line.split(',');
+    const cols=splitCSVLine(line);   // ← uses proper parser (handles "1,234.56")
     if(cols.length<3) continue;
-    const dateVal=cols[0].trim(), descVal=(cols[1]||'').trim();
+    const dateVal=cols[0], descVal=cols[1]||'';
     let debit=0;
-    if(debIdx<cols.length){const raw=cols[debIdx].trim().replace(/[",]/g,'');debit=parseFloat(raw)||0;}
+    if(debIdx<cols.length){const raw=cols[debIdx].replace(/,/g,'');debit=parseFloat(raw)||0;}
     if(debit<=0) continue;
     const cat=categorize(descVal); if(cat==='SKIP') continue;
     let clean=descVal.replace(/Compras Tarjeta de Debito - /gi,'').replace(/Compras Tarjeta de Debito-/gi,'').replace(/Retiro de Efectivo - /gi,'ATM ').replace(/\s{2,}/g,' ').replace(/\s+(HN|US|SE)\s*$/i,'').trim();
