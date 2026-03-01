@@ -47,8 +47,9 @@ async function loadDashboard(){
 }
 
 function renderBalanceCards(){
-  const income = sumAmt(allTx.filter(t => t.direction === 'income'));
-  const spent  = sumAmt(allTx.filter(t => t.direction !== 'income'));
+  const yearly = allTx.filter(t => txYear(t) === currentYear);
+  const income = sumAmt(yearly.filter(t => t.direction === 'income'));
+  const spent  = sumAmt(yearly.filter(t => t.direction !== 'income'));
   const bal    = income - spent;
   const hasIncome = income > 0;
   document.getElementById('balanceCards').style.display = hasIncome ? 'grid' : 'none';
@@ -56,7 +57,7 @@ function renderBalanceCards(){
     document.getElementById('bc_received').textContent = fmt(income);
     document.getElementById('bc_spent').textContent    = fmt(spent);
     document.getElementById('bc_balance').textContent  = fmt(bal);
-    document.getElementById('bc_sub').textContent      = `${fmt(income)} recibido — ${fmt(spent)} gastado`;
+    document.getElementById('bc_sub').textContent      = `${currentYear} · ${fmt(income)} recibido — ${fmt(spent)} gastado`;
   }
   if(currentUser === 'sharelyn'){
     document.getElementById('slyBannerBalance').textContent  = fmt(bal);
@@ -72,9 +73,13 @@ function buildYearTabs(years){
     el.style.display = 'none';
   } else {
     el.style.display = 'flex';
-    el.innerHTML = years.map(y =>
-      `<button class="year-tab${currentYear===y?' active':''}" onclick="setYear(${y})">${y}</button>`
-    ).join('');
+    el.innerHTML =
+      `<span class="year-select-lbl">📅 Año</span>` +
+      `<select class="year-select" onchange="setYear(+this.value)">` +
+      years.map(y =>
+        `<option value="${y}"${currentYear===y?' selected':''}>${y}</option>`
+      ).join('') +
+      `</select>`;
   }
   _rebuildMonthPills();
 }
@@ -82,10 +87,8 @@ function buildYearTabs(years){
 function setYear(year){
   currentYear   = year;
   currentFilter = 'all';
-  document.querySelectorAll('.year-tab').forEach(t =>
-    t.classList.toggle('active', +t.textContent === year)
-  );
   _rebuildMonthPills();
+  renderBalanceCards();
   renderDashboard();
 }
 
@@ -139,10 +142,12 @@ function renderSCards(tx){
   const cats   = groupSum(tx, 'category');
   const top    = topEntry(cats);
   const bankT  = sumAmt(tx.filter(t => t.type === 'bank'));
+  const cashT  = sumAmt(tx.filter(t => t.type === 'cash'));
   document.getElementById('summaryCards').innerHTML = `
     <div class="stat-card hl span2"><div class="lbl">💸 Total Gastado</div><div class="val">${fmt(total)}</div><div class="sub">${tx.length} movimientos</div></div>
     <div class="stat-card gd"><div class="lbl">🔥 Mayor Cat.</div><div class="val" style="font-size:.88rem">${top ? ALL_CATS[top[0]]?.label||top[0] : '—'}</div><div class="sub">${top ? fmt(top[1]) : ''}</div></div>
-    <div class="stat-card"><div class="lbl">🏦 Banco</div><div class="val">${fmt(bankT)}</div></div>`;
+    <div class="stat-card"><div class="lbl">💵 Efectivo</div><div class="val">${fmt(cashT)}</div><div class="sub">gasto directo</div></div>
+    <div class="stat-card"><div class="lbl">🏦 Banco</div><div class="val">${fmt(bankT)}</div><div class="sub">débito / transf.</div></div>`;
 }
 
 function renderDonut(tx){

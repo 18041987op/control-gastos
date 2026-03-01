@@ -99,9 +99,10 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .tx-toggle-btn:hover,.tx-toggle-btn.teal-toggle{border-color:#b2dfdb;color:var(--teal);}
 
 /* ── FILTERS ── */
-.year-selector{display:flex;background:#e8eef7;border-radius:12px;padding:3px;gap:2px;margin-bottom:10px;}
-.year-tab{flex:1;padding:8px 0;border:none;background:transparent;border-radius:9px;cursor:pointer;font-size:.84rem;font-weight:700;color:#5b7799;transition:all .2s;}
-.year-tab.active{background:#fff;box-shadow:0 1px 5px rgba(0,0,0,.13);color:var(--admin);}
+.year-selector{display:flex;align-items:center;gap:10px;margin-bottom:12px;padding:2px 0;}
+.year-select-lbl{font-size:.78rem;font-weight:600;color:var(--muted);white-space:nowrap;}
+.year-select{padding:7px 12px;border:1.5px solid #c5d5e8;border-radius:10px;background:#fff;color:var(--admin);font-size:.9rem;font-weight:700;cursor:pointer;min-width:90px;}
+.year-select:focus{outline:none;border-color:var(--admin);}
 .filter-row{display:flex;gap:7px;overflow-x:auto;padding-bottom:2px;margin-bottom:12px;scrollbar-width:none;}
 .filter-row::-webkit-scrollbar{display:none;}
 .pill{padding:5px 14px;border:2px solid #e0d9f7;background:#fff;color:var(--purple);border-radius:20px;cursor:pointer;font-size:.78rem;font-weight:600;white-space:nowrap;transition:all .2s;}
