@@ -243,6 +243,8 @@ function cancelUpload(){
 
 // ── DESCARGA CSV ──────────────────────────────────────────
 function downloadCSV(rows, filename){
+  const n = rows.length;
+  if(!window.confirm(`¿Deseas descargar el historial como CSV?\n\nSe exportarán ${n} ${n===1?'movimiento':'movimientos'}.`)) return;
   const hdrs = ['Fecha','Descripción','Categoría','Mes','Tipo','Dirección','Monto (L)','Editado Por','Editado En'];
   const esc  = v => `"${String(v==null?'':v).replace(/"/g,'""')}"`;
   const lines = [hdrs.map(esc).join(',')];

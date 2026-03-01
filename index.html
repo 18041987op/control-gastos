@@ -96,8 +96,8 @@
           <div class="chart-hdr">
             <h3>📋 Transacciones</h3>
             <div style="display:flex;gap:6px;align-items:center">
-              <button class="tx-toggle-btn" onclick="downloadCSV(filteredAll(),'sharelyn_gastos.csv')" title="Descargar CSV">📥 CSV</button>
               <button class="tx-toggle-btn" id="txToggleBtn" onclick="toggleTxList('txListWrap','txToggleBtn')">Ver lista ▼</button>
+              <button class="tx-toggle-btn" onclick="downloadCSV(filteredAll(),'sharelyn_gastos.csv')" title="Descargar CSV">📥 CSV</button>
             </div>
           </div>
           <div id="txListWrap" style="display:none">
@@ -192,8 +192,8 @@
           <div class="chart-hdr">
             <h3>📋 Movimientos de Teresa</h3>
             <div style="display:flex;gap:6px;align-items:center">
-              <button class="tx-toggle-btn teal-toggle" onclick="downloadCSVTeresa('teresa_movimientos.csv')" title="Descargar CSV">📥 CSV</button>
               <button class="tx-toggle-btn teal-toggle" id="taTxToggleBtn" onclick="toggleTxList('taTxListWrap','taTxToggleBtn')">Ver lista ▼</button>
+              <button class="tx-toggle-btn teal-toggle" onclick="downloadCSVTeresa('teresa_movimientos.csv')" title="Descargar CSV">📥 CSV</button>
             </div>
           </div>
           <div class="filter-row" id="taDirFilter">
@@ -311,8 +311,8 @@
       <div class="chart-hdr">
         <h3>📋 Mis Movimientos</h3>
         <div style="display:flex;gap:6px;align-items:center">
-          <button class="tx-toggle-btn teal-toggle" onclick="downloadCSVTeresa('mis_movimientos.csv')" title="Descargar CSV">📥 CSV</button>
           <button class="tx-toggle-btn teal-toggle" id="tHistToggleBtn" onclick="toggleTxList('tHistListWrap','tHistToggleBtn')">Ver lista ▼</button>
+          <button class="tx-toggle-btn teal-toggle" onclick="downloadCSVTeresa('mis_movimientos.csv')" title="Descargar CSV">📥 CSV</button>
         </div>
       </div>
       <div id="tHistListWrap" style="display:none">
