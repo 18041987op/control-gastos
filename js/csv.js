@@ -267,5 +267,6 @@ function downloadCSV(rows, filename){
 }
 
 function downloadCSVTeresa(filename){
-  downloadCSV(teresaTx, filename);
+  const txData = currentTeresaMode === 'personal' ? teresaPersonalTx : teresaTx;
+  downloadCSV(txData, filename);
 }

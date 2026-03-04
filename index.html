@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=20260301">
+<link rel="stylesheet" href="css/styles.css?v=20260304">
 </head>
 <body>
 
@@ -226,10 +226,14 @@
 
 <!-- ══ TERESA SHELL ════════════════════════════════════════ -->
 <div class="shell" id="teresaShell">
-  <div class="hdr hdr-teresa">
-    <div><h1>🏠 Teresa</h1><div class="sub" id="teresaHdrSub">Control de Movimientos</div></div>
+  <div class="hdr hdr-teresa" id="teresaHdr">
+    <div><h1 id="teresaHdrTitle">🏠 Obra</h1><div class="sub" id="teresaHdrSub">Control de Movimientos</div></div>
     <div class="hdr-right">
-      <button class="scan-hdr-btn" onclick="openScanner()" title="Escanear código de barras">📷</button>
+      <div class="person-tabs" id="teresaModeTabs">
+        <button class="p-tab teresa active" id="tabTeresaObra" onclick="switchTeresaMode('obra')">🏠 Obra</button>
+        <button class="p-tab teresa-personal" id="tabTeresaPersonal" onclick="switchTeresaMode('personal')">🌸 Personal</button>
+      </div>
+      <button class="scan-hdr-btn" id="teresaScanBtn" onclick="openScanner()" title="Escanear código de barras">📷</button>
       <button class="exit-btn" onclick="logout()">Salir</button>
     </div>
   </div>
@@ -261,28 +265,28 @@
 
   <!-- Vista: Registrar Ingreso -->
   <div class="view" id="tvIngreso">
-    <div class="form-card teal-form">
-      <h2 style="color:var(--teal)">📥 Registrar Ingreso</h2>
+    <div class="form-card teal-form" id="ingresoFormCard">
+      <h2 id="ingresoFormTitle" style="color:var(--pink)">📥 Registrar Ingreso</h2>
       <div id="ingresoAlert" class="alert"></div>
       <label>Fecha</label><input type="date" id="ingresoDate">
       <label>Descripción</label><input type="text" id="ingresoDesc" placeholder="Ej: Anticipo semanal, quincena…" maxlength="80">
       <label>Monto (L)</label><input type="number" id="ingresoAmt" placeholder="0.00" min="0.01" step="0.01">
       <label>¿Cómo lo recibiste?</label>
       <div class="opt-grid cols3" id="ingresoMethodGrid"></div>
-      <button class="btn btn-t" onclick="saveIngreso()">Guardar Ingreso</button>
+      <button class="btn btn-t" id="ingresoSaveBtn" onclick="saveIngreso()">Guardar Ingreso</button>
     </div>
   </div>
 
   <!-- Vista: Registrar Gasto -->
   <div class="view" id="tvGasto">
-    <div class="form-card teal-form">
-      <h2 style="color:var(--teal)">💸 Registrar Gasto</h2>
+    <div class="form-card teal-form" id="gastoFormCard">
+      <h2 id="gastoFormTitle" style="color:var(--pink)">💸 Registrar Gasto</h2>
       <div id="gastoAlert" class="alert"></div>
       <label>Fecha</label><input type="date" id="gastoDate">
       <label>Descripción</label>
-      <div class="desc-scan-row">
+      <div class="desc-scan-row" id="descScanRow">
         <input type="text" id="gastoDesc" placeholder="Ej: Cemento, bloques…" maxlength="80">
-        <button type="button" class="scan-btn" onclick="openScanner()" title="Escanear código de barras">📷</button>
+        <button type="button" class="scan-btn" id="gastoScanBtn" onclick="openScanner()" title="Escanear código de barras">📷</button>
       </div>
       <label>Monto (L)</label><input type="number" id="gastoAmt" placeholder="0.00" min="0.01" step="0.01">
       <label>Categoría</label><div class="opt-grid cols3" id="gastoCatGrid"></div>
@@ -296,29 +300,29 @@
         <img id="receiptPreviewImg" class="receipt-preview-img">
       </div>
       <button id="receiptClearBtn" class="btn btn-d" style="display:none;margin-top:6px;padding:8px" onclick="clearReceipt()">✕ Quitar foto</button>
-      <button class="btn btn-t" onclick="saveGasto()" style="margin-top:14px">Guardar Gasto</button>
+      <button class="btn btn-t" id="gastoSaveBtn" onclick="saveGasto()" style="margin-top:14px">Guardar Gasto</button>
     </div>
   </div>
 
   <!-- Vista: Historial -->
   <div class="view" id="tvHistorial">
     <div class="filter-row" id="tHistFilter">
-      <button class="pill teal active" onclick="setTHistFilter('all')">Todos</button>
-      <button class="pill teal" onclick="setTHistFilter('income')">📥 Ingresos</button>
-      <button class="pill teal" onclick="setTHistFilter('expense')">💸 Gastos</button>
+      <button class="pill teal active" id="tHistPillAll" onclick="setTHistFilter('all')">Todos</button>
+      <button class="pill teal" id="tHistPillIncome" onclick="setTHistFilter('income')">📥 Ingresos</button>
+      <button class="pill teal" id="tHistPillExpense" onclick="setTHistFilter('expense')">💸 Gastos</button>
     </div>
     <div class="chart-card">
       <div class="chart-hdr">
         <h3>📋 Mis Movimientos</h3>
         <div style="display:flex;gap:6px;align-items:center">
           <button class="tx-toggle-btn teal-toggle" id="tHistToggleBtn" onclick="toggleTxList('tHistListWrap','tHistToggleBtn')">Ver lista ▼</button>
-          <button class="tx-toggle-btn teal-toggle" onclick="downloadCSVTeresa('mis_movimientos.csv')" title="Descargar CSV">📥 CSV</button>
+          <button class="tx-toggle-btn teal-toggle" id="tHistCsvBtn" onclick="downloadCSVTeresa('mis_movimientos.csv')" title="Descargar CSV">📥 CSV</button>
         </div>
       </div>
       <div id="tHistListWrap" style="display:none">
         <div class="tx-wrap">
           <table>
-            <thead class="teal"><tr><th>Fecha</th><th>Descripción</th><th>Dir.</th><th>Método</th><th>Monto</th><th>Recibo</th><th></th></tr></thead>
+            <thead class="teal" id="tHistThead"><tr><th>Fecha</th><th>Descripción</th><th>Dir.</th><th>Método</th><th>Monto</th><th>Recibo</th><th></th></tr></thead>
             <tbody id="tHistBody"></tbody>
           </table>
         </div>
@@ -328,8 +332,8 @@
 
   <!-- Vista: Tareas (Teresa) -->
   <div class="view" id="tvTodo">
-    <div class="form-card teal-form">
-      <h2 style="color:var(--teal)">✅ Mis Tareas — Obra</h2>
+    <div class="form-card teal-form" id="todoFormCardT">
+      <h2 id="todoTitleT" style="color:var(--pink)">✅ Mis Tareas — Obra</h2>
       <div id="todoAlertT" class="alert"></div>
       <label>¿Qué necesitas hacer?</label>
       <input type="text" id="todoTitleT" placeholder="Ej: Comprar cemento, llamar electricista…" maxlength="100">
@@ -343,7 +347,7 @@
   </div>
 
   <!-- Nav inferior (Teresa) -->
-  <nav class="bottom-nav">
+  <nav class="bottom-nav" id="teresaBottomNav">
     <button class="nav-btn t-active"  onclick="teresaShow('Dashboard')" id="tnDashboard"><span class="nav-icon">📊</span><span class="nav-label">Inicio</span></button>
     <button class="nav-btn"           onclick="teresaShow('Gasto')"     id="tnGasto">    <span class="nav-icon">💸</span><span class="nav-label">Gasto</span></button>
     <button class="nav-btn"           onclick="teresaShow('Ingreso')"   id="tnIngreso">  <span class="nav-icon">📥</span><span class="nav-label">Ingreso</span></button>
@@ -421,16 +425,16 @@
 </div>
 
 <!-- ══ JAVASCRIPT ═════════════════════════════════════════ -->
-<script src="js/config.js?v=20260301"></script>
-<script src="js/utils.js?v=20260301"></script>
-<script src="js/csv.js?v=20260301"></script>
-<script src="js/edit.js?v=20260301"></script>
-<script src="js/sharelyn.js?v=20260301"></script>
-<script src="js/teresa.js?v=20260301"></script>
-<script src="js/admin.js?v=20260301"></script>
-<script src="js/todos.js?v=20260301"></script>
-<script src="js/scanner.js?v=20260301"></script>
-<script src="js/auth.js?v=20260301"></script>
+<script src="js/config.js?v=20260304"></script>
+<script src="js/utils.js?v=20260304"></script>
+<script src="js/csv.js?v=20260304"></script>
+<script src="js/edit.js?v=20260304"></script>
+<script src="js/sharelyn.js?v=20260304"></script>
+<script src="js/teresa.js?v=20260304"></script>
+<script src="js/admin.js?v=20260304"></script>
+<script src="js/todos.js?v=20260304"></script>
+<script src="js/scanner.js?v=20260304"></script>
+<script src="js/auth.js?v=20260304"></script>
 
 </body>
 </html>

@@ -7,7 +7,8 @@ let editPerson = '';
 
 // ── ABRIR MODAL ───────────────────────────────────────────
 function openEditModal(txId, person){
-  const src = person === 'sharelyn' ? allTx : teresaTx;
+  const src = person === 'sharelyn' ? allTx :
+              person === 'teresa_personal' ? teresaPersonalTx : teresaTx;
   const tx  = src.find(t => String(t.id) === String(txId));
   if(!tx) return;
 
@@ -31,8 +32,11 @@ function openEditModal(txId, person){
   document.getElementById('editNote').value  = '';
 
   // Grilla de categorías
-  const cats   = person === 'teresa' ? Object.entries(TERESA_CAT) : Object.entries(CAT);
-  const selCls = person === 'teresa' ? 'sel-teal' : currentUser === 'admin' ? 'sel-admin' : 'sel';
+  const cats   = person === 'teresa_personal' ? Object.entries(TERESA_PERSONAL_CAT) :
+                 person === 'teresa' ? Object.entries(TERESA_CAT) : Object.entries(CAT);
+  const selCls = person === 'teresa_personal' ? 'sel-rosa' :
+                 person === 'teresa' ? 'sel-teal' :
+                 currentUser === 'admin' ? 'sel-admin' : 'sel';
   buildCatGrid('editCatGrid','opt-btn', selCls, cats, (k) => editCatKey = k);
   setTimeout(() => {
     const btns = document.querySelectorAll('#editCatGrid .opt-btn');
@@ -75,7 +79,9 @@ function ePinClear(){
 }
 
 function updateEPinDots(){
-  const cls = currentUser === 'teresa' ? 'ep-teal' : currentUser === 'sharelyn' ? 'ep-purple' : 'ep-admin';
+  const cls = currentUser === 'teresa'
+    ? (currentTeresaMode === 'personal' ? 'ep-rosa' : 'ep-teal')
+    : currentUser === 'sharelyn' ? 'ep-purple' : 'ep-admin';
   document.querySelectorAll('.edit-pdot').forEach((d,i) => {
     d.classList.remove('ep-admin','ep-purple','ep-teal');
     if(i < ePinBuf.length) d.classList.add(cls);
@@ -96,7 +102,7 @@ function verifyEditPin(){
     btn.disabled         = false;
     btn.style.background = '';
     btn.style.cursor     = '';
-    btn.className        = `btn ${currentUser==='teresa'?'btn-t':currentUser==='sharelyn'?'btn-p':'btn-a'}`;
+    btn.className        = `btn ${currentUser==='teresa'?(currentTeresaMode==='personal'?'btn-tp':'btn-t'):currentUser==='sharelyn'?'btn-p':'btn-a'}`;
   } else {
     msg.textContent = 'PIN incorrecto, intenta de nuevo.';
     msg.className   = 'ep-err';

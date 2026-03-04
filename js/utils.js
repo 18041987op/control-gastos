@@ -11,14 +11,14 @@ function setTodayDate(id){
 // ── GRILLAS DE OPCIONES ───────────────────────────────────
 function buildCatGrid(containerId, btnClass, selClass, entries, onSelect){
   document.getElementById(containerId).innerHTML = entries.map(([k,v]) =>
-    `<button class="${btnClass}" onclick="this.parentElement.querySelectorAll('.${btnClass}').forEach(b=>b.classList.remove('sel','sel-admin','sel-teal'));this.classList.add('${selClass}');(${onSelect.toString()})('${k}')">
+    `<button class="${btnClass}" onclick="this.parentElement.querySelectorAll('.${btnClass}').forEach(b=>b.classList.remove('sel','sel-admin','sel-teal','sel-rosa'));this.classList.add('${selClass}');(${onSelect.toString()})('${k}')">
     <span class="opt-icon">${v.emoji}</span>${v.label.replace(/^[^\s]+\s/,'')}</button>`
   ).join('');
 }
 
 function buildMethodGrid(containerId, methods, selClass, onSelect){
   document.getElementById(containerId).innerHTML = methods.map(m =>
-    `<button class="opt-btn" onclick="this.parentElement.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('sel','sel-admin','sel-teal'));this.classList.add('${selClass}');(${onSelect.toString()})('${m.k}')">
+    `<button class="opt-btn" onclick="this.parentElement.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('sel','sel-admin','sel-teal','sel-rosa'));this.classList.add('${selClass}');(${onSelect.toString()})('${m.k}')">
     <span class="opt-icon">${m.icon}</span>${m.label}</button>`
   ).join('');
 }
@@ -74,3 +74,4 @@ async function deleteTx(id, person){
     if(currentUser === 'admin') loadTeresaAdminView();
   }
 }
+

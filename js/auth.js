@@ -61,9 +61,17 @@ function unlockSharelyn(){
 }
 
 function unlockTeresa(){
-  currentUser = 'teresa';
+  currentUser       = 'teresa';
+  currentTeresaMode = 'obra';
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('teresaShell').classList.add('visible');
+  // Asegurar estado visual inicial correcto (modo Obra)
+  document.getElementById('teresaHdr').className       = 'hdr hdr-teresa';
+  document.getElementById('teresaHdrTitle').textContent = '🏠 Obra';
+  document.getElementById('teresaBanner').className    = 'balance-banner bal-teresa';
+  document.getElementById('tabTeresaObra').classList.add('active');
+  document.getElementById('tabTeresaPersonal').classList.remove('active');
+  document.getElementById('teresaScanBtn').style.display = '';
   buildMethodGrid('ingresoMethodGrid', INCOME_METHODS,  'sel-teal', (k) => selectedIngresoMethod = k);
   buildMethodGrid('gastoMethodGrid',   EXPENSE_METHODS, 'sel-teal', (k) => selectedGastoMethod   = k);
   buildCatGrid('gastoCatGrid','opt-btn','sel-teal', Object.entries(TERESA_CAT), (k) => selectedGastoCat = k);
