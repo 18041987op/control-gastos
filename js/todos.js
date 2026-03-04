@@ -5,7 +5,9 @@ let todosShowDone   = false;
 
 // ── HELPERS ───────────────────────────────────────────────
 function getTodoCats(){
-  return currentUser === 'teresa' ? TERESA_TODO_CATS : SHARELYN_TODO_CATS;
+  if(currentUser === 'teresa' && currentTeresaMode === 'personal') return TERESA_PERSONAL_TODO_CATS;
+  if(currentUser === 'teresa') return TERESA_TODO_CATS;
+  return SHARELYN_TODO_CATS;
 }
 
 function getTodoContainerId(suffix){
@@ -13,6 +15,7 @@ function getTodoContainerId(suffix){
 }
 
 function getTodoSelClass(){
+  if(currentUser === 'teresa' && currentTeresaMode === 'personal') return 'sel-rosa';
   if(currentUser === 'teresa')   return 'sel-teal';
   if(currentUser === 'sharelyn') return 'sel';
   return 'sel-admin';
@@ -34,13 +37,15 @@ function buildTodoCatGrid(){
 function selectTodoCat(k, btn, selCls){
   selectedTodoCat = k;
   btn.parentElement.querySelectorAll('.opt-btn')
-    .forEach(b => b.classList.remove('sel','sel-admin','sel-teal'));
+    .forEach(b => b.classList.remove('sel','sel-admin','sel-teal','sel-rosa'));
   btn.classList.add(selCls);
 }
 
 // ── CARGAR TODOS ──────────────────────────────────────────
 async function loadTodos(){
-  const person = currentUser === 'admin' ? 'sharelyn' : currentUser;
+  const person = currentUser === 'admin' ? 'sharelyn' :
+                 currentUser === 'teresa' ? (currentTeresaMode === 'personal' ? 'teresa_personal' : 'teresa') :
+                 currentUser;
   const {data, error} = await db.from('todos')
     .select('*').eq('person', person)
     .order('completed', {ascending: true})
@@ -81,7 +86,9 @@ async function saveTodo(){
     return;
   }
 
-  const person  = currentUser === 'admin' ? 'sharelyn' : currentUser;
+  const person  = currentUser === 'admin' ? 'sharelyn' :
+                  currentUser === 'teresa' ? (currentTeresaMode === 'personal' ? 'teresa_personal' : 'teresa') :
+                  currentUser;
   const {error} = await db.from('todos').insert([{
     person, title, category: selectedTodoCat, due_date: dueDate, completed: false,
   }]);
@@ -131,7 +138,8 @@ function renderTodos(){
   const listId    = getTodoContainerId('List');
   const container = document.getElementById(listId);
   const cats      = getTodoCats();
-  const isTeal    = currentUser === 'teresa';
+  const isRosa    = currentUser === 'teresa' && currentTeresaMode === 'personal';
+  const isTeal    = currentUser === 'teresa' && !isRosa;
   const isAdmin   = currentUser === 'admin';
 
   const pending = allTodos.filter(t => !t.completed);
@@ -150,11 +158,11 @@ function renderTodos(){
 
   if(pending.length){
     html += `<div class="todo-section-title">Pendientes (${pending.length})</div>`;
-    html += pending.map(t => todoItemHtml(t, cats, isTeal, isAdmin)).join('');
+    html += pending.map(t => todoItemHtml(t, cats, isTeal, isAdmin, isRosa)).join('');
   }
 
   if(done.length){
-    const accentCls = isTeal ? 'teal' : isAdmin ? 'admin' : 'purple';
+    const accentCls = isRosa ? 'rosa' : isTeal ? 'teal' : isAdmin ? 'admin' : 'purple';
     html += `
       <button class="todo-done-toggle ${accentCls}" onclick="toggleShowDone()">
         ${todosShowDone
@@ -163,19 +171,19 @@ function renderTodos(){
       </button>`;
     if(todosShowDone){
       html += `<div class="todo-section-title" style="margin-top:0">Completadas (${done.length})</div>`;
-      html += done.map(t => todoItemHtml(t, cats, isTeal, isAdmin)).join('');
+      html += done.map(t => todoItemHtml(t, cats, isTeal, isAdmin, isRosa)).join('');
     }
   }
 
   container.innerHTML = html;
 }
 
-function todoItemHtml(t, cats, isTeal, isAdmin){
+function todoItemHtml(t, cats, isTeal, isAdmin, isRosa){
   const cat      = cats.find(c => c.k === t.category) || {icon:'📌', label: t.category};
   const checkCls = t.completed
-    ? (isTeal ? 'checked-teal' : isAdmin ? 'checked-admin' : 'checked')
+    ? (isRosa ? 'checked-rosa' : isTeal ? 'checked-teal' : isAdmin ? 'checked-admin' : 'checked')
     : '';
-  const tagCls   = isTeal ? 'teal' : isAdmin ? 'admin-tag' : '';
+  const tagCls   = isRosa ? 'rosa' : isTeal ? 'teal' : isAdmin ? 'admin-tag' : '';
   const dateBadge = dateBadgeHtml(t.due_date);
 
   return `

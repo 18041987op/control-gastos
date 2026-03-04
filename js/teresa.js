@@ -1,10 +1,125 @@
+// ── HELPERS DE MODO ───────────────────────────────────────
+function getTeresaPerson(){
+  return currentTeresaMode === 'personal' ? 'teresa_personal' : 'teresa';
+}
+
+function getTeresaCat(){
+  return currentTeresaMode === 'personal' ? TERESA_PERSONAL_CAT : TERESA_CAT;
+}
+
+function getTeresaTx(){
+  return currentTeresaMode === 'personal' ? teresaPersonalTx : teresaTx;
+}
+
+function getTeresaAccentClass(){
+  return currentTeresaMode === 'personal' ? 'rosa' : 'teal';
+}
+
+// ── CAMBIAR MODO (Obra ↔ Personal) ────────────────────────
+function switchTeresaMode(mode){
+  currentTeresaMode = mode;
+  const isPersonal  = mode === 'personal';
+
+  // Tabs del header
+  document.getElementById('tabTeresaObra').classList.toggle('active', !isPersonal);
+  document.getElementById('tabTeresaPersonal').classList.toggle('active', isPersonal);
+
+  // Color del header
+  document.getElementById('teresaHdr').className = isPersonal
+    ? 'hdr hdr-teresa-personal'
+    : 'hdr hdr-teresa';
+
+  // Título del header
+  document.getElementById('teresaHdrTitle').textContent = isPersonal ? '🌸 Personal' : '🏠 Obra';
+
+  // Banner
+  document.getElementById('teresaBanner').className = isPersonal
+    ? 'balance-banner bal-teresa-personal'
+    : 'balance-banner bal-teresa';
+
+  // Botón escáner (solo en modo Obra)
+  document.getElementById('teresaScanBtn').style.display = isPersonal ? 'none' : '';
+
+  // Formularios: cambiar clase y color del título
+  const accent = isPersonal ? 'var(--rosa)' : 'var(--pink)';
+  const formClass = isPersonal ? 'form-card rosa-form' : 'form-card teal-form';
+
+  document.getElementById('ingresoFormCard').className = formClass;
+  document.getElementById('ingresoFormTitle').style.color = accent;
+  document.getElementById('ingresoDesc').placeholder = isPersonal
+    ? 'Ej: Salario, transferencia recibida…'
+    : 'Ej: Anticipo semanal, quincena…';
+
+  document.getElementById('gastoFormCard').className = formClass;
+  document.getElementById('gastoFormTitle').style.color = accent;
+  document.getElementById('gastoDesc').placeholder = isPersonal
+    ? 'Ej: Supermercado, farmacia…'
+    : 'Ej: Cemento, bloques…';
+  document.getElementById('gastoScanBtn').style.display = isPersonal ? 'none' : '';
+
+  // Botones de guardar
+  const btnClass = isPersonal ? 'btn btn-tp' : 'btn btn-t';
+  document.getElementById('ingresoSaveBtn').className = btnClass;
+  document.getElementById('gastoSaveBtn').className   = btnClass;
+
+  // Pills del historial
+  const pillClass = isPersonal ? 'pill rosa' : 'pill teal';
+  ['tHistPillAll','tHistPillIncome','tHistPillExpense'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.className = pillClass + (el.classList.contains('active') ? ' active' : '');
+  });
+
+  // Toggle buttons del historial
+  const toggleClass = isPersonal ? 'tx-toggle-btn rosa-toggle' : 'tx-toggle-btn teal-toggle';
+  ['tHistToggleBtn','tHistCsvBtn'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.className = toggleClass;
+  });
+
+  // Thead del historial
+  document.getElementById('tHistThead').className = isPersonal ? 'rosa' : 'teal';
+
+  // Formulario de tareas
+  document.getElementById('todoFormCardT').className = formClass;
+  document.getElementById('todoTitleT').style.color  = accent;
+  document.getElementById('todoTitleT').textContent  = isPersonal
+    ? '✅ Mis Tareas — Personal'
+    : '✅ Mis Tareas — Obra';
+
+  // Color activo del nav
+  document.querySelectorAll('#teresaBottomNav .nav-btn').forEach(b => {
+    b.classList.remove('t-active','tp-active');
+  });
+  const activeNav = document.querySelector('#teresaBottomNav .nav-btn.active');
+  if(activeNav) activeNav.classList.add(isPersonal ? 'tp-active' : 't-active');
+
+  // Reconstruir grillas con las categorías del modo
+  const selClass = isPersonal ? 'sel-rosa' : 'sel-teal';
+  buildMethodGrid('ingresoMethodGrid', INCOME_METHODS,  selClass, (k) => selectedIngresoMethod = k);
+  buildMethodGrid('gastoMethodGrid',   EXPENSE_METHODS, selClass, (k) => selectedGastoMethod   = k);
+  buildCatGrid('gastoCatGrid','opt-btn', selClass, Object.entries(getTeresaCat()), (k) => selectedGastoCat = k);
+
+  // Resetear selecciones
+  selectedIngresoMethod = '';
+  selectedGastoCat      = '';
+  selectedGastoMethod   = '';
+  clearReceipt();
+
+  // Recargar datos del modo activo
+  loadTeresaData();
+  teresaShow('Dashboard');
+}
+
 // ── NAVEGACIÓN TERESA ─────────────────────────────────────
 function teresaShow(name){
   document.querySelectorAll('#teresaShell .view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('#teresaShell .nav-btn').forEach(b => b.classList.remove('active','t-active'));
+  document.querySelectorAll('#teresaShell .nav-btn').forEach(b => b.classList.remove('active','t-active','tp-active'));
   document.getElementById('tv' + name).classList.add('active');
   const btn = document.getElementById('tn' + name);
-  if(btn) btn.classList.add('t-active');
+  if(btn){
+    btn.classList.add('active');
+    btn.classList.add(currentTeresaMode === 'personal' ? 'tp-active' : 't-active');
+  }
   if(name === 'Dashboard') loadTeresaDashboard();
   if(name === 'Todo')      { buildTodoCatGrid(); loadTodos(); }
 }
@@ -13,10 +128,13 @@ function teresaShow(name){
 async function loadTeresaDashboard(){
   show('tDashLoading'); hide('tDashContent');
 
+  const person  = getTeresaPerson();
+  const cat     = getTeresaCat();
+  const accent  = getTeresaAccentClass();
   const COLS = 'id,date,description,category,amount,direction,month_display,has_receipt,created_at';
   const [txRes, todoRes] = await Promise.all([
-    db.from('transactions').select(COLS).eq('person','teresa').order('created_at',{ascending:false}).limit(60),
-    db.from('todos').select('id,completed').eq('person','teresa'),
+    db.from('transactions').select(COLS).eq('person', person).order('created_at',{ascending:false}).limit(60),
+    db.from('todos').select('id,completed').eq('person', person),
   ]);
 
   const tx       = txRes.data  || [];
@@ -29,9 +147,11 @@ async function loadTeresaDashboard(){
   const totalSpent  = sumAmt(expenses);
   const balance     = totalIncome - totalSpent;
 
+  const hlClass = currentTeresaMode === 'personal' ? 'hl-rosa' : 'hl-teal';
+
   // Cards
   document.getElementById('tDashCards').innerHTML = `
-    <div class="stat-card hl-teal span2" style="cursor:pointer" onclick="teresaShow('Todo')">
+    <div class="stat-card ${hlClass} span2" style="cursor:pointer" onclick="teresaShow('Todo')">
       <div class="lbl">✅ Tareas Pendientes</div>
       <div class="val">${pending}</div>
       <div class="sub">Toca para ver las tareas →</div>
@@ -51,9 +171,9 @@ async function loadTeresaDashboard(){
   document.getElementById('tDashTopExpenses').innerHTML = topExp.length
     ? topExp.map(t => `
       <div class="top-item">
-        <div class="top-lbl" title="${t.description}">${TERESA_CAT[t.category]?.emoji||'📦'} ${t.description}</div>
-        <div class="top-track"><div class="top-fill teal" style="width:${(t.amount/maxAmt*100).toFixed(1)}%"></div></div>
-        <div class="top-amt teal">${fmt(t.amount)}</div>
+        <div class="top-lbl" title="${t.description}">${cat[t.category]?.emoji||'📦'} ${t.description}</div>
+        <div class="top-track"><div class="top-fill ${accent}" style="width:${(t.amount/maxAmt*100).toFixed(1)}%"></div></div>
+        <div class="top-amt ${accent}">${fmt(t.amount)}</div>
       </div>`).join('')
     : '<p style="color:var(--muted);font-size:.82rem;text-align:center;padding:12px">Sin gastos aún.</p>';
 
@@ -63,7 +183,7 @@ async function loadTeresaDashboard(){
     ? `<table style="width:100%;font-size:.78rem;border-collapse:collapse">
         ${recent.map(t => `
         <tr style="border-bottom:1px solid #f0f0f0">
-          <td style="padding:6px 5px">${TERESA_CAT[t.category]?.emoji || (t.direction==='income'?'📥':'📦')}</td>
+          <td style="padding:6px 5px">${cat[t.category]?.emoji || (t.direction==='income'?'📥':'📦')}</td>
           <td style="padding:6px 4px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description}</td>
           <td style="padding:6px 4px"><span class="badge m-${t.month_display?.toLowerCase()||'otros'}">${t.month_display||''}</span></td>
           <td style="padding:6px 4px;font-weight:700;${t.direction==='income'?'color:var(--green)':'color:var(--red)'}">${fmt(t.amount)}</td>
@@ -149,7 +269,7 @@ async function saveIngreso(){
     date: `${dp[2]}/${dp[1]}`, description: desc,
     category: 'otros', cat_label: 'Ingreso',
     month: MONTHS_ES[mn].toLowerCase(), month_display: MONTHS_ES[mn], month_num: mn,
-    amount: amt, type: 'cash', person: 'teresa',
+    amount: amt, type: 'cash', person: getTeresaPerson(),
     direction: 'income', payment_method: selectedIngresoMethod,
   }]);
   if(error){ showAlert(al, 'Error: ' + error.message, 'error'); return; }
@@ -157,7 +277,7 @@ async function saveIngreso(){
   document.getElementById('ingresoDesc').value = '';
   document.getElementById('ingresoAmt').value  = '';
   selectedIngresoMethod = '';
-  document.querySelectorAll('#ingresoMethodGrid .opt-btn').forEach(b => b.classList.remove('sel','sel-teal'));
+  document.querySelectorAll('#ingresoMethodGrid .opt-btn').forEach(b => b.classList.remove('sel','sel-teal','sel-rosa'));
   loadTeresaData();
 }
 
@@ -171,13 +291,14 @@ async function saveGasto(){
     showAlert(al, 'Completa todos los campos incluyendo categoría y método de pago.', 'error');
     return;
   }
-  const dp = date.split('-');
-  const mn = parseInt(dp[1]);
+  const cat = getTeresaCat();
+  const dp  = date.split('-');
+  const mn  = parseInt(dp[1]);
   const row = {
     date: `${dp[2]}/${dp[1]}`, description: desc,
-    category: selectedGastoCat, cat_label: TERESA_CAT[selectedGastoCat]?.label||selectedGastoCat,
+    category: selectedGastoCat, cat_label: cat[selectedGastoCat]?.label||selectedGastoCat,
     month: MONTHS_ES[mn].toLowerCase(), month_display: MONTHS_ES[mn], month_num: mn,
-    amount: amt, type: 'cash', person: 'teresa',
+    amount: amt, type: 'cash', person: getTeresaPerson(),
     direction: 'expense', payment_method: selectedGastoMethod,
   };
   if(currentReceiptData){
@@ -190,25 +311,32 @@ async function saveGasto(){
   document.getElementById('gastoDesc').value = '';
   document.getElementById('gastoAmt').value  = '';
   selectedGastoCat = ''; selectedGastoMethod = '';
-  document.querySelectorAll('#gastoCatGrid .opt-btn,#gastoMethodGrid .opt-btn').forEach(b => b.classList.remove('sel','sel-teal'));
+  document.querySelectorAll('#gastoCatGrid .opt-btn,#gastoMethodGrid .opt-btn').forEach(b => b.classList.remove('sel','sel-teal','sel-rosa'));
   clearReceipt();
   loadTeresaData();
 }
 
 // ── CARGAR DATOS DE TERESA ────────────────────────────────
 async function loadTeresaData(){
+  const person = getTeresaPerson();
   const COLS = 'id,date,description,category,cat_label,month,month_display,amount,direction,payment_method,has_receipt,created_at,edited_at,edited_by';
   const {data} = await db.from('transactions')
-    .select(COLS).eq('person','teresa')
+    .select(COLS).eq('person', person)
     .order('created_at',{ascending:false});
-  teresaTx = data || [];
+
+  if(currentTeresaMode === 'personal'){
+    teresaPersonalTx = data || [];
+  } else {
+    teresaTx = data || [];
+  }
   renderTeresaBanner();
   renderTHistorial();
 }
 
 function renderTeresaBanner(){
-  const income = sumAmt(teresaTx.filter(t => t.direction === 'income'));
-  const spent  = sumAmt(teresaTx.filter(t => t.direction === 'expense'));
+  const txData = getTeresaTx();
+  const income = sumAmt(txData.filter(t => t.direction === 'income'));
+  const spent  = sumAmt(txData.filter(t => t.direction === 'expense'));
   const bal    = income - spent;
   document.getElementById('teresaBalance').textContent  = fmt(bal);
   document.getElementById('teresaReceived').textContent = fmt(income);
@@ -218,14 +346,19 @@ function renderTeresaBanner(){
 
 function setTHistFilter(f){
   tHistFilter = f;
-  document.querySelectorAll('#tHistFilter .pill').forEach((p,i) =>
-    p.classList.toggle('active', ['all','income','expense'][i] === f)
-  );
+  const pillClass = currentTeresaMode === 'personal' ? 'pill rosa' : 'pill teal';
+  ['tHistPillAll','tHistPillIncome','tHistPillExpense'].forEach((id, i) => {
+    const el = document.getElementById(id);
+    if(el) el.className = pillClass + (['all','income','expense'][i] === f ? ' active' : '');
+  });
   renderTHistorial();
 }
 
 function renderTHistorial(){
-  const tx = tHistFilter === 'all' ? teresaTx : teresaTx.filter(t => t.direction === tHistFilter);
+  const txData = getTeresaTx();
+  const tx     = tHistFilter === 'all' ? txData : txData.filter(t => t.direction === tHistFilter);
+  const person = getTeresaPerson();
+  const cat    = getTeresaCat();
   if(!tx.length){
     document.getElementById('tHistBody').innerHTML = '<tr><td colspan="7" style="text-align:center;padding:16px;color:#aaa">Sin movimientos</td></tr>';
     return;
@@ -239,8 +372,8 @@ function renderTHistorial(){
       <td class="${t.direction==='income'?'amount-pos':'amount-neg'}">${fmt(t.amount)}</td>
       <td>${t.has_receipt?`<span style="cursor:pointer;font-size:1.2rem" onclick="openReceipt('${t.id}')" title="Ver recibo">📸</span>`:'—'}</td>
       <td style="white-space:nowrap">
-        <button class="del-btn" title="Editar" style="color:#b2dfdb" onclick="openEditModal('${t.id}','teresa')">✏️</button>
-        <button class="del-btn" onclick="deleteTx('${t.id}','teresa')">🗑</button>
+        <button class="del-btn" title="Editar" style="color:#b2dfdb" onclick="openEditModal('${t.id}','${person}')">✏️</button>
+        <button class="del-btn" onclick="deleteTx('${t.id}','${person}')">🗑</button>
       </td>
     </tr>`).join('');
 }

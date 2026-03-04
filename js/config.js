@@ -37,7 +37,22 @@ const TERESA_CAT = {
   otros:        {label:'📦 Otros',          color:'#90a4ae', emoji:'📦'},
 };
 
-const ALL_CATS = {...CAT, ...TERESA_CAT};
+// ── TERESA PERSONAL: CATEGORÍAS DE VIDA COTIDIANA ────────
+const TERESA_PERSONAL_CAT = {
+  supermercado: {label:'🛒 Supermercado',    color:'#66bb6a', emoji:'🛒'},
+  restaurante:  {label:'🍽️ Restaurantes',    color:'#f7971e', emoji:'🍽️'},
+  transporte:   {label:'🚗 Transporte',      color:'#42a5f5', emoji:'🚗'},
+  hogar:        {label:'🏠 Hogar',           color:'#8d6e63', emoji:'🏠'},
+  salud:        {label:'💊 Salud',           color:'#ef5350', emoji:'💊'},
+  belleza:      {label:'💄 Belleza',         color:'#d4709a', emoji:'💄'},
+  ropa:         {label:'👗 Ropa',            color:'#ab47bc', emoji:'👗'},
+  servicios:    {label:'💡 Servicios',       color:'#ffd740', emoji:'💡'},
+  diversion:    {label:'🎬 Diversión',       color:'#26c6da', emoji:'🎬'},
+  familia:      {label:'👪 Familia',         color:'#f48fb1', emoji:'👪'},
+  otros:        {label:'📦 Otros',           color:'#90a4ae', emoji:'📦'},
+};
+
+const ALL_CATS = {...CAT, ...TERESA_CAT, ...TERESA_PERSONAL_CAT};
 
 // ── MÉTODOS DE PAGO ───────────────────────────────────────
 const INCOME_METHODS = [
@@ -79,6 +94,18 @@ const SHARELYN_TODO_CATS = [
   {k:'otro',      label:'Otro',       icon:'💡'},
 ];
 
+// Teresa Personal - vida cotidiana adulta
+const TERESA_PERSONAL_TODO_CATS = [
+  {k:'comprar',   label:'Comprar',    icon:'🛒'},
+  {k:'pagar',     label:'Pagar',      icon:'💳'},
+  {k:'cita',      label:'Cita médica',icon:'🏥'},
+  {k:'hogar',     label:'Hogar',      icon:'🏠'},
+  {k:'social',    label:'Social',     icon:'👥'},
+  {k:'personal',  label:'Personal',   icon:'💆'},
+  {k:'familiar',  label:'Familiar',   icon:'👪'},
+  {k:'otro',      label:'Otro',       icon:'💡'},
+];
+
 // Teresa maneja un proyecto de remodelación de casas
 const TERESA_TODO_CATS = [
   {k:'material',    label:'Comprar',    icon:'🛒'},
@@ -92,10 +119,12 @@ const TERESA_TODO_CATS = [
 ];
 
 // ── ESTADO GLOBAL ─────────────────────────────────────────
-let currentUser   = null;   // 'admin' | 'sharelyn' | 'teresa'
-let currentPerson = 'sharelyn';
-let allTx         = [];     // transacciones de Sharelyn
-let teresaTx      = [];     // transacciones de Teresa
+let currentUser        = null;   // 'admin' | 'sharelyn' | 'teresa'
+let currentPerson      = 'sharelyn';
+let currentTeresaMode  = 'obra'; // 'obra' | 'personal'
+let allTx              = [];     // transacciones de Sharelyn
+let teresaTx           = [];     // transacciones de Teresa (obra)
+let teresaPersonalTx   = [];     // transacciones de Teresa Personal
 let currentFilter = 'all';  // month: 'all' | 'enero' | ...
 let currentYear   = null;   // integer, set on first load
 let taFilter      = 'all';
