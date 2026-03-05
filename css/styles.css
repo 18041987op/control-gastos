@@ -51,17 +51,33 @@ body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(
 .p-tab.sharelyn.active{color:var(--purple);}
 
 /* ── BALANCE BANNER ── */
-.balance-banner{padding:18px 18px 16px;color:#fff;text-align:center;}
+.balance-banner{padding:20px 18px 18px;color:#fff;text-align:center;}
 .bal-admin-sly{background:linear-gradient(135deg,var(--purple-light),var(--purple));}
 .bal-teresa{background:linear-gradient(135deg,var(--pink-light),var(--pink));}
 .bal-teresa-personal{background:linear-gradient(135deg,var(--rosa-light),var(--rosa));}
-.balance-banner .bal-label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;opacity:.8;margin-bottom:4px;}
-.balance-banner .bal-amount{font-size:2.2rem;font-weight:800;}
+.balance-banner .bal-label{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;opacity:.85;margin-bottom:6px;}
+.balance-banner .bal-amount{font-size:2.8rem;font-weight:900;letter-spacing:-.02em;text-shadow:0 2px 12px rgba(0,0,0,.18);}
 .balance-banner .bal-sub{font-size:.75rem;opacity:.75;margin-top:4px;}
-.bal-row{display:flex;justify-content:center;gap:24px;margin-top:12px;}
-.bal-chip{background:rgba(255,255,255,.2);border-radius:12px;padding:8px 14px;text-align:center;}
+.bal-row{display:flex;justify-content:center;gap:16px;margin-top:14px;}
+.bal-chip{background:rgba(255,255,255,.22);border-radius:14px;padding:9px 16px;text-align:center;backdrop-filter:blur(4px);}
 .bal-chip .bc-label{font-size:.68rem;opacity:.8;}
-.bal-chip .bc-val{font-size:.95rem;font-weight:700;margin-top:1px;}
+.bal-chip .bc-val{font-size:1rem;font-weight:800;margin-top:2px;text-shadow:0 1px 4px rgba(0,0,0,.12);}
+
+/* ── DASHBOARD TASK WIDGET ── */
+.dash-todo-card{background:#fff;border-radius:16px;padding:14px 16px;margin:0 0 8px;box-shadow:0 2px 10px rgba(0,0,0,.07);border-left:4px solid transparent;}
+.dash-todo-card.hl-teal{border-left-color:var(--teal);}
+.dash-todo-card.hl-rosa{border-left-color:var(--rosa);}
+.dash-todo-hdr{display:flex;justify-content:space-between;align-items:center;font-size:.82rem;font-weight:700;color:var(--text);margin-bottom:10px;}
+.dash-todo-badge{background:var(--pink);color:#fff;border-radius:20px;padding:2px 9px;font-size:.72rem;font-weight:800;}
+.dash-todo-card.hl-teal .dash-todo-badge{background:var(--teal);}
+.dash-todo-card.hl-rosa .dash-todo-badge{background:var(--rosa);}
+.dash-todo-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid #f5f5f5;}
+.dash-todo-row:last-of-type{border-bottom:none;}
+.dash-todo-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;background:var(--teal);}
+.dash-todo-dot.rosa{background:var(--rosa);}
+.dash-todo-text{font-size:.8rem;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dash-todo-more{font-size:.72rem;color:var(--muted);text-align:right;margin-top:8px;}
+.dash-todo-empty{font-size:.8rem;color:var(--muted);text-align:center;padding:8px 0;margin:0;}
 
 /* ── BOTTOM NAV ── */
 .bottom-nav{position:fixed;bottom:0;left:0;right:0;background:#fff;display:flex;border-top:1px solid #eee;z-index:10;box-shadow:0 -4px 16px rgba(0,0,0,.06);}
