@@ -37,8 +37,9 @@ function switchTeresaMode(mode){
     ? 'balance-banner bal-teresa-personal'
     : 'balance-banner bal-teresa';
 
-  // Botón escáner (solo en modo Obra)
-  document.getElementById('teresaScanBtn').style.display = isPersonal ? 'none' : '';
+  // Botón escáner y pestaña Presupuestos (solo en modo Obra)
+  document.getElementById('teresaScanBtn').style.display    = isPersonal ? 'none' : '';
+  document.getElementById('tnPresupuestos').style.display   = isPersonal ? 'none' : '';
 
   // Formularios: cambiar clase y color del título
   const accent = isPersonal ? 'var(--rosa)' : 'var(--pink)';
@@ -120,8 +121,9 @@ function teresaShow(name){
     btn.classList.add('active');
     btn.classList.add(currentTeresaMode === 'personal' ? 'tp-active' : 't-active');
   }
-  if(name === 'Dashboard') loadTeresaDashboard();
-  if(name === 'Todo')      { buildTodoCatGrid(); loadTodos(); }
+  if(name === 'Dashboard')    loadTeresaDashboard();
+  if(name === 'Todo')         { buildTodoCatGrid(); loadTodos(); }
+  if(name === 'Presupuestos') { showPresuForm(false); loadPresupuestos(); }
 }
 
 // ── DASHBOARD TERESA ──────────────────────────────────────

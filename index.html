@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=20260305">
+<link rel="stylesheet" href="css/styles.css?v=20260306">
 </head>
 <body>
 
@@ -346,13 +346,50 @@
     <div id="todoListT"></div>
   </div>
 
+  <!-- Vista: Presupuestos (solo modo Obra) -->
+  <div class="view" id="tvPresupuestos">
+    <div id="presuCompareWrap" style="display:none"></div>
+    <div id="presuListWrap">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;padding:0 2px">
+        <h3 style="color:var(--pink-dark);font-size:.95rem">📋 Presupuestos de Ferretería</h3>
+        <button class="btn btn-t" style="padding:8px 14px;font-size:.8rem" onclick="showPresuForm(true)">+ Nuevo</button>
+      </div>
+      <div id="presuList"></div>
+    </div>
+    <div id="presuFormWrap" style="display:none">
+      <div class="form-card teal-form" id="presuFormCard">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h2 id="presuFormTitle" style="color:var(--pink)">📋 Nuevo Presupuesto</h2>
+          <button class="tx-toggle-btn teal-toggle" onclick="showPresuForm(false)">✕ Cancelar</button>
+        </div>
+        <div id="presuAlert" class="alert"></div>
+        <label>Ferretería / Proveedor</label>
+        <input type="text" id="presuStore" placeholder="Ej: Ferretería El Constructor" maxlength="80">
+        <label>Fecha</label>
+        <input type="date" id="presuDate">
+        <label>Nota (opcional)</label>
+        <input type="text" id="presuNotes" placeholder="Ej: Para la segunda planta" maxlength="100">
+        <label style="margin-top:14px">Artículos del presupuesto</label>
+        <div id="presuItemsWrap"></div>
+        <button class="btn" style="background:#f5f5f5;color:var(--text);margin-top:8px;font-size:.82rem;border:1.5px dashed #ddd"
+                onclick="addPresuItem()">+ Agregar artículo</button>
+        <div class="presu-total-row" style="margin-top:14px">
+          <span class="presu-total-lbl">Total del presupuesto:</span>
+          <span id="presuTotal" class="presu-total-val">L. 0.00</span>
+        </div>
+        <button class="btn btn-t" id="presuSaveBtn" onclick="savePresupuesto()" style="margin-top:14px">💾 Guardar Presupuesto</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Nav inferior (Teresa) -->
   <nav class="bottom-nav" id="teresaBottomNav">
-    <button class="nav-btn t-active"  onclick="teresaShow('Dashboard')" id="tnDashboard"><span class="nav-icon">📊</span><span class="nav-label">Inicio</span></button>
-    <button class="nav-btn"           onclick="teresaShow('Gasto')"     id="tnGasto">    <span class="nav-icon">💸</span><span class="nav-label">Gasto</span></button>
-    <button class="nav-btn"           onclick="teresaShow('Ingreso')"   id="tnIngreso">  <span class="nav-icon">📥</span><span class="nav-label">Ingreso</span></button>
-    <button class="nav-btn"           onclick="teresaShow('Historial')" id="tnHistorial"><span class="nav-icon">📋</span><span class="nav-label">Historial</span></button>
-    <button class="nav-btn"           onclick="teresaShow('Todo')"      id="tnTodo">     <span class="nav-icon">✅</span><span class="nav-label">Tareas</span></button>
+    <button class="nav-btn t-active"  onclick="teresaShow('Dashboard')"    id="tnDashboard">   <span class="nav-icon">📊</span><span class="nav-label">Inicio</span></button>
+    <button class="nav-btn"           onclick="teresaShow('Gasto')"        id="tnGasto">       <span class="nav-icon">💸</span><span class="nav-label">Gasto</span></button>
+    <button class="nav-btn"           onclick="teresaShow('Ingreso')"      id="tnIngreso">     <span class="nav-icon">📥</span><span class="nav-label">Ingreso</span></button>
+    <button class="nav-btn"           onclick="teresaShow('Presupuestos')" id="tnPresupuestos"><span class="nav-icon">📋</span><span class="nav-label">Presu</span></button>
+    <button class="nav-btn"           onclick="teresaShow('Historial')"    id="tnHistorial">   <span class="nav-icon">🗂️</span><span class="nav-label">Historial</span></button>
+    <button class="nav-btn"           onclick="teresaShow('Todo')"         id="tnTodo">        <span class="nav-icon">✅</span><span class="nav-label">Tareas</span></button>
   </nav>
 </div>
 
@@ -425,16 +462,17 @@
 </div>
 
 <!-- ══ JAVASCRIPT ═════════════════════════════════════════ -->
-<script src="js/config.js?v=20260305"></script>
-<script src="js/utils.js?v=20260305"></script>
-<script src="js/csv.js?v=20260305"></script>
-<script src="js/edit.js?v=20260305"></script>
-<script src="js/sharelyn.js?v=20260305"></script>
-<script src="js/teresa.js?v=20260305"></script>
-<script src="js/admin.js?v=20260305"></script>
-<script src="js/todos.js?v=20260305"></script>
-<script src="js/scanner.js?v=20260305"></script>
-<script src="js/auth.js?v=20260305"></script>
+<script src="js/config.js?v=20260306"></script>
+<script src="js/utils.js?v=20260306"></script>
+<script src="js/csv.js?v=20260306"></script>
+<script src="js/edit.js?v=20260306"></script>
+<script src="js/sharelyn.js?v=20260306"></script>
+<script src="js/teresa.js?v=20260306"></script>
+<script src="js/presupuestos.js?v=20260306"></script>
+<script src="js/admin.js?v=20260306"></script>
+<script src="js/todos.js?v=20260306"></script>
+<script src="js/scanner.js?v=20260306"></script>
+<script src="js/auth.js?v=20260306"></script>
 
 </body>
 </html>
