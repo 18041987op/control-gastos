@@ -372,14 +372,34 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
 .b-pending{background:#fff9e6;color:#b8860b;}
 .b-approved{background:#e8f5e9;color:var(--green);}
 .b-rejected{background:#ffebee;color:var(--red);}
-.presu-items-table{width:100%;border-collapse:collapse;margin-top:6px;}
-.presu-items-table th{background:#fff3e0;color:var(--pink-dark);font-size:.75rem;padding:6px 8px;text-align:left;}
-.presu-items-table td{padding:5px 8px;border-bottom:1px solid #f5f0eb;font-size:.78rem;vertical-align:middle;}
+/* Item cards del formulario */
+.presu-item-block{background:#fff;border:1.5px solid #f0e8e0;border-radius:12px;padding:11px 12px;margin-bottom:8px;}
+.presu-item-block.labor-block{background:#f7fdfb;border-color:#c8e6c9;}
+.presu-desc-wrap{position:relative;margin-bottom:8px;}
+.presu-item-input{width:100%;border:1.5px solid #e8e8e8;border-radius:8px;padding:8px 10px;font-size:.82rem;font-family:inherit;box-sizing:border-box;background:#fafafa;}
+.presu-item-input:focus{outline:none;border-color:var(--pink);background:#fff;}
+.presu-item-input.num{text-align:right;background:#fafafa;}
+.presu-item-input.labor-desc:focus{border-color:var(--teal);}
+/* Dropdown de sugerencias */
+.item-sugg-panel{position:absolute;top:calc(100% - 2px);left:0;right:0;background:#fff;border:1.5px solid var(--pink);border-top:none;border-radius:0 0 10px 10px;max-height:190px;overflow-y:auto;z-index:200;box-shadow:0 6px 18px rgba(0,0,0,.12);}
+.item-sugg-opt{display:block;width:100%;text-align:left;padding:9px 12px;background:none;border:none;border-bottom:1px solid #f5f5f5;cursor:pointer;font-size:.8rem;color:var(--text);font-family:inherit;}
+.item-sugg-opt:last-child{border-bottom:none;}
+.item-sugg-opt:hover,.item-sugg-opt:active{background:#fff3e0;color:var(--pink-dark);}
+/* Fila de cantidad / precio / total */
+.presu-nums-row{display:flex;align-items:flex-end;gap:8px;}
+.num-group{display:flex;flex-direction:column;flex:1;min-width:0;}
+.num-lbl{font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin-bottom:3px;white-space:nowrap;}
+.num-total{font-size:.88rem;font-weight:800;color:var(--pink-dark);padding:8px 4px;}
+.num-total.teal{color:var(--teal);}
+.item-del-btn{background:none;border:none;cursor:pointer;color:#ffb3b3;font-size:1.1rem;padding:6px 4px;flex-shrink:0;line-height:1;}
+.item-del-btn:hover{color:var(--red);}
+/* Total y subtotales */
 .presu-total-row{background:#fff8f0;display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border-radius:10px;margin-top:12px;}
 .presu-total-lbl{font-weight:700;color:var(--pink-dark);font-size:.85rem;}
 .presu-total-val{font-size:1.15rem;font-weight:800;color:var(--pink);}
-.presu-item-input{width:100%;border:1px solid #e8e8e8;border-radius:6px;padding:5px 7px;font-size:.78rem;font-family:inherit;}
-.presu-item-input:focus{outline:none;border-color:var(--pink);}
-.presu-item-input.num{text-align:right;width:80px;}
+/* Tabla de detalle (vista, no formulario) */
+.presu-items-table{width:100%;border-collapse:collapse;margin-top:6px;}
+.presu-items-table th{background:#fff3e0;color:var(--pink-dark);font-size:.75rem;padding:6px 8px;text-align:left;}
+.presu-items-table td{padding:5px 8px;border-bottom:1px solid #f5f0eb;font-size:.78rem;vertical-align:middle;}
 .scan-btn{padding:0 14px;border:2px solid #ffd0a0;background:#fff8f0;border-radius:10px;cursor:pointer;font-size:1.35rem;flex-shrink:0;transition:all .2s;line-height:1;}
 .scan-btn:active{background:var(--pink);border-color:var(--pink);}
