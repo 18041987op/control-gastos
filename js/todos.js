@@ -1,7 +1,29 @@
 // ── ESTADO TODO ───────────────────────────────────────────
-let selectedTodoCat = '';
-let allTodos        = [];
-let todosShowDone   = false;
+let selectedTodoCat  = '';
+let allTodos         = [];
+let todosShowDone    = false;
+let todoFormOpenFor  = null; // 'S' | 'T' | null
+
+function toggleTodoForm(suffix){
+  const wrap = document.getElementById(`todoFormWrap${suffix}`);
+  if(!wrap) return;
+  const isOpen = wrap.style.display !== 'none';
+  wrap.style.display = isOpen ? 'none' : 'block';
+  todoFormOpenFor = isOpen ? null : suffix;
+  if(!isOpen){
+    // Limpiar y enfocar al abrir
+    const inputId = getTodoContainerId('Title');
+    const input   = document.getElementById(inputId);
+    if(input){ input.value = ''; input.focus(); }
+    const dateId = getTodoContainerId('Date');
+    const dateEl = document.getElementById(dateId);
+    if(dateEl) dateEl.value = '';
+    buildTodoCatGrid();
+    const alertId = getTodoContainerId('Alert');
+    const al = document.getElementById(alertId);
+    if(al){ al.className = 'alert'; al.innerHTML = ''; }
+  }
+}
 
 // ── HELPERS ───────────────────────────────────────────────
 function getTodoCats(){
@@ -97,8 +119,13 @@ async function saveTodo(){
   document.getElementById(inputId).value = '';
   document.getElementById(dateId).value  = '';
   selectedTodoCat = '';
-  buildTodoCatGrid();
   hideAlert(al);
+  // Cerrar el formulario
+  if(todoFormOpenFor){
+    const wrap = document.getElementById(`todoFormWrap${todoFormOpenFor}`);
+    if(wrap) wrap.style.display = 'none';
+    todoFormOpenFor = null;
+  }
   await loadTodos();
 }
 

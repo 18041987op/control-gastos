@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=20260305d">
+<link rel="stylesheet" href="css/styles.css?v=20260305e">
 </head>
 <body>
 
@@ -161,8 +161,11 @@
 
     <!-- Vista: Tareas (Sharelyn) -->
     <div class="view" id="viewTodo">
-      <div class="form-card admin-form">
-        <h2>✅ Mis Tareas — Sharelyn</h2>
+      <div class="todo-page-hdr">
+        <h3>✅ Mis Tareas — Sharelyn</h3>
+        <button class="todo-add-fab" onclick="toggleTodoForm('S')">➕ Nueva Tarea</button>
+      </div>
+      <div class="form-card admin-form" id="todoFormWrapS" style="display:none">
         <div id="todoAlertS" class="alert"></div>
         <label>¿Qué necesitas hacer?</label>
         <input type="text" id="todoTitleS" placeholder="Ej: Estudiar para parcial, comprar libros…" maxlength="100">
@@ -170,7 +173,10 @@
         <input type="date" id="todoDateS">
         <label>Categoría</label>
         <div class="opt-grid cols4" id="todoCatGridS"></div>
-        <button class="btn btn-p" onclick="saveTodo()" style="margin-top:14px">➕ Agregar Tarea</button>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <button class="btn btn-p" style="flex:1" onclick="saveTodo()">✅ Guardar Tarea</button>
+          <button class="btn" style="background:#f0f0f0;color:var(--muted);padding:0 16px" onclick="toggleTodoForm('S')">✕</button>
+        </div>
       </div>
       <div id="todoListS"></div>
     </div>
@@ -332,8 +338,11 @@
 
   <!-- Vista: Tareas (Teresa) -->
   <div class="view" id="tvTodo">
-    <div class="form-card teal-form" id="todoFormCardT">
-      <h2 id="todoTitleT" style="color:var(--pink)">✅ Mis Tareas — Obra</h2>
+    <div class="todo-page-hdr">
+      <h3 id="todoPageTitleT" style="color:var(--pink)">✅ Mis Tareas</h3>
+      <button class="todo-add-fab teal" onclick="toggleTodoForm('T')">➕ Nueva Tarea</button>
+    </div>
+    <div class="form-card teal-form" id="todoFormWrapT" style="display:none">
       <div id="todoAlertT" class="alert"></div>
       <label>¿Qué necesitas hacer?</label>
       <input type="text" id="todoTitleT" placeholder="Ej: Comprar cemento, llamar electricista…" maxlength="100">
@@ -341,7 +350,10 @@
       <input type="date" id="todoDateT">
       <label>Categoría</label>
       <div class="opt-grid cols4" id="todoCatGridT"></div>
-      <button class="btn btn-t" onclick="saveTodo()" style="margin-top:14px">➕ Agregar Tarea</button>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-t" style="flex:1" onclick="saveTodo()">✅ Guardar Tarea</button>
+        <button class="btn" style="background:#f0f0f0;color:var(--muted);padding:0 16px" onclick="toggleTodoForm('T')">✕</button>
+      </div>
     </div>
     <div id="todoListT"></div>
   </div>
@@ -476,7 +488,7 @@
 <script src="js/teresa.js?v=20260305c"></script>
 <script src="js/presupuestos.js?v=20260305d"></script>
 <script src="js/admin.js?v=20260307"></script>
-<script src="js/todos.js?v=20260307"></script>
+<script src="js/todos.js?v=20260305e"></script>
 <script src="js/scanner.js?v=20260307"></script>
 <script src="js/auth.js?v=20260307"></script>
 
