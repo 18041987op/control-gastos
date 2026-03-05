@@ -7,7 +7,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=20260305c">
+<link rel="stylesheet" href="css/styles.css?v=20260305d">
 </head>
 <body>
 
@@ -363,7 +363,9 @@
           <button class="tx-toggle-btn teal-toggle" onclick="showPresuForm(false)">✕ Cancelar</button>
         </div>
         <div id="presuAlert" class="alert"></div>
-        <label>Ferretería / Proveedor</label>
+        <label>Tipo de Trabajo</label>
+        <div id="workCatSelectorWrap"></div>
+        <label style="margin-top:12px">Ferretería / Proveedor</label>
         <input type="text" id="presuStore" placeholder="Ej: Ferretería El Constructor" maxlength="80">
         <label>Fecha</label>
         <input type="date" id="presuDate">
@@ -371,8 +373,12 @@
         <input type="text" id="presuNotes" placeholder="Ej: Para la segunda planta" maxlength="100">
         <label style="margin-top:14px">Artículos del presupuesto</label>
         <div id="presuItemsWrap"></div>
-        <button class="btn" style="background:#f5f5f5;color:var(--text);margin-top:8px;font-size:.82rem;border:1.5px dashed #ddd"
-                onclick="addPresuItem()">+ Agregar artículo</button>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn" style="flex:1;background:#f5f5f5;color:var(--text);font-size:.82rem;border:1.5px dashed #ddd"
+                  onclick="addPresuItem()">+ Material</button>
+          <button class="btn" style="flex:1;background:#f0faf8;color:var(--teal);font-size:.82rem;border:1.5px dashed var(--teal)"
+                  onclick="addLaborItem()">🛠 Mano de Obra</button>
+        </div>
         <div class="presu-total-row" style="margin-top:14px">
           <span class="presu-total-lbl">Total del presupuesto:</span>
           <span id="presuTotal" class="presu-total-val">L. 0.00</span>
@@ -468,7 +474,7 @@
 <script src="js/edit.js?v=20260307"></script>
 <script src="js/sharelyn.js?v=20260307"></script>
 <script src="js/teresa.js?v=20260305c"></script>
-<script src="js/presupuestos.js?v=20260307"></script>
+<script src="js/presupuestos.js?v=20260305d"></script>
 <script src="js/admin.js?v=20260307"></script>
 <script src="js/todos.js?v=20260307"></script>
 <script src="js/scanner.js?v=20260307"></script>
