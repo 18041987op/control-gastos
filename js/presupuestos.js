@@ -138,16 +138,54 @@ function selectWorkCat(k, btn){
   selectedWorkCat = k;
   document.querySelectorAll('.work-cat-btn').forEach(b => b.classList.remove('active'));
   if(btn) btn.classList.add('active');
-  updateItemsDatalist();
+  // Actualizar placeholder de inputs de descripción
+  document.querySelectorAll('.item-desc:not(.labor-desc)').forEach(inp => {
+    inp.placeholder = 'Busca o escribe un artículo…';
+  });
 }
 
-function updateItemsDatalist(){
-  const dl = document.getElementById('presuItemsList');
-  if(!dl) return;
+// ── SUGERENCIAS DE ARTÍCULOS ──────────────────────────────
+const _suggTimers = {};
+
+function openItemSugg(i){
+  clearTimeout(_suggTimers[i]);
+  filterItemSugg(i, document.getElementById(`item-desc-${i}`)?.value || '');
+}
+
+function filterItemSugg(i, query){
+  const el = document.getElementById(`sugg-${i}`);
+  if(!el) return;
   const cat = PRESU_WORK_CATS.find(c => c.k === selectedWorkCat);
-  dl.innerHTML = cat
-    ? cat.items.map(item => `<option value="${escHtml(item)}">`).join('')
-    : '';
+  if(!cat){ el.style.display = 'none'; return; }
+  const q = (query||'').toLowerCase().trim();
+  const hits = q ? cat.items.filter(it => it.toLowerCase().includes(q)) : cat.items;
+  if(!hits.length){ el.style.display = 'none'; return; }
+  el.innerHTML = hits.map(item =>
+    `<button class="item-sugg-opt" type="button"
+       onpointerdown="event.preventDefault()"
+       onclick="pickItemSugg(${i},'${item.replace(/'/g,'&#39;').replace(/"/g,'&quot;')}')">
+       ${escHtml(item)}
+     </button>`
+  ).join('');
+  el.style.display = 'block';
+}
+
+function pickItemSugg(i, text){
+  currentItems[i].description = text;
+  const input = document.getElementById(`item-desc-${i}`);
+  if(input) input.value = text;
+  const el = document.getElementById(`sugg-${i}`);
+  if(el) el.style.display = 'none';
+  // Mover foco a cantidad
+  const qty = document.getElementById(`item-qty-${i}`);
+  if(qty){ qty.focus(); qty.select(); }
+}
+
+function scheduleCloseItemSugg(i){
+  _suggTimers[i] = setTimeout(() => {
+    const el = document.getElementById(`sugg-${i}`);
+    if(el) el.style.display = 'none';
+  }, 200);
 }
 
 // ── FORM: MOSTRAR / OCULTAR ───────────────────────────────
@@ -184,22 +222,22 @@ function showPresuForm(show, presupuesto){
 
 // ── FORM: ITEMS ───────────────────────────────────────────
 function addPresuItem(){
-  currentItems.push({description:'', qty:1, unit_price:0, type:'material'});
+  const i = currentItems.length;
+  currentItems.push({description:'', qty:'', unit_price:'', type:'material'});
   renderItemsForm();
   setTimeout(() => {
-    const rows = document.querySelectorAll('.presu-item-row');
-    const last = rows[rows.length - 1];
-    if(last) last.querySelector('.item-desc')?.focus();
+    const input = document.getElementById(`item-desc-${i}`);
+    if(input){ input.focus(); openItemSugg(i); }
   }, 30);
 }
 
 function addLaborItem(){
-  currentItems.push({description:'Mano de obra', qty:1, unit_price:0, type:'labor'});
+  const i = currentItems.length;
+  currentItems.push({description:'Mano de obra', qty:'', unit_price:'', type:'labor'});
   renderItemsForm();
   setTimeout(() => {
-    const rows = document.querySelectorAll('.presu-item-row');
-    const last = rows[rows.length - 1];
-    if(last) last.querySelector('.item-desc')?.focus();
+    const qty = document.getElementById(`item-qty-${i}`);
+    if(qty) qty.focus();
   }, 30);
 }
 
@@ -225,66 +263,57 @@ function updatePresuItem(i, field, value){
 function renderItemsForm(){
   const wrap = document.getElementById('presuItemsWrap');
   if(!currentItems.length){
-    wrap.innerHTML = '<p style="color:var(--muted);font-size:.8rem;text-align:center;padding:14px 0">Aún no hay artículos. Toca <strong>+ Material</strong> o <strong>+ Mano de Obra</strong>.</p>';
+    wrap.innerHTML = '<p style="color:var(--muted);font-size:.8rem;text-align:center;padding:14px 0">Aún no hay artículos. Toca <strong>+ Material</strong> o <strong>🛠 Mano de Obra</strong>.</p>';
     document.getElementById('presuTotal').textContent = fmt(0);
-    const matEl = document.getElementById('presuMaterialsTotal');
-    const labEl = document.getElementById('presuLaborTotal');
-    if(matEl) matEl.textContent = fmt(0);
-    if(labEl) labEl.textContent = fmt(0);
     return;
   }
 
-  const hasLabor = currentItems.some(it => it.type === 'labor');
+  const hasLabor  = currentItems.some(it => it.type === 'labor');
+  const descHint  = selectedWorkCat ? 'Busca o escribe un artículo…' : 'Descripción del artículo';
 
-  wrap.innerHTML = `
-    <datalist id="presuItemsList"></datalist>
-    <table class="presu-items-table">
-      <thead>
-        <tr>
-          <th>Artículo</th>
-          <th style="text-align:center;width:52px">Cant.</th>
-          <th style="text-align:right;width:90px">P. Unit.</th>
-          <th style="text-align:right;width:78px">Total</th>
-          <th style="width:26px"></th>
-        </tr>
-      </thead>
-      <tbody>
-        ${currentItems.map((it, i) => `
-        <tr class="presu-item-row${it.type==='labor'?' labor-row':''}">
-          <td>
-            ${it.type==='labor' ? '<span class="labor-badge">🛠 Mano de Obra</span>' : ''}
-            <input class="presu-item-input item-desc" type="text"
-              list="presuItemsList"
-              value="${escHtml(it.description)}"
-              placeholder="${it.type==='labor' ? 'Ej: Instalación eléctrica' : 'Ej: Cemento 50kg'}"
-              onchange="updatePresuItem(${i},'description',this.value)">
-          </td>
-          <td>
-            <input class="presu-item-input num" type="number" min="0.01" step="any"
-              value="${it.qty}"
-              oninput="updatePresuItem(${i},'qty',this.value)">
-          </td>
-          <td>
-            <input class="presu-item-input num" type="number" min="0" step="any"
-              value="${it.unit_price}"
-              oninput="updatePresuItem(${i},'unit_price',this.value)">
-          </td>
-          <td style="text-align:right;font-weight:700;color:${it.type==='labor'?'var(--teal)':'var(--pink-dark)'}" id="item-line-${i}">
-            ${fmt((it.qty||0)*(it.unit_price||0))}
-          </td>
-          <td style="text-align:center">
-            <button onclick="removePresuItem(${i})" style="background:none;border:none;cursor:pointer;color:#e74c3c;font-size:1rem;padding:2px">🗑</button>
-          </td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-    ${hasLabor ? `
+  wrap.innerHTML = currentItems.map((it, i) => {
+    const isLabor   = it.type === 'labor';
+    const lineTotal = (parseFloat(it.qty)||0) * (parseFloat(it.unit_price)||0);
+    return `
+    <div class="presu-item-block${isLabor?' labor-block':''}">
+      ${isLabor ? '<div class="labor-badge">🛠 Mano de Obra</div>' : ''}
+      <div class="presu-desc-wrap">
+        <input id="item-desc-${i}"
+          class="presu-item-input item-desc${isLabor?' labor-desc':''}"
+          type="text"
+          value="${escHtml(it.description)}"
+          placeholder="${isLabor ? 'Ej: Instalación eléctrica completa' : descHint}"
+          oninput="filterItemSugg(${i},this.value);updatePresuItem(${i},'description',this.value)"
+          onfocus="openItemSugg(${i})"
+          onblur="scheduleCloseItemSugg(${i})">
+        <div class="item-sugg-panel" id="sugg-${i}" style="display:none"></div>
+      </div>
+      <div class="presu-nums-row">
+        <label class="num-group">
+          <span class="num-lbl">Cant.</span>
+          <input id="item-qty-${i}" class="presu-item-input num" type="number" min="0.01" step="any"
+            value="${it.qty || ''}" placeholder="1"
+            oninput="updatePresuItem(${i},'qty',this.value)">
+        </label>
+        <label class="num-group">
+          <span class="num-lbl">Precio unit. (L)</span>
+          <input id="item-price-${i}" class="presu-item-input num" type="number" min="0" step="any"
+            value="${it.unit_price || ''}" placeholder="0.00"
+            oninput="updatePresuItem(${i},'unit_price',this.value)">
+        </label>
+        <div class="num-group">
+          <span class="num-lbl">Total</span>
+          <span class="num-total${isLabor?' teal':''}" id="item-line-${i}">${fmt(lineTotal)}</span>
+        </div>
+        <button class="item-del-btn" type="button" onclick="removePresuItem(${i})" title="Eliminar">🗑</button>
+      </div>
+    </div>`;
+  }).join('') + (hasLabor ? `
     <div class="presu-subtotals">
       <div class="presu-sub-row"><span>🧱 Materiales</span><span id="presuMaterialsTotal">${fmt(calcMaterialsTotal())}</span></div>
       <div class="presu-sub-row labor"><span>🛠 Mano de Obra</span><span id="presuLaborTotal">${fmt(calcLaborTotal())}</span></div>
-    </div>` : `<div style="display:none"><span id="presuMaterialsTotal"></span><span id="presuLaborTotal"></span></div>`}`;
+    </div>` : '<span id="presuMaterialsTotal" style="display:none"></span><span id="presuLaborTotal" style="display:none"></span>');
 
-  updateItemsDatalist();
   document.getElementById('presuTotal').textContent = fmt(calcPresuTotal());
 }
 
