@@ -136,35 +136,37 @@ async function loadTeresaDashboard(){
   const COLS = 'id,date,description,category,amount,direction,month_display,has_receipt,created_at';
   const [txRes, todoRes] = await Promise.all([
     db.from('transactions').select(COLS).eq('person', person).order('created_at',{ascending:false}).limit(60),
-    db.from('todos').select('id,completed').eq('person', person),
+    db.from('todos').select('id,title,due_date,completed').eq('person', person)
+      .eq('completed', false)
+      .order('due_date', {ascending: true, nullsFirst: false})
+      .order('created_at', {ascending: false}),
   ]);
 
-  const tx       = txRes.data  || [];
-  const todos    = todoRes.data || [];
-  const expenses = tx.filter(t => t.direction === 'expense');
-  const pending  = todos.filter(t => !t.completed).length;
-
-  // Totales
-  const totalIncome = sumAmt(tx.filter(t => t.direction === 'income'));
-  const totalSpent  = sumAmt(expenses);
-  const balance     = totalIncome - totalSpent;
+  const tx           = txRes.data  || [];
+  const pendingTodos = todoRes.data || [];
+  const pending      = pendingTodos.length;
+  const topTodos     = pendingTodos.slice(0, 5);
+  const expenses     = tx.filter(t => t.direction === 'expense');
 
   const hlClass = currentTeresaMode === 'personal' ? 'hl-rosa' : 'hl-teal';
 
-  // Cards
+  // Widget de tareas pendientes
+  const todosHtml = pending === 0
+    ? '<p class="dash-todo-empty">¡Sin tareas pendientes! ✨</p>'
+    : topTodos.map(t => `
+        <div class="dash-todo-row">
+          <span class="dash-todo-dot ${accent}"></span>
+          <span class="dash-todo-text">${escHtml(t.title)}</span>
+        </div>`).join('')
+      + `<div class="dash-todo-more">${pending > 5 ? `+${pending - 5} más · ` : ''}Ver todas →</div>`;
+
   document.getElementById('tDashCards').innerHTML = `
-    <div class="stat-card ${hlClass} span2" style="cursor:pointer" onclick="teresaShow('Todo')">
-      <div class="lbl">✅ Tareas Pendientes</div>
-      <div class="val">${pending}</div>
-      <div class="sub">Toca para ver las tareas →</div>
-    </div>
-    <div class="stat-card hl-green">
-      <div class="lbl">📥 Balance</div>
-      <div class="val">${fmt(balance)}</div>
-    </div>
-    <div class="stat-card">
-      <div class="lbl">💸 Gastado</div>
-      <div class="val amount-neg">${fmt(totalSpent)}</div>
+    <div class="dash-todo-card ${hlClass}" onclick="teresaShow('Todo')" style="cursor:pointer">
+      <div class="dash-todo-hdr">
+        <span>✅ Tareas Pendientes</span>
+        <span class="dash-todo-badge">${pending}</span>
+      </div>
+      ${todosHtml}
     </div>`;
 
   // Top gastos por monto
