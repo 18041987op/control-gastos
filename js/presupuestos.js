@@ -192,32 +192,135 @@ function scheduleCloseItemSugg(i){
 function showPresuForm(show, presupuesto){
   document.getElementById('presuFormWrap').style.display = show ? 'block' : 'none';
   document.getElementById('presuListWrap').style.display = show ? 'none'  : 'block';
-  if(show){
-    editingPresuId  = presupuesto ? presupuesto.id : null;
-    selectedWorkCat = presupuesto?.work_category || '';
-    const title = document.getElementById('presuFormTitle');
-    title.textContent = editingPresuId ? '✏️ Editar Presupuesto' : '📋 Nuevo Presupuesto';
+  if(!show) return;
 
-    document.getElementById('presuStore').value = presupuesto?.store_name || '';
-    document.getElementById('presuDate').value  = presupuesto?.date       || '';
-    document.getElementById('presuNotes').value = presupuesto?.notes      || '';
-    document.getElementById('presuAlert').className = 'alert';
-    document.getElementById('presuAlert').innerHTML  = '';
-
-    currentItems = presupuesto
-      ? (Array.isArray(presupuesto.items) ? presupuesto.items : []).map(it => ({
-          description: it.description || '',
-          qty:         it.qty         || 0,
-          unit_price:  it.unit_price  || 0,
-          type:        it.type        || 'material',
-        }))
-      : [];
-
-    if(!presupuesto) setTodayDate('presuDate');
-    renderWorkCatSelector();
-    updateItemsDatalist();
-    renderItemsForm();
+  if(!presupuesto){
+    // Nuevo presupuesto → pantalla de elección
+    document.getElementById('presuFormCard').style.display = 'none';
+    renderPresuChoiceScreen();
+  } else {
+    // Editar o clonar → ir directo al formulario
+    document.getElementById('presuChoiceWrap').innerHTML = '';
+    _openPresuFormCard(presupuesto);
   }
+}
+
+function _openPresuFormCard(presupuesto){
+  document.getElementById('presuChoiceWrap').innerHTML = '';
+  document.getElementById('presuFormCard').style.display = 'block';
+
+  editingPresuId  = presupuesto.id   || null;
+  selectedWorkCat = presupuesto.work_category || '';
+
+  document.getElementById('presuFormTitle').textContent =
+    editingPresuId ? '✏️ Editar Presupuesto' : '📋 Nuevo Presupuesto';
+  document.getElementById('presuStore').value = presupuesto.store_name || '';
+  document.getElementById('presuDate').value  = presupuesto.date       || '';
+  document.getElementById('presuNotes').value = presupuesto.notes      || '';
+  document.getElementById('presuAlert').className = 'alert';
+  document.getElementById('presuAlert').innerHTML  = '';
+
+  currentItems = (Array.isArray(presupuesto.items) ? presupuesto.items : []).map(it => ({
+    description: it.description || '',
+    qty:         it.qty  !== undefined ? it.qty  : '',
+    unit_price:  it.unit_price !== undefined ? it.unit_price : '',
+    type:        it.type || 'material',
+  }));
+
+  if(!presupuesto.date) setTodayDate('presuDate');
+  renderWorkCatSelector();
+  renderItemsForm();
+}
+
+// ── PANTALLA DE ELECCIÓN (nuevo presupuesto) ──────────────
+function renderPresuChoiceScreen(){
+  document.getElementById('presuChoiceWrap').innerHTML = `
+    <div class="presu-choice-screen">
+      <div class="presu-choice-hdr">
+        <h3>📋 Nuevo Presupuesto</h3>
+        <button class="tx-toggle-btn teal-toggle" onclick="showPresuForm(false)">✕ Cancelar</button>
+      </div>
+      <p class="presu-choice-sub">¿Cómo quieres empezar?</p>
+      <div class="presu-choice-btns">
+        <button class="presu-choice-btn" onclick="startEmptyPresu()">
+          <span class="pcb-icon">📄</span>
+          <span class="pcb-title">Vacío</span>
+          <span class="pcb-desc">Empieza desde cero</span>
+        </button>
+        <button class="presu-choice-btn" onclick="openComparePicker()">
+          <span class="pcb-icon">⚖️</span>
+          <span class="pcb-title">Comparar precios</span>
+          <span class="pcb-desc">Copia artículos de un presupuesto existente</span>
+        </button>
+      </div>
+    </div>`;
+}
+
+function startEmptyPresu(){
+  _openPresuFormCard({
+    id: null, store_name:'', date:'', notes:'', items:[], work_category:'',
+  });
+}
+
+function openComparePicker(){
+  if(!allPresupuestos.length){
+    document.getElementById('presuChoiceWrap').innerHTML += `
+      <p style="color:var(--muted);font-size:.82rem;text-align:center;margin-top:16px">
+        No hay presupuestos guardados para comparar.
+      </p>`;
+    return;
+  }
+  document.getElementById('presuChoiceWrap').innerHTML = `
+    <div class="presu-choice-screen">
+      <div class="presu-choice-hdr">
+        <button class="tx-toggle-btn teal-toggle" onclick="renderPresuChoiceScreen()">← Volver</button>
+        <h3>⚖️ ¿Cuál es el presupuesto base?</h3>
+        <button class="tx-toggle-btn teal-toggle" onclick="showPresuForm(false)">✕</button>
+      </div>
+      <p class="presu-choice-sub">Los artículos se copiarán. Solo tendrás que ingresar los nuevos precios.</p>
+      <div id="presuPickerList">
+        ${allPresupuestos.map(p => {
+          const wc      = PRESU_WORK_CATS.find(c => c.k === p.work_category);
+          const dateStr = p.date ? new Date(p.date+'T12:00:00').toLocaleDateString('es-HN',{day:'2-digit',month:'2-digit',year:'numeric'}) : '';
+          const items   = Array.isArray(p.items) ? p.items : [];
+          const labCnt  = items.filter(it => it.type === 'labor').length;
+          return `
+          <div class="presu-pick-card" onclick="pickCompareBase('${p.id}')">
+            <div class="presu-store" style="font-size:.88rem">🏪 ${escHtml(p.store_name)}</div>
+            ${wc ? `<div class="presu-work-cat-tag">${wc.icon} ${wc.label}</div>` : ''}
+            <div class="presu-meta">${dateStr} · ${items.length} artículo${items.length!==1?'s':''}${labCnt?` · 🛠 ${labCnt} M.O.`:''} · <strong>${fmt(p.total)}</strong></div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+}
+
+function pickCompareBase(id){
+  const p = allPresupuestos.find(x => x.id === id);
+  if(!p) return;
+  // Copiar items pero limpiar precios (el usuario pondrá los nuevos)
+  const copiedItems = (Array.isArray(p.items) ? p.items : []).map(it => ({
+    description: it.description || '',
+    qty:         it.qty || '',
+    unit_price:  '',        // precio vacío → usuario lo llena
+    type:        it.type || 'material',
+  }));
+  _openPresuFormCard({
+    id:            null,
+    store_name:    '',      // vacío con placeholder de aviso
+    date:          '',
+    notes:         p.notes || '',
+    items:         copiedItems,
+    work_category: p.work_category || '',
+    _isCompare:    true,
+  });
+  document.getElementById('presuFormTitle').textContent = '⚖️ Comparar — ingresa el proveedor';
+  // Placeholder llamativo en el campo de proveedor
+  document.getElementById('presuStore').placeholder = '⚠️ Nombre del nuevo proveedor…';
+  setTimeout(() => {
+    const store = document.getElementById('presuStore');
+    if(store){ store.focus(); }
+  }, 50);
 }
 
 // ── FORM: ITEMS ───────────────────────────────────────────
@@ -268,10 +371,17 @@ function renderItemsForm(){
     return;
   }
 
-  const hasLabor  = currentItems.some(it => it.type === 'labor');
-  const descHint  = selectedWorkCat ? 'Busca o escribe un artículo…' : 'Descripción del artículo';
+  // Siempre mostrar: materiales primero, mano de obra al final
+  const displayOrder = [
+    ...currentItems.map((it, origIdx) => ({...it, origIdx})).filter(it => it.type !== 'labor'),
+    ...currentItems.map((it, origIdx) => ({...it, origIdx})).filter(it => it.type === 'labor'),
+  ];
 
-  wrap.innerHTML = currentItems.map((it, i) => {
+  const hasLabor = displayOrder.some(it => it.type === 'labor');
+  const descHint = selectedWorkCat ? 'Busca o escribe un artículo…' : 'Descripción del artículo';
+
+  wrap.innerHTML = displayOrder.map(it => {
+    const i         = it.origIdx;
     const isLabor   = it.type === 'labor';
     const lineTotal = (parseFloat(it.qty)||0) * (parseFloat(it.unit_price)||0);
     return `
@@ -431,24 +541,9 @@ async function loadPresupuestos(){
   renderPresupuestosList();
 }
 
-// ── CLONAR PRESUPUESTO ─────────────────────────────────────
+// ── CLONAR / COMPARAR ─────────────────────────────────────
 function clonePresupuesto(id){
-  const p = allPresupuestos.find(x => x.id === id);
-  if(!p) return;
-  // Abre el formulario como nuevo presupuesto con los mismos ítems
-  const clone = {
-    id:            null,
-    store_name:    '',
-    date:          '',
-    notes:         p.notes || '',
-    items:         p.items,
-    work_category: p.work_category || '',
-  };
-  showPresuForm(true, clone);
-  // Limpiar el id de edición ya que es un nuevo presupuesto
-  editingPresuId = null;
-  document.getElementById('presuFormTitle').textContent = '📋 Nuevo Presupuesto (copia)';
-  setTodayDate('presuDate');
+  pickCompareBase(id); // reutiliza el mismo flujo de comparación
 }
 
 // ── RENDERIZAR LISTA ──────────────────────────────────────
@@ -482,7 +577,15 @@ function renderPresupuestosList(){
         <div style="min-width:0">
           <div class="presu-store">🏪 ${escHtml(p.store_name)}</div>
           ${workCat ? `<div class="presu-work-cat-tag">${workCat.icon} ${workCat.label}</div>` : ''}
-          <div class="presu-meta">${dateStr} · ${items.length} artículo${items.length!==1?'s':''} · <strong>${fmt(p.total)}</strong></div>
+          <div class="presu-meta">${dateStr} · ${items.length} artículo${items.length!==1?'s':''}</div>
+          ${laborItems.length ? `
+          <div class="presu-breakdown">
+            <span class="pb-mat">🧱 ${fmt(matItems.reduce((s,it)=>s+(it.total??(it.qty||0)*(it.unit_price||0)),0))}</span>
+            <span class="pb-sep">+</span>
+            <span class="pb-labor">🛠 ${fmt(laborItems.reduce((s,it)=>s+(it.total??(it.qty||0)*(it.unit_price||0)),0))}</span>
+            <span class="pb-sep">=</span>
+            <span class="pb-total">${fmt(p.total)}</span>
+          </div>` : `<div class="presu-meta-total">${fmt(p.total)}</div>`}
           ${p.notes ? `<div class="presu-note">📝 ${escHtml(p.notes)}</div>` : ''}
         </div>
         <span class="badge presu-badge ${st.cls}">${st.label}</span>

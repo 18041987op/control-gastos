@@ -345,6 +345,26 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
 .presu-meta{font-size:.75rem;color:var(--muted);}
 .presu-note{font-size:.73rem;color:var(--muted);margin-top:3px;font-style:italic;}
 .presu-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid #f5f0eb;}
+/* Pantalla de elección / picker de comparación */
+.presu-choice-screen{padding:16px;}
+.presu-choice-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:8px;flex-wrap:wrap;}
+.presu-choice-hdr h3{font-size:.92rem;font-weight:700;color:var(--pink-dark);flex:1;}
+.presu-choice-sub{font-size:.78rem;color:var(--muted);margin-bottom:16px;line-height:1.5;}
+.presu-choice-btns{display:flex;gap:12px;margin-bottom:14px;}
+.presu-choice-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:18px 10px;border:2px solid #ffe0b2;border-radius:14px;background:#fff;cursor:pointer;transition:all .18s;}
+.presu-choice-btn:hover,.presu-choice-btn:active{border-color:var(--pink);background:#fff8f0;}
+.pcb-icon{font-size:1.8rem;}
+.pcb-title{font-size:.82rem;font-weight:700;color:var(--text);}
+.pcb-desc{font-size:.7rem;color:var(--muted);text-align:center;line-height:1.4;}
+.presu-pick-card{background:#fff;border:1.5px solid #f0e8e0;border-radius:12px;padding:12px 14px;margin-bottom:8px;cursor:pointer;transition:all .15s;}
+.presu-pick-card:hover,.presu-pick-card:active{border-color:var(--pink);background:#fff8f0;}
+/* Desglose de totales en la tarjeta */
+.presu-breakdown{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:3px;font-size:.75rem;}
+.pb-mat{color:var(--muted);}
+.pb-labor{color:var(--teal);font-weight:600;}
+.pb-sep{color:#ccc;}
+.pb-total{font-weight:800;color:var(--pink-dark);}
+.presu-meta-total{font-size:.78rem;font-weight:700;color:var(--pink-dark);margin-top:2px;}
 /* Selector de categoría de trabajo */
 .work-cat-scroll{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none;}
 .work-cat-scroll::-webkit-scrollbar{display:none;}
