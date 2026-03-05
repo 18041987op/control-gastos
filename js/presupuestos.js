@@ -3,12 +3,103 @@ let allPresupuestos = [];
 let currentItems    = [];   // items del formulario actual
 let compareIds      = [];   // hasta 2 ids para comparar
 let editingPresuId  = null; // id si estamos editando
+let selectedWorkCat = '';   // categoría de trabajo seleccionada
 
 const PRESU_STATUS = {
   pending:  {label:'🟡 Pendiente', cls:'b-pending'},
   approved: {label:'✅ Aprobado',  cls:'b-approved'},
   rejected: {label:'❌ Descartado', cls:'b-rejected'},
 };
+
+// ── CATEGORÍAS DE OBRA Y ARTÍCULOS COMUNES (Honduras) ─────
+const PRESU_WORK_CATS = [
+  { k:'electricidad', icon:'⚡', label:'Electricidad', items:[
+    'Cable calibre #10 (m)','Cable calibre #12 (m)','Cable calibre #14 (m)','Cable calibre #8 (m)',
+    'Ducto PVC 1/2" (m)','Ducto PVC 3/4" (m)','Ducto PVC 1" (m)',
+    'Tomacorriente doble','Switch simple','Switch doble','Switch triple',
+    'Roseta para bombillo','Panel de control 8 espacios','Panel de control 12 espacios',
+    'Breaker 15A','Breaker 20A','Breaker 30A','Breaker 2×20A',
+    'Caja octagonal','Caja rectangular (apagador)',
+  ]},
+  { k:'plomeria', icon:'🔧', label:'Plomería', items:[
+    'Tubo PVC 1/2" (6m)','Tubo PVC 3/4" (6m)','Tubo PVC 1" (6m)','Tubo PVC 2" (6m)','Tubo PVC 4" (6m)',
+    'Codo PVC 1/2" 90°','Codo PVC 3/4" 90°','Tee PVC 1/2"',
+    'Llave de chorro','Llave de paso 1/2"','Inodoro','Lavamanos',
+    'Ducha sencilla','Pila de lavar','Llave de fregadero',
+    'Sifón plástico','Pegamento PVC (tubo)','Teflón','Trampa PVC 2"','Reductor PVC 3/4"×1/2"',
+  ]},
+  { k:'estructura', icon:'🏗️', label:'Hierro y Estructura', items:[
+    'Hierro #3 (3/8") varilla','Hierro #4 (1/2") varilla','Hierro #5 (5/8") varilla','Hierro #6 (3/4") varilla',
+    'Alambre de amarre (lb)','Malla electrosoldada 6×6','Perfil metálico 2×4','Perfil metálico 4×4',
+    'Ángulo metálico 1 1/2"','Ángulo metálico 2"','Solera metálica','Soldadura (lb)',
+    'Platina 1/4"×2"','Tubo cuadrado 2×2','Tubo rectangular 2×4','Clavo 3" (lb)',
+    'Perno de anclaje','Cemento (saco 50kg)','Piedrín (m³)','Arena (m³)',
+  ]},
+  { k:'mamposteria', icon:'🧱', label:'Block y Mampostería', items:[
+    'Block 15×20×40 (und)','Block 10×20×40 (und)','Block 20×20×40 (und)','Block ½ 15×20×20',
+    'Cemento (saco 50kg)','Arena (m³)','Piedrín (m³)','Cal hidratada (saco)',
+    'Ladrillo de barro (und)','Mortero premezclado (saco)','Concreto premezclado (m³)',
+    'Formaleta (tabla)','Cuartón de madera','Alambre de amarre (lb)',
+    'Clavo 3" (lb)','Hierro #3 (3/8")','Madera para andamio','Block pómez 15×20×40',
+    'Varilla lisa 1/4"','Regla de madera',
+  ]},
+  { k:'repello', icon:'🪣', label:'Repello y Afinado', items:[
+    'Cemento (saco 50kg)','Arena fina (m³)','Cal hidratada (saco)','Masilla blanca (cubo)',
+    'Bondex (saco)','Repello premezclado (saco)','Porcelana blanca (saco)',
+    'Malla gallinero (m)','Malla de fibra (m²)','Impermeabilizante (galón)',
+    'Esquinero de aluminio (m)','Emplaste (cubo)','Pasta corrida (galón)',
+    'Sika Látex (galón)','Sika (galón)','Poliflex (rollo)',
+    'Anticorrosivo (galón)','Porcelana gris (saco)','Bondex extra (saco)','Masilla acrílica (cubo)',
+  ]},
+  { k:'ceramica', icon:'🏠', label:'Cerámica y Pisos', items:[
+    'Cerámica 30×30 (m²)','Cerámica 40×40 (m²)','Porcelanato 60×60 (m²)','Porcelanato 30×60 (m²)',
+    'Piso terrazo (m²)','Bondex blanco (saco)','Porcelana blanca (saco)','Porcelana gris (saco)',
+    'Crucetas plásticas (paq)','Esquinero aluminio (m)','Tape cerámica 10cm (m)',
+    'Tape cerámica 15cm (m)','Ladrillo tayuyo 23×11','Piso vinílico (m²)',
+    'Porcelana negra (saco)','Separadores 2mm (paq)','Adhesivo para piso (galón)',
+    'Zócalo cerámico (m)','Cerámica para pared 20×30 (m²)','Piso laminado (m²)',
+  ]},
+  { k:'cielofalso', icon:'⬜', label:'Cielo Falso', items:[
+    'Tabla yeso 4×8 (plancha)','Tabla yeso húmeda 4×8','Plycem 4×8 (plancha)',
+    'Perfil canal 3 5/8"','Perfil riel 3 5/8"','Perfil canal para cielo','Angular de remate',
+    'Tornillo 1" (caja 500)','Tornillo 1 5/8" (caja 500)','Pasta para juntas (cubo)',
+    'Cinta de papel (rollo)','Cinta malla fibra (rollo)','Alambre colgante (m)',
+    'Varilla roscada 3/8"×1m','Golosa 1 1/4" (caja)','Tubo cuadrado 7/8"',
+    'Plycem texturizado 4×8','Espuma expansiva (lata)','Masilla para cielo (cubo)','Lija #120 (pliego)',
+  ]},
+  { k:'pintura', icon:'🖌️', label:'Pintura', items:[
+    'Pintura interior (galón)','Pintura exterior (galón)','Pintura de techo (galón)',
+    'Pintura anticorrosiva (galón)','Sellador acrílico (galón)','Base de agua (galón)',
+    'Rodillo de felpa 9"','Brocha 3"','Brocha 4"','Cinta de enmascarar',
+    'Lija #100 (pliego)','Lija #150 (pliego)','Lija #80 (pliego)','Thinner (galón)',
+    'Esmalte sintético (galón)','Barniz (galón)','Imprimador (galón)',
+    'Masilla plástica (cubo)','Pintura de aceite (galón)','Disolvente (galón)',
+  ]},
+  { k:'carpinteria', icon:'🚪', label:'Carpintería y Puertas', items:[
+    'Puerta madera sólida 80×210','Puerta madera económica 80×210','Puerta metálica 80×210',
+    'Marco de puerta (cedro)','Ventana aluminio corrediza 1×1.20','Ventana aluminio fija 0.60×1.20',
+    'Cerradura de palanca','Cerradura de pomo','Bisagra 3 1/2" (par)','Pasador de aluminio',
+    'Silicón transparente (tubo)','Vidrio claro 3mm (m²)','Vidrio claro 4mm (m²)',
+    'Triplex 4×8 (plancha)','Madera cedro 1×4 (m)','Madera pino 1×6 (m)',
+    'Tornillo para madera (caja)','Mosquitero (m²)','Haladera de aluminio','Moldura de madera (m)',
+  ]},
+  { k:'techo', icon:'🏠', label:'Techo y Cubierta', items:[
+    'Lámina zinc calibre 26 (m)','Lámina zinc calibre 28 (m)','Lámina teja de barro (m²)',
+    'Lámina translúcida (m)','Cuartón de madera 2×4 (m)','Cuartón de madera 2×6 (m)',
+    'Viga de madera (m)','Clavo de zinc (lb)','Tornillo para lámina (caja)',
+    'Cumbrera de zinc (m)','Flashing de zinc (m)','Impermeabilizante de techo (galón)',
+    'Canal de aguas lluvias (m)','Bajante PVC 4" (m)','Correa metálica (m)',
+    'Manto asfáltico (m²)','Espuma de poliuretano (m²)','Teja de concreto (m²)',
+    'Gancho para lámina (und)','Ángulo para remate de techo',
+  ]},
+  { k:'general', icon:'🔨', label:'Varios / General', items:[
+    'Cemento (saco 50kg)','Arena (m³)','Piedrín (m³)','Clavo 3" (lb)','Clavo 2" (lb)',
+    'Alambre de amarre (lb)','Plástico de construcción','Carretilla (und)','Pala (und)',
+    'Pico (und)','Regla de aluminio (m)','Nivel de burbuja','Cinta métrica 5m',
+    'Plomada','Cubeta plástica 5 gal','Guantes de trabajo (par)',
+    'Casco de construcción','Lentes de seguridad','Mascarilla desechable (paq)','Agua potable (garrafón)',
+  ]},
+];
 
 // ── HELPERS ───────────────────────────────────────────────
 function escHtml(str){
@@ -19,12 +110,53 @@ function calcPresuTotal(){
   return currentItems.reduce((sum, it) => sum + (parseFloat(it.qty)||0) * (parseFloat(it.unit_price)||0), 0);
 }
 
+function calcMaterialsTotal(){
+  return currentItems.filter(it => it.type !== 'labor')
+    .reduce((sum, it) => sum + (parseFloat(it.qty)||0) * (parseFloat(it.unit_price)||0), 0);
+}
+
+function calcLaborTotal(){
+  return currentItems.filter(it => it.type === 'labor')
+    .reduce((sum, it) => sum + (parseFloat(it.qty)||0) * (parseFloat(it.unit_price)||0), 0);
+}
+
+// ── SELECTOR DE CATEGORÍA DE TRABAJO ─────────────────────
+function renderWorkCatSelector(){
+  const wrap = document.getElementById('workCatSelectorWrap');
+  if(!wrap) return;
+  wrap.innerHTML = `
+    <div class="work-cat-scroll">
+      ${PRESU_WORK_CATS.map(c => `
+        <button class="work-cat-btn${selectedWorkCat===c.k?' active':''}"
+          onclick="selectWorkCat('${c.k}',this)">
+          ${c.icon} ${c.label}
+        </button>`).join('')}
+    </div>`;
+}
+
+function selectWorkCat(k, btn){
+  selectedWorkCat = k;
+  document.querySelectorAll('.work-cat-btn').forEach(b => b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  updateItemsDatalist();
+}
+
+function updateItemsDatalist(){
+  const dl = document.getElementById('presuItemsList');
+  if(!dl) return;
+  const cat = PRESU_WORK_CATS.find(c => c.k === selectedWorkCat);
+  dl.innerHTML = cat
+    ? cat.items.map(item => `<option value="${escHtml(item)}">`).join('')
+    : '';
+}
+
 // ── FORM: MOSTRAR / OCULTAR ───────────────────────────────
 function showPresuForm(show, presupuesto){
   document.getElementById('presuFormWrap').style.display = show ? 'block' : 'none';
   document.getElementById('presuListWrap').style.display = show ? 'none'  : 'block';
   if(show){
-    editingPresuId = presupuesto ? presupuesto.id : null;
+    editingPresuId  = presupuesto ? presupuesto.id : null;
+    selectedWorkCat = presupuesto?.work_category || '';
     const title = document.getElementById('presuFormTitle');
     title.textContent = editingPresuId ? '✏️ Editar Presupuesto' : '📋 Nuevo Presupuesto';
 
@@ -39,19 +171,31 @@ function showPresuForm(show, presupuesto){
           description: it.description || '',
           qty:         it.qty         || 0,
           unit_price:  it.unit_price  || 0,
+          type:        it.type        || 'material',
         }))
       : [];
 
     if(!presupuesto) setTodayDate('presuDate');
+    renderWorkCatSelector();
+    updateItemsDatalist();
     renderItemsForm();
   }
 }
 
 // ── FORM: ITEMS ───────────────────────────────────────────
 function addPresuItem(){
-  currentItems.push({description:'', qty:1, unit_price:0});
+  currentItems.push({description:'', qty:1, unit_price:0, type:'material'});
   renderItemsForm();
-  // focus último input de descripción
+  setTimeout(() => {
+    const rows = document.querySelectorAll('.presu-item-row');
+    const last = rows[rows.length - 1];
+    if(last) last.querySelector('.item-desc')?.focus();
+  }, 30);
+}
+
+function addLaborItem(){
+  currentItems.push({description:'Mano de obra', qty:1, unit_price:0, type:'labor'});
+  renderItemsForm();
   setTimeout(() => {
     const rows = document.querySelectorAll('.presu-item-row');
     const last = rows[rows.length - 1];
@@ -66,23 +210,34 @@ function removePresuItem(i){
 
 function updatePresuItem(i, field, value){
   currentItems[i][field] = (field === 'description') ? value : (parseFloat(value) || 0);
-  // solo recalcular total, no re-render completo (para no perder el foco)
   const lineEl = document.getElementById(`item-line-${i}`);
   if(lineEl && field !== 'description'){
     const line = (currentItems[i].qty || 0) * (currentItems[i].unit_price || 0);
     lineEl.textContent = fmt(line);
   }
   document.getElementById('presuTotal').textContent = fmt(calcPresuTotal());
+  const matEl = document.getElementById('presuMaterialsTotal');
+  const labEl = document.getElementById('presuLaborTotal');
+  if(matEl) matEl.textContent = fmt(calcMaterialsTotal());
+  if(labEl) labEl.textContent = fmt(calcLaborTotal());
 }
 
 function renderItemsForm(){
   const wrap = document.getElementById('presuItemsWrap');
   if(!currentItems.length){
-    wrap.innerHTML = '<p style="color:var(--muted);font-size:.8rem;text-align:center;padding:14px 0">Aún no hay artículos. Toca <strong>+ Agregar</strong>.</p>';
+    wrap.innerHTML = '<p style="color:var(--muted);font-size:.8rem;text-align:center;padding:14px 0">Aún no hay artículos. Toca <strong>+ Material</strong> o <strong>+ Mano de Obra</strong>.</p>';
     document.getElementById('presuTotal').textContent = fmt(0);
+    const matEl = document.getElementById('presuMaterialsTotal');
+    const labEl = document.getElementById('presuLaborTotal');
+    if(matEl) matEl.textContent = fmt(0);
+    if(labEl) labEl.textContent = fmt(0);
     return;
   }
+
+  const hasLabor = currentItems.some(it => it.type === 'labor');
+
   wrap.innerHTML = `
+    <datalist id="presuItemsList"></datalist>
     <table class="presu-items-table">
       <thead>
         <tr>
@@ -95,11 +250,13 @@ function renderItemsForm(){
       </thead>
       <tbody>
         ${currentItems.map((it, i) => `
-        <tr class="presu-item-row">
+        <tr class="presu-item-row${it.type==='labor'?' labor-row':''}">
           <td>
+            ${it.type==='labor' ? '<span class="labor-badge">🛠 Mano de Obra</span>' : ''}
             <input class="presu-item-input item-desc" type="text"
+              list="presuItemsList"
               value="${escHtml(it.description)}"
-              placeholder="Ej: Cemento 42.5kg"
+              placeholder="${it.type==='labor' ? 'Ej: Instalación eléctrica' : 'Ej: Cemento 50kg'}"
               onchange="updatePresuItem(${i},'description',this.value)">
           </td>
           <td>
@@ -112,7 +269,7 @@ function renderItemsForm(){
               value="${it.unit_price}"
               oninput="updatePresuItem(${i},'unit_price',this.value)">
           </td>
-          <td style="text-align:right;font-weight:700;color:var(--pink-dark)" id="item-line-${i}">
+          <td style="text-align:right;font-weight:700;color:${it.type==='labor'?'var(--teal)':'var(--pink-dark)'}" id="item-line-${i}">
             ${fmt((it.qty||0)*(it.unit_price||0))}
           </td>
           <td style="text-align:center">
@@ -120,7 +277,14 @@ function renderItemsForm(){
           </td>
         </tr>`).join('')}
       </tbody>
-    </table>`;
+    </table>
+    ${hasLabor ? `
+    <div class="presu-subtotals">
+      <div class="presu-sub-row"><span>🧱 Materiales</span><span id="presuMaterialsTotal">${fmt(calcMaterialsTotal())}</span></div>
+      <div class="presu-sub-row labor"><span>🛠 Mano de Obra</span><span id="presuLaborTotal">${fmt(calcLaborTotal())}</span></div>
+    </div>` : `<div style="display:none"><span id="presuMaterialsTotal"></span><span id="presuLaborTotal"></span></div>`}`;
+
+  updateItemsDatalist();
   document.getElementById('presuTotal').textContent = fmt(calcPresuTotal());
 }
 
@@ -150,9 +314,19 @@ async function savePresupuesto(){
     qty:         parseFloat(it.qty)        || 0,
     unit_price:  parseFloat(it.unit_price) || 0,
     total:       parseFloat(((it.qty||0)*(it.unit_price||0)).toFixed(2)),
+    type:        it.type || 'material',
   }));
 
-  const row = { person:'teresa', store_name:store, date, notes:notes||null, items, total, status:'pending' };
+  const row = {
+    person:        'teresa',
+    store_name:    store,
+    date,
+    notes:         notes || null,
+    items,
+    total,
+    status:        'pending',
+    work_category: selectedWorkCat || null,
+  };
 
   const btn = document.getElementById('presuSaveBtn');
   btn.disabled = true; btn.textContent = 'Guardando…';
@@ -175,7 +349,12 @@ async function savePresupuesto(){
         &nbsp;&nbsp;notes TEXT, items JSONB DEFAULT '[]',<br>
         &nbsp;&nbsp;total NUMERIC DEFAULT 0,<br>
         &nbsp;&nbsp;status TEXT DEFAULT 'pending',<br>
+        &nbsp;&nbsp;work_category TEXT,<br>
         &nbsp;&nbsp;created_at TIMESTAMPTZ DEFAULT NOW()<br>);</code>`, 'error');
+    } else if(error.message?.includes('work_category')){
+      showAlert(al, `Ejecuta en Supabase SQL Editor:<br>
+        <code style="font-size:.75rem;display:block;margin-top:6px;padding:8px;background:#f8f8f8;border-radius:6px">
+        ALTER TABLE presupuestos ADD COLUMN work_category TEXT;</code>`, 'error');
     } else {
       showAlert(al, 'Error: ' + error.message, 'error');
     }
@@ -208,6 +387,7 @@ async function loadPresupuestos(){
             &nbsp;&nbsp;notes TEXT, items JSONB DEFAULT '[]',<br>
             &nbsp;&nbsp;total NUMERIC DEFAULT 0,<br>
             &nbsp;&nbsp;status TEXT DEFAULT 'pending',<br>
+            &nbsp;&nbsp;work_category TEXT,<br>
             &nbsp;&nbsp;created_at TIMESTAMPTZ DEFAULT NOW()<br>
             );
           </code>
@@ -220,6 +400,26 @@ async function loadPresupuestos(){
 
   allPresupuestos = data || [];
   renderPresupuestosList();
+}
+
+// ── CLONAR PRESUPUESTO ─────────────────────────────────────
+function clonePresupuesto(id){
+  const p = allPresupuestos.find(x => x.id === id);
+  if(!p) return;
+  // Abre el formulario como nuevo presupuesto con los mismos ítems
+  const clone = {
+    id:            null,
+    store_name:    '',
+    date:          '',
+    notes:         p.notes || '',
+    items:         p.items,
+    work_category: p.work_category || '',
+  };
+  showPresuForm(true, clone);
+  // Limpiar el id de edición ya que es un nuevo presupuesto
+  editingPresuId = null;
+  document.getElementById('presuFormTitle').textContent = '📋 Nuevo Presupuesto (copia)';
+  setTodayDate('presuDate');
 }
 
 // ── RENDERIZAR LISTA ──────────────────────────────────────
@@ -239,16 +439,20 @@ function renderPresupuestosList(){
   container.innerHTML = allPresupuestos.map(p => {
     const st      = PRESU_STATUS[p.status] || PRESU_STATUS.pending;
     const items   = Array.isArray(p.items) ? p.items : [];
+    const workCat = PRESU_WORK_CATS.find(c => c.k === p.work_category);
     const dateStr = p.date
       ? new Date(p.date + 'T12:00:00').toLocaleDateString('es-HN',{day:'2-digit',month:'2-digit',year:'numeric'})
       : '';
     const cmpActive = compareIds.includes(p.id);
+    const laborItems = items.filter(it => it.type === 'labor');
+    const matItems   = items.filter(it => it.type !== 'labor');
 
     return `
     <div class="presu-card${cmpActive ? ' presu-comparing' : ''}" id="pc-${p.id}">
       <div class="presu-card-top">
         <div style="min-width:0">
           <div class="presu-store">🏪 ${escHtml(p.store_name)}</div>
+          ${workCat ? `<div class="presu-work-cat-tag">${workCat.icon} ${workCat.label}</div>` : ''}
           <div class="presu-meta">${dateStr} · ${items.length} artículo${items.length!==1?'s':''} · <strong>${fmt(p.total)}</strong></div>
           ${p.notes ? `<div class="presu-note">📝 ${escHtml(p.notes)}</div>` : ''}
         </div>
@@ -265,13 +469,24 @@ function renderPresupuestosList(){
             <th style="text-align:right;width:80px">Total</th>
           </tr></thead>
           <tbody>
-            ${items.map(it => `
+            ${matItems.map(it => `
             <tr>
               <td>${escHtml(it.description)}</td>
               <td style="text-align:center">${it.qty}</td>
               <td style="text-align:right">${fmt(it.unit_price)}</td>
               <td style="text-align:right;font-weight:700;color:var(--pink-dark)">${fmt(it.total ?? it.qty*it.unit_price)}</td>
             </tr>`).join('')}
+            ${laborItems.length ? `
+            <tr style="background:#f0faf8">
+              <td colspan="4" style="padding:5px 8px;font-size:.72rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.04em">🛠 Mano de Obra</td>
+            </tr>
+            ${laborItems.map(it => `
+            <tr style="background:#f0faf8">
+              <td>${escHtml(it.description)}</td>
+              <td style="text-align:center">${it.qty}</td>
+              <td style="text-align:right">${fmt(it.unit_price)}</td>
+              <td style="text-align:right;font-weight:700;color:var(--teal)">${fmt(it.total ?? it.qty*it.unit_price)}</td>
+            </tr>`).join('')}` : ''}
             <tr style="border-top:2px solid #ffd0a0;background:#fffbf5">
               <td colspan="3" style="padding:6px 8px;font-weight:700;text-align:right">Total:</td>
               <td style="padding:6px 8px;font-weight:800;color:var(--pink);text-align:right">${fmt(p.total)}</td>
@@ -284,6 +499,7 @@ function renderPresupuestosList(){
       <div class="presu-actions">
         <button class="presu-btn" onclick="togglePresuDetail('${p.id}')">👁 Ver</button>
         <button class="presu-btn" onclick="showPresuForm(true, allPresupuestos.find(x=>x.id==='${p.id}'))">✏️ Editar</button>
+        <button class="presu-btn presu-btn-clone" onclick="clonePresupuesto('${p.id}')" title="Duplicar para comparar">📋 Copiar</button>
         <select class="presu-status-sel" onchange="updatePresuStatus('${p.id}',this.value)">
           <option value="pending"  ${p.status==='pending' ?'selected':''}>🟡 Pendiente</option>
           <option value="approved" ${p.status==='approved'?'selected':''}>✅ Aprobado</option>
@@ -347,7 +563,6 @@ async function convertPresuToGasto(id){
 
   if(error){ alert('Error al crear gasto: ' + error.message); return; }
 
-  // Marcar como aprobado
   await db.from('presupuestos').update({status:'approved'}).eq('id', id);
   const presu = allPresupuestos.find(x => x.id === id);
   if(presu) presu.status = 'approved';
@@ -384,15 +599,26 @@ function renderComparison(){
   const aItems = Array.isArray(a.items) ? a.items : [];
   const bItems = Array.isArray(b.items) ? b.items : [];
 
-  // Unión de todas las descripciones (normalizado a minúsculas para matching)
+  // Separar materiales y mano de obra
+  const aMat   = aItems.filter(it => it.type !== 'labor');
+  const bMat   = bItems.filter(it => it.type !== 'labor');
+  const aLabor = aItems.filter(it => it.type === 'labor');
+  const bLabor = bItems.filter(it => it.type === 'labor');
+
+  const aMatTotal   = aMat.reduce((s,it) => s + (it.total ?? it.qty*it.unit_price), 0);
+  const bMatTotal   = bMat.reduce((s,it) => s + (it.total ?? it.qty*it.unit_price), 0);
+  const aLaborTotal = aLabor.reduce((s,it) => s + (it.total ?? it.qty*it.unit_price), 0);
+  const bLaborTotal = bLabor.reduce((s,it) => s + (it.total ?? it.qty*it.unit_price), 0);
+
+  // Unión de todas las descripciones de materiales
   const allDescs = [...new Set([
-    ...aItems.map(i => i.description),
-    ...bItems.map(i => i.description),
+    ...aMat.map(i => i.description),
+    ...bMat.map(i => i.description),
   ])];
 
-  const rows = allDescs.map(desc => {
-    const ai = aItems.find(i => i.description.toLowerCase() === desc.toLowerCase());
-    const bi = bItems.find(i => i.description.toLowerCase() === desc.toLowerCase());
+  const matRows = allDescs.map(desc => {
+    const ai = aMat.find(i => i.description.toLowerCase() === desc.toLowerCase());
+    const bi = bMat.find(i => i.description.toLowerCase() === desc.toLowerCase());
     const ap = ai?.unit_price ?? null;
     const bp = bi?.unit_price ?? null;
     const aCheaper = ap !== null && bp !== null && ap < bp;
@@ -413,7 +639,33 @@ function renderComparison(){
       </tr>`;
   }).join('');
 
+  // Filas de mano de obra
+  const allLaborDescs = [...new Set([...aLabor.map(i => i.description),...bLabor.map(i => i.description)])];
+  const laborRows = allLaborDescs.length ? `
+    <tr style="background:#f0faf8">
+      <td colspan="3" style="padding:5px 8px;font-size:.72rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.04em">🛠 Mano de Obra</td>
+    </tr>
+    ${allLaborDescs.map(desc => {
+      const ai = aLabor.find(i => i.description.toLowerCase() === desc.toLowerCase());
+      const bi = bLabor.find(i => i.description.toLowerCase() === desc.toLowerCase());
+      const ap = ai?.unit_price ?? null;
+      const bp = bi?.unit_price ?? null;
+      const aCheaper = ap !== null && bp !== null && ap < bp;
+      const bCheaper = ap !== null && bp !== null && bp < ap;
+      return `
+        <tr style="border-bottom:1px solid #f0f0f0;background:#f7fdfb">
+          <td style="padding:5px 8px;font-size:.77rem">${escHtml(desc)}</td>
+          <td style="padding:5px 8px;text-align:right;font-size:.77rem;font-weight:${aCheaper?'700':'400'};color:${aCheaper?'var(--green)':ap===null?'#ccc':'inherit'}">
+            ${ap !== null ? fmt(ap) : '—'}${aCheaper ? ' ✓' : ''}
+          </td>
+          <td style="padding:5px 8px;text-align:right;font-size:.77rem;font-weight:${bCheaper?'700':'400'};color:${bCheaper?'var(--green)':bp===null?'#ccc':'inherit'}">
+            ${bp !== null ? fmt(bp) : '—'}${bCheaper ? ' ✓' : ''}
+          </td>
+        </tr>`;
+    }).join('')}` : '';
+
   const aBetter = a.total <= b.total;
+
   document.getElementById('presuCompareWrap').innerHTML = `
     <div class="chart-card" style="margin:12px 0">
       <div class="chart-hdr">
@@ -431,8 +683,23 @@ function renderComparison(){
             <th style="padding:7px 8px;font-size:.76rem;text-align:right;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">🏪 ${escHtml(b.store_name)}</th>
           </tr>
         </thead>
-        <tbody>${rows}</tbody>
+        <tbody>
+          ${matRows}
+          ${laborRows}
+        </tbody>
         <tfoot>
+          ${(aMatTotal || bMatTotal) ? `
+          <tr style="background:#fffbf5">
+            <td style="padding:5px 8px;font-size:.76rem;color:var(--muted)">🧱 Subtotal materiales</td>
+            <td style="padding:5px 8px;text-align:right;font-size:.76rem;color:var(--muted)">${fmt(aMatTotal)}</td>
+            <td style="padding:5px 8px;text-align:right;font-size:.76rem;color:var(--muted)">${fmt(bMatTotal)}</td>
+          </tr>` : ''}
+          ${(aLaborTotal || bLaborTotal) ? `
+          <tr style="background:#f0faf8">
+            <td style="padding:5px 8px;font-size:.76rem;color:var(--teal)">🛠 Subtotal mano de obra</td>
+            <td style="padding:5px 8px;text-align:right;font-size:.76rem;color:var(--teal)">${fmt(aLaborTotal)}</td>
+            <td style="padding:5px 8px;text-align:right;font-size:.76rem;color:var(--teal)">${fmt(bLaborTotal)}</td>
+          </tr>` : ''}
           <tr style="border-top:2px solid #ffd0a0;background:#fffbf5">
             <td style="padding:7px 8px;font-weight:700;font-size:.8rem">Total</td>
             <td style="padding:7px 8px;text-align:right;font-weight:800;font-size:.85rem;color:${aBetter?'var(--green)':'inherit'}">

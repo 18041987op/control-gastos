@@ -334,9 +334,24 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
 .presu-card.presu-comparing{border-color:var(--pink);box-shadow:0 2px 14px rgba(230,81,0,.22);}
 .presu-card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;}
 .presu-store{font-weight:700;font-size:.9rem;color:var(--text);margin-bottom:3px;}
+.presu-work-cat-tag{display:inline-block;font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:10px;background:#fff3e0;color:var(--pink-dark);margin-bottom:3px;}
 .presu-meta{font-size:.75rem;color:var(--muted);}
 .presu-note{font-size:.73rem;color:var(--muted);margin-top:3px;font-style:italic;}
 .presu-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;padding-top:10px;border-top:1px solid #f5f0eb;}
+/* Selector de categoría de trabajo */
+.work-cat-scroll{display:flex;gap:8px;overflow-x:auto;padding:4px 0 8px;scrollbar-width:none;}
+.work-cat-scroll::-webkit-scrollbar{display:none;}
+.work-cat-btn{flex-shrink:0;padding:6px 12px;border:1.5px solid #e0d0b8;background:#fff;border-radius:20px;cursor:pointer;font-size:.75rem;font-weight:600;color:var(--pink-dark);white-space:nowrap;transition:all .18s;}
+.work-cat-btn.active{background:var(--pink);color:#fff;border-color:var(--pink);}
+/* Item de mano de obra */
+.labor-row{background:#f7fdfb;}
+.labor-badge{display:block;font-size:.65rem;font-weight:700;color:var(--teal);text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px;}
+/* Subtotales materiales / mano de obra */
+.presu-subtotals{border-top:1px dashed #e0e0e0;margin-top:8px;padding-top:8px;}
+.presu-sub-row{display:flex;justify-content:space-between;font-size:.77rem;padding:3px 4px;color:var(--muted);}
+.presu-sub-row.labor{color:var(--teal);}
+/* Botón clonar */
+.presu-btn-clone{border-color:#c8e6c9;color:#2e7d32;}
 .presu-btn{padding:5px 10px;border:1px solid #e0d0c0;background:#fff;border-radius:8px;cursor:pointer;font-size:.74rem;font-weight:600;color:var(--pink-dark);transition:all .15s;}
 .presu-btn:hover{background:#fff3e0;}
 .presu-btn-green{border-color:#a5d6a7;color:var(--green);}
