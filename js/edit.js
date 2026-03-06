@@ -88,10 +88,13 @@ function updateEPinDots(){
   });
 }
 
-function verifyEditPin(){
-  const correct = currentUser === 'admin' ? ADMIN_PIN : currentUser === 'sharelyn' ? SHARELYN_PIN : TERESA_PIN;
-  const msg     = document.getElementById('ePinMsg');
-  if(ePinBuf === correct){
+async function verifyEditPin(){
+  const correctHash = currentUser === 'admin'    ? ADMIN_PIN_HASH
+                    : currentUser === 'sharelyn' ? SHARELYN_PIN_HASH
+                    :                              TERESA_PIN_HASH;
+  const h   = await sha256hex(ePinBuf + PIN_SALT);
+  const msg = document.getElementById('ePinMsg');
+  if(h === correctHash){
     ePinOk = true;
     msg.textContent = '✅ PIN verificado — puedes guardar';
     msg.className   = 'ep-ok';

@@ -1,9 +1,14 @@
 // ── SUPABASE CONFIG ───────────────────────────────────────
 const SUPABASE_URL      = 'https://ozfmydiutupboupttkmz.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_TcG2qZdwO5PQuJAJ701xtg_XArHPpsG';
-const ADMIN_PIN         = '1340';
-const SHARELYN_PIN      = '1804';
-const TERESA_PIN        = '2026';
+
+// ── PINs: solo se guardan hashes, nunca el dígito real ─────
+// Salt fijo de la app (pepper). Cambiar esto invalida todos los PINs.
+const PIN_SALT = 'gastos-hn-2026';
+// Hashes = SHA-256(PIN + PIN_SALT)  — generados fuera del navegador
+const ADMIN_PIN_HASH    = 'ac45faf608df85509393719a3a0328252ac5ca1f77d8e1e435de0e9303237ade';
+const SHARELYN_PIN_HASH = '6115a92948fb8f1b2e5860a3dca8c6e07fc9b328d19ebb010f69d7102901fa87';
+const TERESA_PIN_HASH   = 'b64806f18e83bfb929005a77d75b63f2c2f82fe5fadcc3f40116f6743166ec16';
 
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
