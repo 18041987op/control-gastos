@@ -81,11 +81,16 @@ function switchTeresaMode(mode){
   document.getElementById('tHistThead').className = isPersonal ? 'rosa' : 'teal';
 
   // Formulario de tareas
-  document.getElementById('todoFormCardT').className = formClass;
-  document.getElementById('todoTitleT').style.color  = accent;
-  document.getElementById('todoTitleT').textContent  = isPersonal
+  document.getElementById('todoFormWrapT').className = formClass;
+  document.getElementById('todoPageTitleT').style.color   = accent;
+  document.getElementById('todoPageTitleT').textContent   = isPersonal
     ? '✅ Mis Tareas — Personal'
     : '✅ Mis Tareas — Obra';
+  // Botón FAB Nueva Tarea y botón Guardar
+  const fabT  = document.getElementById('todoFabT');
+  const saveT = document.getElementById('todoSaveBtnT');
+  if(fabT)  fabT.className  = isPersonal ? 'todo-add-fab rosa' : 'todo-add-fab teal';
+  if(saveT) saveT.className = isPersonal ? 'btn btn-tp' : 'btn btn-t';
 
   // Color activo del nav
   document.querySelectorAll('#teresaBottomNav .nav-btn').forEach(b => {
@@ -208,7 +213,7 @@ function handleReceiptSelect(e){
     document.getElementById('receiptPreviewImg').style.display = 'block';
     document.getElementById('receiptPlaceholderTxt').textContent = 'Foto seleccionada ✓';
     document.getElementById('receiptClearBtn').style.display  = 'block';
-    document.getElementById('receiptDrop').style.borderColor  = 'var(--teal)';
+    document.getElementById('receiptDrop').style.borderColor  = currentTeresaMode === 'personal' ? 'var(--rosa)' : 'var(--pink)';
   });
 }
 
