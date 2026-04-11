@@ -8,6 +8,25 @@ function fmtUSD(n){
   return '$' + parseFloat(n||0).toLocaleString('en-US',{minimumFractionDigits:2, maximumFractionDigits:2});
 }
 
+// Sam's avatar helper
+function samIcon(size){
+  size = size || 24;
+  return `<img src="img/sam.svg" alt="Sam" class="sam-avatar" style="width:${size}px;height:${size}px;border-radius:50%;vertical-align:middle">`;
+}
+function catEmoji(k){
+  if(k === 'sam') return samIcon(22);
+  return ARELY_CAT[k]?.emoji || '📦';
+}
+
+// Custom category grid for Arely (shows Sam's avatar)
+function buildArelyCatGrid(containerId, onSelect){
+  document.getElementById(containerId).innerHTML = Object.entries(ARELY_CAT).map(([k,v]) => {
+    const icon = k === 'sam' ? samIcon(20) : `<span class="opt-icon">${v.emoji}</span>`;
+    return `<button class="opt-btn" onclick="this.parentElement.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('sel','sel-arely'));this.classList.add('sel-arely');(${onSelect.toString()})('${k}')">
+    ${icon}${v.label.replace(/^[^\s]+\s/,'')}</button>`;
+  }).join('');
+}
+
 // ── NAVIGATION ───────────────────────────────────────────
 function arelyShow(name){
   document.querySelectorAll('#arelyShell .view').forEach(v => v.classList.remove('active'));
@@ -17,6 +36,7 @@ function arelyShow(name){
   if(btn){ btn.classList.add('active','a-active'); }
   if(name === 'Dashboard')  loadArelyDashboard();
   if(name === 'AddExpense') loadArelyRecentExp();
+  if(name === 'Upload')     { /* ready */ }
   if(name === 'Budget')     loadArelyBudgetView();
   if(name === 'Calendar')   renderArelyCalendar();
   if(name === 'Checklist')  { buildArelyTodoCatGrid(); loadArelyTodos(); }
@@ -100,7 +120,7 @@ function renderArelyCatBreakdown(tx){
     const pct = ((amt/total)*100).toFixed(1);
     return `
     <div class="arely-cat-row">
-      <div class="arely-cat-icon" style="background:${cat.color}20;color:${cat.color}">${cat.emoji}</div>
+      <div class="arely-cat-icon" style="background:${cat.color}20;color:${cat.color}">${k === 'sam' ? samIcon(28) : cat.emoji}</div>
       <div class="arely-cat-info">
         <div class="arely-cat-name">${cat.label}</div>
         <div class="arely-cat-bar-wrap">
@@ -206,7 +226,7 @@ function renderArelyTxTable(){
     <tr${t.edited_at?' class="was-edited"':''}>
       <td>${t.date||'—'}${t.edited_at?'<span class="edited-mark">✏️</span>':''}</td>
       <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.description}">${t.description}</td>
-      <td><span class="badge b-arely-cat">${ARELY_CAT[t.category]?.emoji||'📦'} ${ARELY_CAT[t.category]?.label||t.category}</span></td>
+      <td><span class="badge b-arely-cat">${catEmoji(t.category)} ${ARELY_CAT[t.category]?.label||t.category}</span></td>
       <td class="amount-neg">${fmtUSD(t.amount)}</td>
       <td><button class="del-btn" onclick="deleteTx('${t.id}','arely')">🗑</button></td>
     </tr>`).join('');
@@ -253,7 +273,7 @@ async function loadArelyRecentExp(){
   box.innerHTML = `<table style="width:100%;font-size:.78rem;border-collapse:collapse">
     ${recent.map(t => `
     <tr style="border-bottom:1px solid #f0f0f0">
-      <td style="padding:6px 5px">${ARELY_CAT[t.category]?.emoji||'📦'}</td>
+      <td style="padding:6px 5px">${catEmoji(t.category)}</td>
       <td style="padding:6px 4px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description}</td>
       <td style="padding:6px 4px;color:#D06B8D;font-weight:700">${fmtUSD(t.amount)}</td>
       <td><button class="del-btn" onclick="deleteTx('${t.id}','arely')">🗑</button></td>
@@ -263,17 +283,23 @@ async function loadArelyRecentExp(){
 
 // ── BUDGET VIEW ──────────────────────────────────────────
 function loadArelyBudgetView(){
-  document.getElementById('arelyBudgetInput').value = arelyBudget || '';
+  document.getElementById('arelyBudgetInput').value = arelyBudget > 0 ? arelyBudget : '';
+  const hint = document.getElementById('arelyBudgetHint');
+  if(hint) hint.textContent = arelyBudget > 0
+    ? 'Current budget: ' + fmtUSD(arelyBudget)
+    : 'Enter your total monthly household budget';
   renderArelyBudgetCategories();
 }
 
 function saveArelyBudget(){
-  const val = parseFloat(document.getElementById('arelyBudgetInput').value);
+  const raw = document.getElementById('arelyBudgetInput').value.replace(/[^0-9.]/g,'');
+  const val = parseFloat(raw);
   const al  = document.getElementById('arelyBudgetAlert');
   if(!val || val <= 0){ showAlert(al, 'Enter a valid budget amount.', 'error'); return; }
   arelyBudget = val;
   localStorage.setItem('arely_budget_' + getCurrentMonthKey(), val);
-  showAlert(al, '✅ Budget saved!', 'success');
+  showAlert(al, '✅ Budget set to ' + fmtUSD(val) + '!', 'success');
+  document.getElementById('arelyBudgetHint').textContent = 'Current budget: ' + fmtUSD(val);
   renderArelyBanner();
   renderArelyBudgetCategories();
 }
@@ -294,7 +320,7 @@ function renderArelyBudgetCategories(){
     const budgetPct = arelyBudget > 0 ? ((amt / arelyBudget) * 100).toFixed(1) : 0;
     return `
     <div class="arely-budget-cat-row">
-      <div class="arely-cat-icon" style="background:${cat.color}20;color:${cat.color}">${cat.emoji}</div>
+      <div class="arely-cat-icon" style="background:${cat.color}20;color:${cat.color}">${k === 'sam' ? samIcon(28) : cat.emoji}</div>
       <div class="arely-cat-info">
         <div class="arely-cat-name">${cat.label}</div>
         <div class="arely-cat-bar-wrap">
@@ -367,6 +393,202 @@ function renderArelyCalendar(){
         </div>
       </div>`;
   });
+}
+
+// ── CSV UPLOAD & PARSER ──────────────────────────────────
+let arelyPendingCsv = [];
+
+function arelyDragOver(e){ e.preventDefault(); document.getElementById('arelyUploadArea').classList.add('drag'); }
+function arelyDragLeave(){ document.getElementById('arelyUploadArea').classList.remove('drag'); }
+function arelyDrop(e){ e.preventDefault(); arelyDragLeave(); const f = e.dataTransfer.files[0]; if(f) arelyProcessFile(f); }
+function arelyFileSelect(e){ const f = e.target.files[0]; if(f) arelyProcessFile(f); }
+
+function arelyProcessFile(f){
+  const reader = new FileReader();
+  reader.onload = e => { arelyPendingCsv = arelyParseCSV(e.target.result); arelyShowPreview(arelyPendingCsv, f.name); };
+  reader.readAsText(f, 'utf-8');
+}
+
+// Auto-categorize for household expenses (US context)
+function arelyCategorize(desc){
+  const d = desc.toUpperCase();
+  // Electricity & Power
+  if(/DUKE ENERGY|POWER|ELECTRIC|ENERGY BILL|SCE&G|DOMINION/.test(d)) return 'electricity';
+  // Water
+  if(/WATER|CHARLOTTE WATER|AQUA|SEWER/.test(d)) return 'water';
+  // Gas / Fuel
+  if(/\bGAS\b|PIEDMONT|NATURAL GAS|ATMOS|SHELL|EXXON|CIRCLE K|SPEEDWAY|MARATHON|QT |QUIKTRIP|CHEVRON|BP |WAWA|RACETRAC|SHEETZ/.test(d)) return 'gas';
+  // Internet / Cable
+  if(/SPECTRUM|ATT|AT&T|COMCAST|XFINITY|VERIZON FIO|GOOGLE FIBER|TMOBILE HOME|STARLINK|HULU|NETFLIX|DISNEY|YOUTUBE|APPLE.COM|SPOTIFY/.test(d)) return 'internet';
+  // Phone
+  if(/T-MOBILE|TMOBILE|VERIZON WIRE|CRICKET|BOOST|METRO BY|MINT MOBILE|VISIBLE/.test(d)) return 'phone';
+  // Groceries
+  if(/WALMART|ALDI|LIDL|FOOD LION|PUBLIX|KROGER|HARRIS TEETER|TRADER JOE|WHOLE FOODS|COSTCO|SAM'S CLUB|TARGET|DOLLAR TREE|DOLLAR GEN|FAMILY DOLLAR|GROCERY|MARKET|PRICESMART/.test(d)) return 'groceries';
+  // Rent / Mortgage
+  if(/RENT|MORTGAGE|LEASE|HOA|PROPERTY|ZILLOW|APARTMENT/.test(d)) return 'rent';
+  // Sam (Pet)
+  if(/PET|PETCO|PETSMART|VET |VETERINAR|BANFIELD|CHEWY|DOG |PUPPY|GROOM/.test(d)) return 'sam';
+  // Transportation
+  if(/UBER|LYFT|DMV|AUTO|CAR WASH|JIFFY|FIRESTONE|AUTOZONE|O'REILLY|ADVANCE AUTO|PARKING|TOLL|EZ PASS/.test(d)) return 'transport';
+  // Health
+  if(/PHARMACY|CVS|WALGREEN|RITE AID|DOCTOR|HOSPITAL|URGENT|DENTAL|OPTOM|MEDIC|HEALTH|HIMS|PRESCRIPTION/.test(d)) return 'health';
+  // Home Maintenance
+  if(/LOWES|LOWE'S|HOME DEPOT|HARDWARE|PLUMB|ROOF|REPAIR|CLEAN|MAID|LAWN/.test(d)) return 'maintenance';
+  // Dining
+  if(/DOORDASH|GRUBHUB|UBEREATS|MCDONALD|CHICK-FIL|WENDY|BURGER|PIZZA|RESTAURANT|GRILL|DINER|CAFE|COFFEE|STARBUCK|DUNKIN|TACO|CHIPOTLE|OLIVE GARDEN|IHOP|WAFFLE|BUFFET|KEBAB|RED LOBSTER|PAPA JOHN|KID CASHEW/.test(d)) return 'dining';
+  // Insurance
+  if(/INSURANCE|GEICO|STATE FARM|ALLSTATE|PROGRESSIVE|LIBERTY|USAA/.test(d)) return 'insurance';
+  // Clothing
+  if(/SHEIN|ZARA|H&M|OLD NAVY|GAP|ROSS|MARSHALL|TJ MAXX|NORDSTROM|MACYS|FASHION|CLOTH|APPAREL/.test(d)) return 'clothing';
+  // Entertainment
+  if(/CINEMA|MOVIE|AMC|REGAL|GAME|STEAM|PLAYSTATION|XBOX|BOWLING|MINIATURE|CONCERT|TICKET/.test(d)) return 'entertainment';
+  // Payment / Skip
+  if(/PAYMENT|THANK YOU|AUTOPAY/.test(d)) return 'PAYMENT';
+  return 'other';
+}
+
+function arelyParseCSV(content){
+  const lines = content.split(/\r?\n/);
+  const txns = [];
+
+  for(let i = 0; i < lines.length; i++){
+    const line = lines[i].trim();
+    if(!line) continue;
+
+    // Parse quoted CSV: "Date","Amount","*","","Description"
+    const cols = [];
+    let cur = '', inQ = false;
+    for(let j = 0; j < line.length; j++){
+      const c = line[j];
+      if(c === '"'){ inQ = !inQ; }
+      else if(c === ',' && !inQ){ cols.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    cols.push(cur.trim());
+
+    if(cols.length < 2) continue;
+    // Date should be MM/DD/YYYY
+    const dateParts = cols[0].split('/');
+    if(dateParts.length < 3) continue;
+    const mm = parseInt(dateParts[0]);
+    const dd = parseInt(dateParts[1]);
+    const yyyy = parseInt(dateParts[2]);
+    if(!mm || !dd || !yyyy || mm < 1 || mm > 12) continue;
+
+    const amount = parseFloat(cols[1]);
+    if(isNaN(amount) || amount === 0) continue;
+
+    const desc = cols[cols.length - 1] || cols[4] || cols[3] || cols[2] || '';
+    if(!desc) continue;
+
+    const isExpense = amount < 0;
+    const absAmt = Math.abs(amount);
+    const cat = arelyCategorize(desc);
+
+    if(cat === 'PAYMENT') continue; // Skip credit card payments
+
+    const fmtDate = `${String(mm).padStart(2,'0')}/${String(dd).padStart(2,'0')}`;
+    txns.push({
+      date: fmtDate,
+      description: desc.replace(/\s{2,}/g,' ').trim(),
+      category: isExpense ? cat : 'other',
+      cat_label: isExpense ? (ARELY_CAT[cat]?.label || cat) : 'Income',
+      month: MONTHS_EN[mm].toLowerCase(),
+      month_display: MONTHS_EN[mm],
+      month_num: mm,
+      year: yyyy,
+      amount: absAmt,
+      type: 'bank',
+      person: 'arely',
+      direction: isExpense ? 'expense' : 'income',
+    });
+  }
+  return txns;
+}
+
+function arelyShowPreview(txns, filename){
+  const al = document.getElementById('arelyUploadAlert');
+  if(!txns.length){ showAlert(al, 'No transactions found in this file.', 'error'); return; }
+  hideAlert(al);
+  const expenses = txns.filter(t => t.direction === 'expense');
+  const incomes  = txns.filter(t => t.direction === 'income');
+  document.getElementById('arelyPreviewTitle').textContent = `Preview: ${expenses.length} expenses + ${incomes.length} income from "${filename}"`;
+  document.getElementById('arelyPreviewBox').innerHTML = `
+    <table style="width:100%;font-size:.76rem;border-collapse:collapse">
+      <thead><tr style="background:var(--arely-bg)">
+        <th style="padding:4px 7px;text-align:left">Date</th>
+        <th style="padding:4px 7px;text-align:left">Description</th>
+        <th style="padding:4px 7px;text-align:left">Category</th>
+        <th style="padding:4px 7px;text-align:right">Amount</th>
+      </tr></thead>
+      <tbody>${txns.slice(0,50).map(t => `
+        <tr style="border-bottom:1px solid #f5f0f3">
+          <td style="padding:3px 7px">${t.date}</td>
+          <td style="padding:3px 7px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description}</td>
+          <td style="padding:3px 7px"><span class="badge b-arely-cat">${catEmoji(t.category)} ${t.cat_label}</span></td>
+          <td style="padding:3px 7px;text-align:right;color:${t.direction==='income'?'var(--green)':'var(--red)'};font-weight:600">${fmtUSD(t.amount)}</td>
+        </tr>`).join('')}
+        ${txns.length > 50 ? `<tr><td colspan="4" style="text-align:center;padding:8px;color:var(--muted)">… and ${txns.length-50} more</td></tr>` : ''}
+      </tbody>
+    </table>`;
+
+  // Check for duplicates
+  const dupWarn = document.getElementById('arelyDupWarning');
+  const importBtn = document.getElementById('arelyImportBtn');
+  const replaceBtn = document.getElementById('arelyReplaceBtn');
+  if(txns.length > 0){
+    const sampleMonth = txns[0].month;
+    const sampleYear  = txns[0].year;
+    const existing    = arelyTx.filter(t => t.month === sampleMonth && t.type === 'bank' && (t.year == sampleYear));
+    if(existing.length > 0){
+      showAlert(dupWarn, `⚠️ There are already ${existing.length} bank transactions from ${txns[0].month_display} ${sampleYear}. Use "Clear month & Import" to replace them.`, 'error');
+      importBtn.style.display  = 'none';
+      replaceBtn.style.display = 'block';
+    } else {
+      hideAlert(dupWarn);
+      importBtn.style.display  = 'block';
+      replaceBtn.style.display = 'none';
+    }
+  }
+  document.getElementById('arelyPreviewSection').style.display = 'block';
+}
+
+async function arelyImportCSV(){
+  const btn = document.getElementById('arelyImportBtn');
+  const al  = document.getElementById('arelyUploadAlert');
+  if(!arelyPendingCsv.length) return;
+  btn.disabled = true; btn.textContent = 'Importing…';
+  const {error} = await db.from('transactions').insert(arelyPendingCsv);
+  btn.disabled = false; btn.textContent = '✅ Import Transactions';
+  if(error){ showAlert(al, 'Error: ' + error.message, 'error'); return; }
+  showAlert(al, `✅ ${arelyPendingCsv.length} transactions imported!`, 'success');
+  arelyCancelUpload();
+  await loadArelyData();
+}
+
+async function arelyReplaceCSV(){
+  const btn = document.getElementById('arelyReplaceBtn');
+  const al  = document.getElementById('arelyUploadAlert');
+  if(!arelyPendingCsv.length) return;
+  btn.disabled = true; btn.textContent = 'Clearing…';
+  let delQ = db.from('transactions').delete().eq('month',arelyPendingCsv[0].month).eq('type','bank').eq('person','arely');
+  if(arelyPendingCsv[0].year) delQ = delQ.eq('year', arelyPendingCsv[0].year);
+  await delQ;
+  btn.textContent = 'Importing…';
+  const {error} = await db.from('transactions').insert(arelyPendingCsv);
+  btn.disabled = false; btn.textContent = '🔄 Clear month & Import';
+  if(error){ showAlert(al, 'Error: ' + error.message, 'error'); return; }
+  showAlert(al, `✅ Replaced & imported ${arelyPendingCsv.length} transactions!`, 'success');
+  arelyCancelUpload();
+  await loadArelyData();
+}
+
+function arelyCancelUpload(){
+  arelyPendingCsv = [];
+  document.getElementById('arelyPreviewSection').style.display = 'none';
+  document.getElementById('arelyCsvInput').value = '';
+  document.getElementById('arelyImportBtn').style.display = 'block';
+  document.getElementById('arelyReplaceBtn').style.display = 'none';
 }
 
 // ── CHECKLIST / TODOS ────────────────────────────────────
@@ -464,4 +686,305 @@ function escHtml(s){
   const d = document.createElement('div');
   d.textContent = s;
   return d.innerHTML;
+}
+
+// ══════════════════════════════════════════════════════════
+// CSV IMPORT — Credit Card Statement Parser for Arely
+// Format: "MM/DD/YYYY","amount","*","","DESCRIPTION"
+// Negative = expense, positive = payment/credit
+// ══════════════════════════════════════════════════════════
+
+let arelyPendingTx = [];
+
+// ── AUTO-CATEGORIZATION ──────────────────────────────────
+function arelyAutoCategorize(desc){
+  const d = desc.toUpperCase();
+
+  // Electricity
+  if(/DUKE ENERGY|POWER BILL|ELECTRIC|ENERGY UNITED|PIEDMONT NATURAL/.test(d)) return 'electricity';
+
+  // Water
+  if(/WATER BILL|CHARLOTTE WATER|CMUD|WATER DEPT|AQUA AMERICA/.test(d)) return 'water';
+
+  // Gas / Fuel
+  if(/EXXON|SHELL|CHEVRON|BP\b|QT\s|QUIKTRIP|CIRCLE K|SPEEDWAY|SHEETZ|PILOT|MARATHON|MURPHY|GAS|WAWA|FUEL|SAM.S MART|RACETRAC/.test(d)) return 'gas';
+
+  // Internet / Cable / Streaming
+  if(/SPECTRUM|COMCAST|XFINITY|ATT\b|AT&T|VERIZON FIO|GOOGLE \*FI|NETFLIX|HULU|DISNEY\+|AMAZON PRIME|SPOTIFY|APPLE\.COM\/BILL|GOOGLE \*GOOGLE ONE|YOUTUBE|HBO|PARAMOUNT|PEACOCK|DASHPASS|DOORDASHDASHPASS|FINHABITS/.test(d)) return 'internet';
+
+  // Phone
+  if(/T-MOBILE|VERIZON WIRELESS|CRICKET|METRO.*PCS|MINT MOBILE|BOOST|IDT BOSS|GOOGLE \*FI/.test(d)) return 'phone';
+
+  // Groceries
+  if(/WALMART|TARGET|KROGER|PUBLIX|ALDI|COSTCO|SAM.?S CLUB|FOOD LION|HARRIS TEETER|TRADER JOE|WHOLE FOODS|LIDL|SUPERMERCADO|MARIACHI|PANADERIA|DOLLARTREE|DOLLAR TREE|AMAZON GROCERY/.test(d)) return 'groceries';
+
+  // Rent / Mortgage
+  if(/RENT|MORTGAGE|LEASE|PROPERTY|HOA |HOMEOWNERS/.test(d)) return 'rent';
+
+  // Sam (Pet) 🐾
+  if(/PETSMART|PETCO|PET SUPPLIES|VET|VETERINAR|HIGHT VET|ANIMAL HOSPITAL|BANFIELD|PET FOOD/.test(d)) return 'sam';
+
+  // Transportation / Car
+  if(/DMV|AUTO|TIRE|JIFFY|OIL CHANGE|CAR WASH|XPRESS|SAM.S XPRESS|UBER(?!.*EAT)|LYFT|PARKING|TOLL|GEICO|ALLSTATE|STATE FARM|PROGRESSIVE|CARMAX/.test(d)) return 'transport';
+
+  // Health / Medical
+  if(/NOVANT|HOSPITAL|CLINIC|PHARMACY|CVS|WALGREENS|MEDICAL|DENTIST|DENTAL|DOCTOR|HEALTH|OPTOM|CEENTA|HIMS AND HERS|A\.Z\. PHARM/.test(d)) return 'health';
+
+  // Home Maintenance
+  if(/LOWES|HOME DEPOT|MENARDS|ACE HARDWARE|TRUE VALUE|SHERWIN|PAINT|PLUMB/.test(d)) return 'maintenance';
+
+  // Dining Out / Food Delivery
+  if(/DOORDASH|GRUBHUB|UBER.*EAT|POSTMATES|MCDONALD|BURGER|CHICK-FIL|WENDY|TACO|SUBWAY|PIZZA|DOMINO|STARBUCKS|DUNKIN|CHIPOTLE|PANDA EXPRESS|POPEYE|ZAXBY|BOJANGLE|COOK OUT|WAFFLE|IHOP|DENNY|APPLEBEE|CHILI|OLIVE GARDEN|RED LOBSTER|OUTBACK|CAVA|QDOBA|DD \*|RESTAURANT|BUFFET|GRILL|KEBAB|TAQUERIA|LUPITA|VIVA.?CHICKEN|ANTOJITOS|KID CASHEW|FACTOR\s|SHEIN/.test(d)) return 'dining';
+
+  // Insurance
+  if(/INSURANCE|INSUR|ABOGAD/.test(d)) return 'insurance';
+
+  // Clothing / Shopping
+  if(/ROSS |BURLINGTON|TJMAXX|TJ MAXX|MARSHALLS|OLD NAVY|GAP\b|H&M|ZARA|FOREVER 21|NIKE|ADIDAS|SHEIN/.test(d)) return 'clothing';
+
+  // Entertainment
+  if(/MOVIE|CINEMA|AMC\b|REGAL|NETFLIX|GAMESPOT|PLAYSTATION|XBOX|STEAM|NINTENDO|CONCERT|TICKET|EVENT/.test(d)) return 'entertainment';
+
+  // Payments / Credits (skip)
+  if(/AUTOMATIC PAYMENT|ONLINE PAYMENT|PAYMENT THANK|THANK YOU|CURRENCY CONV FEE ADJUST/.test(d)) return 'PAYMENT';
+
+  // Medical refunds
+  if(/CEENTA.*SOUTHPARK/.test(d)){
+    // Could be a payment or refund - check by context
+    return 'health';
+  }
+
+  return 'other';
+}
+
+// ── DRAG & DROP ──────────────────────────────────────────
+function arelyDragOver(e){
+  e.preventDefault();
+  document.getElementById('arelyUploadArea').classList.add('drag');
+}
+function arelyDragLeave(){
+  document.getElementById('arelyUploadArea').classList.remove('drag');
+}
+function arelyDrop(e){
+  e.preventDefault();
+  arelyDragLeave();
+  const f = e.dataTransfer.files[0];
+  if(f) arelyProcessFile(f);
+}
+function arelyFileSelect(e){
+  const f = e.target.files[0];
+  if(f) arelyProcessFile(f);
+}
+
+// ── PARSE CSV ────────────────────────────────────────────
+function arelyProcessFile(f){
+  const reader = new FileReader();
+  reader.onload = e => {
+    arelyPendingTx = arelyParseCSV(e.target.result);
+    arelyShowPreview(arelyPendingTx, f.name);
+  };
+  reader.readAsText(f, 'utf-8');
+}
+
+function arelyParseCSV(content){
+  const lines = content.split(/\r?\n/);
+  const txns = [];
+
+  for(let i = 0; i < lines.length; i++){
+    const line = lines[i].trim();
+    if(!line) continue;
+
+    // Parse quoted CSV: "date","amount","*","","description"
+    const cols = [];
+    let cur = '', inQ = false;
+    for(let j = 0; j < line.length; j++){
+      const c = line[j];
+      if(c === '"'){ inQ = !inQ; }
+      else if(c === ',' && !inQ){ cols.push(cur.trim()); cur = ''; }
+      else { cur += c; }
+    }
+    cols.push(cur.trim());
+
+    if(cols.length < 2) continue;
+
+    // Parse date (MM/DD/YYYY)
+    const dateStr = cols[0];
+    const dp = dateStr.split('/');
+    if(dp.length < 3) continue;
+    const mm = parseInt(dp[0]);
+    const dd = dp[1];
+    const yyyy = parseInt(dp[2]);
+    if(!mm || !yyyy || yyyy < 2020) continue;
+
+    // Parse amount
+    const rawAmt = parseFloat(cols[1]);
+    if(isNaN(rawAmt) || rawAmt === 0) continue;
+
+    // Description is the last column
+    const desc = cols[cols.length - 1] || 'Unknown';
+
+    // Determine direction
+    const isExpense = rawAmt < 0;
+    const absAmt = Math.abs(rawAmt);
+
+    // Auto-categorize
+    const cat = arelyAutoCategorize(desc);
+
+    // Skip payments/credits (positive amounts that are payments)
+    if(cat === 'PAYMENT') continue;
+
+    // Clean description
+    let clean = desc
+      .replace(/\s{2,}/g,' ')
+      .replace(/\s+(CA|NC|GA|TX|NY|FL|MO|NJ|WA|DE|VA|AZ)\s*$/i,'')
+      .trim();
+
+    const monthEN = MONTHS_EN[mm];
+    txns.push({
+      date: `${dd}/${String(mm).padStart(2,'0')}`,
+      description: clean,
+      category: isExpense ? cat : 'other',
+      cat_label: isExpense ? (ARELY_CAT[cat]?.label || cat) : 'Payment',
+      month: monthEN.toLowerCase(),
+      month_display: monthEN,
+      month_num: mm,
+      year: yyyy,
+      amount: absAmt,
+      type: 'bank',
+      person: 'arely',
+      direction: isExpense ? 'expense' : 'income',
+    });
+  }
+
+  return txns;
+}
+
+// ── PREVIEW ──────────────────────────────────────────────
+function arelyShowPreview(txns, filename){
+  const al = document.getElementById('arelyUploadAlert');
+  if(!txns.length){
+    showAlert(al, 'No transactions found in this file.', 'error');
+    return;
+  }
+  hideAlert(al);
+
+  const expenses = txns.filter(t => t.direction === 'expense');
+  const incomes  = txns.filter(t => t.direction === 'income');
+  const total    = expenses.reduce((s,t) => s + t.amount, 0);
+
+  document.getElementById('arelyPreviewTitle').textContent =
+    `Preview: ${expenses.length} expenses + ${incomes.length} credits from "${filename}" — Total: ${fmtUSD(total)}`;
+
+  document.getElementById('arelyPreviewBox').innerHTML = `
+    <table style="width:100%;font-size:.76rem;border-collapse:collapse">
+      <thead><tr style="background:var(--arely-bg)">
+        <th style="padding:4px 7px;text-align:left">Date</th>
+        <th style="padding:4px 7px;text-align:left">Description</th>
+        <th style="padding:4px 7px;text-align:left">Category</th>
+        <th style="padding:4px 7px;text-align:right">Amount</th>
+      </tr></thead>
+      <tbody>${txns.map(t => `
+        <tr style="border-bottom:1px solid #f5f0f3">
+          <td style="padding:3px 7px">${t.date}</td>
+          <td style="padding:3px 7px;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escHtml(t.description)}">${escHtml(t.description)}</td>
+          <td style="padding:3px 7px"><span class="badge b-arely-cat">${catEmoji(t.category)} ${ARELY_CAT[t.category]?.label||t.category}</span></td>
+          <td style="padding:3px 7px;text-align:right;color:${t.direction==='income'?'var(--green)':'var(--red)'};font-weight:600">${fmtUSD(t.amount)}</td>
+        </tr>`).join('')}
+      </tbody>
+    </table>`;
+
+  // Check for duplicates
+  const dupWarn = document.getElementById('arelyDupWarning');
+  const importBtn = document.getElementById('arelyImportBtn');
+  const replaceBtn = document.getElementById('arelyReplaceBtn');
+
+  // Check existing transactions for the same months
+  const txMonths = [...new Set(txns.map(t => `${t.month}-${t.year}`))];
+  const existingBank = arelyTx.filter(t => t.type === 'bank' && txMonths.some(mk => {
+    const [m, y] = mk.split('-');
+    return t.month === m && (t.year == y);
+  }));
+
+  if(existingBank.length > 0){
+    showAlert(dupWarn, `⚠️ There are already ${existingBank.length} bank transactions for these months. Use "Delete Previous & Import" to replace them.`, 'error');
+    importBtn.style.display  = 'none';
+    replaceBtn.style.display = 'block';
+  } else {
+    hideAlert(dupWarn);
+    importBtn.style.display  = 'block';
+    replaceBtn.style.display = 'none';
+  }
+
+  document.getElementById('arelyPreviewSection').style.display = 'block';
+}
+
+// ── IMPORT ───────────────────────────────────────────────
+async function arelyImportCSV(){
+  const btn = document.getElementById('arelyImportBtn');
+  const al  = document.getElementById('arelyUploadAlert');
+  if(!arelyPendingTx.length) return;
+  btn.disabled = true;
+  btn.textContent = 'Importing…';
+  const {error} = await db.from('transactions').insert(arelyPendingTx);
+  btn.disabled = false;
+  btn.textContent = '✅ Import Transactions';
+  if(error){ showAlert(al, 'Error: ' + error.message, 'error'); return; }
+  showAlert(al, `✅ ${arelyPendingTx.length} transactions imported!`, 'success');
+  arelyCancelUpload();
+  await loadArelyData();
+}
+
+async function arelyReplaceCSV(){
+  const btn = document.getElementById('arelyReplaceBtn');
+  const al  = document.getElementById('arelyUploadAlert');
+  if(!arelyPendingTx.length) return;
+  btn.disabled = true;
+  btn.textContent = 'Deleting old data…';
+
+  // Delete existing bank transactions for the months in the import
+  const txMonths = [...new Set(arelyPendingTx.map(t => `${t.month}|${t.year}`))];
+  for(const mk of txMonths){
+    const [m, y] = mk.split('|');
+    await db.from('transactions').delete()
+      .eq('person','arely').eq('type','bank').eq('month', m).eq('year', parseInt(y));
+  }
+
+  btn.textContent = 'Importing…';
+  const {error} = await db.from('transactions').insert(arelyPendingTx);
+  btn.disabled = false;
+  btn.textContent = '🔄 Delete Previous & Import';
+  if(error){ showAlert(al, 'Error: ' + error.message, 'error'); return; }
+  showAlert(al, `✅ ${arelyPendingTx.length} transactions imported!`, 'success');
+  arelyCancelUpload();
+  await loadArelyData();
+}
+
+function arelyCancelUpload(){
+  arelyPendingTx = [];
+  document.getElementById('arelyPreviewSection').style.display = 'none';
+  document.getElementById('arelyCsvInput').value = '';
+  document.getElementById('arelyImportBtn').style.display = 'block';
+  document.getElementById('arelyReplaceBtn').style.display = 'none';
+}
+
+// ── CSV DOWNLOAD ─────────────────────────────────────────
+function downloadCSVArely(filename){
+  const tx = arelyTx;
+  const n = tx.length;
+  if(!confirm(`Download expense history as CSV?\n\n${n} transaction${n===1?'':'s'} will be exported.`)) return;
+  const hdrs = ['Date','Description','Category','Month','Type','Direction','Amount ($)'];
+  const esc  = v => `"${String(v==null?'':v).replace(/"/g,'""')}"`;
+  const lines = [hdrs.map(esc).join(',')];
+  tx.forEach(t => {
+    lines.push([
+      t.date, t.description, ARELY_CAT[t.category]?.label||t.category||'',
+      t.month_display||t.month||'', t.type||'bank', t.direction||'expense',
+      parseFloat(t.amount||0).toFixed(2),
+    ].map(esc).join(','));
+  });
+  const blob = new Blob(['\uFEFF'+lines.join('\n')], {type:'text/csv;charset=utf-8'});
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
 }

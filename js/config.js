@@ -67,7 +67,7 @@ const ARELY_CAT = {
   phone:        {label:'Phone',            color:'#26C6DA', emoji:'📱'},
   groceries:    {label:'Groceries',        color:'#66BB6A', emoji:'🛒'},
   rent:         {label:'Rent / Mortgage',  color:'#8D6E63', emoji:'🏠'},
-  sam:          {label:'Sam 🐾',           color:'#F2A0BB', emoji:'🐾'},
+  sam:          {label:'Sam 🐾',           color:'#F2A0BB', emoji:'🐾', hasAvatar:true},
   transport:    {label:'Transportation',   color:'#FFA726', emoji:'🚗'},
   health:       {label:'Health / Medical', color:'#EF5350', emoji:'💊'},
   maintenance:  {label:'Home Maintenance', color:'#78909C', emoji:'🧹'},

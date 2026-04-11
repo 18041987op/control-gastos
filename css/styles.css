@@ -449,6 +449,11 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
 /* Form */
 .arely-form{border-top:4px solid var(--arely);}
 .arely-form label{color:var(--arely-dark);}
+.arely-form input[type="number"],.arely-form input[type="text"],.arely-form input[type="date"]{
+  width:100%;padding:12px 14px;border:2px solid var(--arely-lighter);border-radius:10px;
+  font-size:.95rem;color:var(--text);background:#fff;outline:none;box-sizing:border-box;
+}
+.arely-form input:focus{border-color:var(--arely);}
 
 /* Buttons */
 .btn-arely{background:linear-gradient(135deg,var(--arely-light),var(--arely));color:#fff;border:none;padding:14px;border-radius:12px;font-weight:700;cursor:pointer;font-size:.9rem;width:100%;margin-top:14px;transition:opacity .2s;}
@@ -525,3 +530,10 @@ thead.arely th{background:var(--arely-bg);color:var(--arely-dark);}
 .arely-todo-title-text{font-size:.85rem;font-weight:500;}
 .arely-todo-title-text.strike{text-decoration:line-through;color:#aaa;}
 .arely-todo-due{font-size:.68rem;background:var(--arely-bg);color:var(--arely);padding:2px 8px;border-radius:8px;font-weight:600;}
+
+/* Sam's Avatar */
+.sam-avatar{border:2px solid var(--arely-lighter);box-shadow:0 1px 4px rgba(208,107,141,.25);object-fit:cover;}
+.opt-btn .sam-avatar{margin-right:2px;}
+.arely-upload{border:2.5px dashed var(--arely-lighter)!important;background:var(--arely-white)!important;transition:border-color .2s;}
+.arely-upload:hover,.arely-upload.drag{border-color:var(--arely)!important;background:var(--arely-bg)!important;}
+.arely-upload strong{color:var(--arely)!important;}

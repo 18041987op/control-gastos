@@ -500,10 +500,11 @@
       <h2>💰 Monthly Budget</h2>
       <div id="arelyBudgetAlert" class="alert"></div>
       <label>Budget Amount ($)</label>
-      <div style="display:flex;gap:8px;align-items:center">
-        <input type="number" id="arelyBudgetInput" placeholder="e.g. 2000" min="1" step="1" style="flex:1">
-        <button class="btn btn-arely" style="padding:12px 18px" onclick="saveArelyBudget()">Set</button>
-      </div>
+      <input type="text" id="arelyBudgetInput" inputmode="decimal" placeholder="e.g. 2000.00" autocomplete="off"
+             style="width:100%;font-size:1.4rem;padding:16px 18px;border:2.5px solid var(--arely-lighter);border-radius:14px;margin-bottom:6px;text-align:center;font-weight:700;color:var(--arely-dark);letter-spacing:.02em"
+             onfocus="this.style.borderColor='var(--arely)'" onblur="this.style.borderColor='var(--arely-lighter)'">
+      <div style="text-align:center;font-size:.75rem;color:var(--muted);margin-bottom:12px" id="arelyBudgetHint">Enter your total monthly household budget</div>
+      <button class="btn btn-arely" onclick="saveArelyBudget()">💾 Set Monthly Budget</button>
     </div>
     <div id="arelyBudgetCatCards" class="chart-card">
       <div class="chart-hdr"><h3>📊 Budget vs Spending per Category</h3></div>
@@ -525,6 +526,65 @@
     <div class="chart-card">
       <div class="chart-hdr"><h3>📋 Budget Status</h3></div>
       <div id="arelyCalBudgetStatus"></div>
+    </div>
+  </div>
+
+  <!-- Vista: Upload CSV -->
+  <div class="view" id="avUploadCSV">
+    <div class="form-card arely-form">
+      <h2>📤 Import Credit Card Statement</h2>
+      <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px">Upload a CSV file from your credit card to auto-categorize and import expenses.</p>
+      <div id="arelyUploadAlert" class="alert"></div>
+      <div class="upload-area arely-upload" id="arelyUploadArea"
+           onclick="document.getElementById('arelyCsvInput').click()"
+           ondragover="arelyDragOver(event)"
+           ondragleave="arelyDragLeave(event)"
+           ondrop="arelyDrop(event)">
+        <div class="upload-icon">📄</div>
+        <p><strong>Click</strong> or drag your CSV here</p>
+        <p style="margin-top:5px;font-size:.76rem;color:var(--muted)">Supports credit card CSV statements</p>
+      </div>
+      <input type="file" id="arelyCsvInput" accept=".csv" style="display:none" onchange="arelyFileSelect(event)">
+      <div id="arelyPreviewSection" style="display:none">
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:8px" id="arelyPreviewTitle"></div>
+        <div class="preview-box" id="arelyPreviewBox"></div>
+        <div id="arelyDupWarning" class="alert"></div>
+        <button class="btn btn-arely" id="arelyImportBtn" onclick="arelyImportCSV()">✅ Import Transactions</button>
+        <button class="btn" id="arelyReplaceBtn" onclick="arelyReplaceCSV()"
+                style="display:none;background:linear-gradient(135deg,#e74c3c,#c0392b);color:#fff;margin-top:6px;width:100%;padding:14px;border:none;border-radius:12px;font-weight:700;cursor:pointer">
+          🔄 Delete Previous & Import
+        </button>
+        <button class="btn" style="margin-top:8px;background:#f0f0f0;color:var(--muted);width:100%;padding:12px;border:none;border-radius:12px;cursor:pointer" onclick="arelyCancelUpload()">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vista: Upload CSV -->
+  <div class="view" id="avUpload">
+    <div class="form-card arely-form">
+      <h2>📤 Upload Statement</h2>
+      <div id="arelyUploadAlert" class="alert"></div>
+      <div class="upload-area arely-upload" id="arelyUploadArea"
+           onclick="document.getElementById('arelyCsvInput').click()"
+           ondragover="arelyDragOver(event)"
+           ondragleave="arelyDragLeave(event)"
+           ondrop="arelyDrop(event)">
+        <div class="upload-icon">📄</div>
+        <p><strong>Click</strong> or drag your CSV here</p>
+        <p style="margin-top:5px;font-size:.76rem">Credit card or bank statement</p>
+      </div>
+      <input type="file" id="arelyCsvInput" accept=".csv" style="display:none" onchange="arelyFileSelect(event)">
+      <div id="arelyPreviewSection" style="display:none">
+        <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:8px" id="arelyPreviewTitle"></div>
+        <div class="preview-box" id="arelyPreviewBox"></div>
+        <div id="arelyDupWarning" class="alert"></div>
+        <button class="btn btn-arely" id="arelyImportBtn" onclick="arelyImportCSV()">✅ Import Transactions</button>
+        <button class="btn btn-arely" id="arelyReplaceBtn" onclick="arelyReplaceCSV()"
+                style="display:none;background:linear-gradient(135deg,#ef9a9a,#e53935);margin-top:6px">
+          🔄 Clear month & Import
+        </button>
+        <button class="btn" style="background:#f0f0f0;color:var(--muted);margin-top:8px" onclick="arelyCancelUpload()">Cancel</button>
+      </div>
     </div>
   </div>
 
@@ -554,8 +614,9 @@
 
   <!-- Nav inferior (Arely) -->
   <nav class="bottom-nav" id="arelyBottomNav">
-    <button class="nav-btn a-active" onclick="arelyShow('Dashboard')" id="anDashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></button>
+    <button class="nav-btn a-active" onclick="arelyShow('Dashboard')"  id="anDashboard"><span class="nav-icon">📊</span><span class="nav-label">Home</span></button>
     <button class="nav-btn"          onclick="arelyShow('AddExpense')" id="anAddExpense"><span class="nav-icon">➕</span><span class="nav-label">Expense</span></button>
+    <button class="nav-btn"          onclick="arelyShow('Upload')"     id="anUpload"><span class="nav-icon">📤</span><span class="nav-label">CSV</span></button>
     <button class="nav-btn"          onclick="arelyShow('Budget')"     id="anBudget"><span class="nav-icon">💰</span><span class="nav-label">Budget</span></button>
     <button class="nav-btn"          onclick="arelyShow('Calendar')"   id="anCalendar"><span class="nav-icon">📅</span><span class="nav-label">Calendar</span></button>
     <button class="nav-btn"          onclick="arelyShow('Checklist')"  id="anChecklist"><span class="nav-icon">✅</span><span class="nav-label">Tasks</span></button>

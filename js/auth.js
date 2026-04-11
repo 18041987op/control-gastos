@@ -94,7 +94,7 @@ function unlockArely(){
   currentUser = 'arely';
   document.getElementById('loginScreen').style.display = 'none';
   document.getElementById('arelyShell').classList.add('visible');
-  buildCatGrid('arelyCatGrid','opt-btn','sel-arely', Object.entries(ARELY_CAT), (k) => arelySelectedCat = k);
+  buildArelyCatGrid('arelyCatGrid', (k) => arelySelectedCat = k);
   buildArelyTodoCatGrid();
   setTodayDate('arelyExpDate');
   arelyShow('Dashboard');
