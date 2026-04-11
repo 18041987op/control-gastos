@@ -414,6 +414,154 @@
   </nav>
 </div>
 
+<!-- ══ ARELY SHELL ═════════════════════════════════════════ -->
+<div class="shell" id="arelyShell">
+  <div class="hdr hdr-arely" id="arelyHdr">
+    <div>
+      <h1 id="arelyHdrTitle">🏡 1311 Old Robinson</h1>
+      <div class="sub" id="arelyHdrSub">Household Expenses</div>
+    </div>
+    <div class="hdr-right">
+      <button class="exit-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <!-- Budget Banner -->
+  <div class="balance-banner bal-arely" id="arelyBanner">
+    <div class="bal-label">Monthly Budget</div>
+    <div class="bal-amount" id="arelyBudgetTotal">$0.00</div>
+    <div class="arely-budget-bar-wrap">
+      <div class="arely-budget-bar" id="arelyBudgetBar"><span id="arelyBudgetPct">0%</span></div>
+    </div>
+    <div class="bal-row">
+      <div class="bal-chip"><div class="bc-label">💸 Spent</div><div class="bc-val" id="arelyBannerSpent">$0.00</div></div>
+      <div class="bal-chip"><div class="bc-label">✅ Remaining</div><div class="bc-val" id="arelyBannerRemaining">$0.00</div></div>
+    </div>
+  </div>
+
+  <!-- Vista: Dashboard -->
+  <div class="view active" id="avDashboard">
+    <div id="aDashLoading" class="loading"><div class="spinner"></div><br>Loading…</div>
+    <div id="aDashContent" style="display:none">
+      <!-- Category Breakdown Cards -->
+      <div class="chart-card">
+        <div class="chart-hdr"><h3>📊 Spending by Category</h3></div>
+        <div id="arelyCatBreakdown"></div>
+      </div>
+      <!-- Donut Chart -->
+      <div class="chart-card">
+        <div class="chart-hdr"><h3>🥧 Category Distribution</h3></div>
+        <div class="chart-wrap"><canvas id="arelyDonutCanvas"></canvas></div>
+      </div>
+      <!-- Trend Timeline -->
+      <div class="chart-card">
+        <div class="chart-hdr"><h3>📈 Spending Trend</h3></div>
+        <div class="chart-wrap"><canvas id="arelyTrendCanvas"></canvas></div>
+      </div>
+      <!-- Recent Transactions -->
+      <div class="chart-card">
+        <div class="chart-hdr">
+          <h3>📋 Recent Transactions</h3>
+          <button class="tx-toggle-btn arely-toggle" id="arelyTxToggle" onclick="toggleTxList('arelyTxWrap','arelyTxToggle')">Show list ▼</button>
+        </div>
+        <div id="arelyTxWrap" style="display:none">
+          <div class="tx-wrap">
+            <table>
+              <thead class="arely"><tr><th>Date</th><th>Description</th><th>Category</th><th>Amount</th><th></th></tr></thead>
+              <tbody id="arelyTxBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="aDashEmpty" class="empty" style="display:none"><div class="empty-icon">📭</div><p>No expenses yet.</p></div>
+  </div>
+
+  <!-- Vista: Add Expense -->
+  <div class="view" id="avAddExpense">
+    <div class="form-card arely-form">
+      <h2>➕ Add Expense</h2>
+      <div id="arelyAddAlert" class="alert"></div>
+      <label>Date</label><input type="date" id="arelyExpDate">
+      <label>Description</label><input type="text" id="arelyExpDesc" placeholder="e.g. Electric bill, dog food…" maxlength="80">
+      <label>Amount ($)</label><input type="number" id="arelyExpAmt" placeholder="0.00" min="0.01" step="0.01">
+      <label>Category</label><div class="opt-grid cols3" id="arelyCatGrid"></div>
+      <button class="btn btn-arely" onclick="saveArelyExpense()">Save Expense</button>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hdr"><h3>🕐 Recent Expenses</h3></div>
+      <div id="arelyRecentExp"><div class="loading"><div class="spinner"></div></div></div>
+    </div>
+  </div>
+
+  <!-- Vista: Budget -->
+  <div class="view" id="avBudget">
+    <div class="form-card arely-form">
+      <h2>💰 Monthly Budget</h2>
+      <div id="arelyBudgetAlert" class="alert"></div>
+      <label>Budget Amount ($)</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="number" id="arelyBudgetInput" placeholder="e.g. 2000" min="1" step="1" style="flex:1">
+        <button class="btn btn-arely" style="padding:12px 18px" onclick="saveArelyBudget()">Set</button>
+      </div>
+    </div>
+    <div id="arelyBudgetCatCards" class="chart-card">
+      <div class="chart-hdr"><h3>📊 Budget vs Spending per Category</h3></div>
+      <div id="arelyBudgetCatList"></div>
+    </div>
+  </div>
+
+  <!-- Vista: Calendar -->
+  <div class="view" id="avCalendar">
+    <div class="chart-card">
+      <div class="chart-hdr"><h3>📅 Calendar</h3></div>
+      <div id="arelyCalendar"></div>
+      <div id="arelyCalendarLegend" class="arely-cal-legend">
+        <span class="cal-leg-item"><span class="cal-leg-dot cal-today"></span> Today</span>
+        <span class="cal-leg-item"><span class="cal-leg-dot cal-past"></span> Past</span>
+        <span class="cal-leg-item"><span class="cal-leg-dot cal-alert"></span> Budget Alert</span>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="chart-hdr"><h3>📋 Budget Status</h3></div>
+      <div id="arelyCalBudgetStatus"></div>
+    </div>
+  </div>
+
+  <!-- Vista: Checklist -->
+  <div class="view" id="avChecklist">
+    <div class="todo-page-hdr">
+      <h3 style="color:#D06B8D">✅ My Checklist</h3>
+      <button class="todo-add-fab arely-fab" onclick="toggleArelyTodoForm()">➕ New Task</button>
+    </div>
+    <div class="form-card arely-form" id="arelyTodoFormWrap" style="display:none">
+      <div id="arelyTodoAlert" class="alert"></div>
+      <label>What do you need to do?</label>
+      <input type="text" id="arelyTodoTitle" placeholder="e.g. Pay electric bill, buy Sam's food…" maxlength="100">
+      <label>Due date <span style="font-weight:400;font-size:.72rem">(optional)</span></label>
+      <input type="date" id="arelyTodoDate">
+      <label>Category</label>
+      <div class="opt-grid cols4" id="arelyTodoCatGrid"></div>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-arely" style="flex:1" onclick="saveArelyTodo()">✅ Save Task</button>
+        <button class="btn" style="background:#f0f0f0;color:var(--muted);padding:0 16px" onclick="toggleArelyTodoForm()">✕</button>
+      </div>
+    </div>
+    <!-- Progress summary -->
+    <div class="arely-todo-progress" id="arelyTodoProgress"></div>
+    <div id="arelyTodoList"></div>
+  </div>
+
+  <!-- Nav inferior (Arely) -->
+  <nav class="bottom-nav" id="arelyBottomNav">
+    <button class="nav-btn a-active" onclick="arelyShow('Dashboard')" id="anDashboard"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></button>
+    <button class="nav-btn"          onclick="arelyShow('AddExpense')" id="anAddExpense"><span class="nav-icon">➕</span><span class="nav-label">Expense</span></button>
+    <button class="nav-btn"          onclick="arelyShow('Budget')"     id="anBudget"><span class="nav-icon">💰</span><span class="nav-label">Budget</span></button>
+    <button class="nav-btn"          onclick="arelyShow('Calendar')"   id="anCalendar"><span class="nav-icon">📅</span><span class="nav-label">Calendar</span></button>
+    <button class="nav-btn"          onclick="arelyShow('Checklist')"  id="anChecklist"><span class="nav-icon">✅</span><span class="nav-label">Tasks</span></button>
+  </nav>
+</div>
+
 <!-- ══ MODAL: EDITAR TRANSACCIÓN ══════════════════════════ -->
 <div id="editModal" onclick="if(event.target===this)closeEditModal()">
   <div class="edit-sheet">
@@ -490,6 +638,7 @@
 <script src="js/sharelyn.js?v=20260307"></script>
 <script src="js/teresa.js?v=20260309"></script>
 <script src="js/presupuestos.js?v=20260305g"></script>
+<script src="js/arely.js?v=20260411"></script>
 <script src="js/admin.js?v=20260307"></script>
 <script src="js/todos.js?v=20260305e"></script>
 <script src="js/scanner.js?v=20260307"></script>

@@ -423,3 +423,105 @@ tr.was-edited > td:first-child{border-left:3px solid #ffe082;}
 .presu-items-table td{padding:5px 8px;border-bottom:1px solid #f5f0eb;font-size:.78rem;vertical-align:middle;}
 .scan-btn{padding:0 14px;border:2px solid #ffd0a0;background:#fff8f0;border-radius:10px;cursor:pointer;font-size:1.35rem;flex-shrink:0;transition:all .2s;line-height:1;}
 .scan-btn:active{background:var(--pink);border-color:var(--pink);}
+
+/* ══════════════════════════════════════════════════════════
+   ARELY — Household Expense Manager
+   Palette: #FFFDFD · #F9EEF3 · #F6C9D8 · #F2A0BB · #D06B8D
+   ══════════════════════════════════════════════════════════ */
+:root{
+  --arely:#D06B8D;--arely-light:#F2A0BB;--arely-lighter:#F6C9D8;
+  --arely-bg:#F9EEF3;--arely-white:#FFFDFD;--arely-dark:#a8506f;
+}
+
+/* Header */
+.hdr-arely{background:linear-gradient(135deg,var(--arely-light),var(--arely));}
+
+/* Balance Banner */
+.bal-arely{background:linear-gradient(135deg,var(--arely-light),var(--arely));}
+
+/* Budget Progress Bar */
+.arely-budget-bar-wrap{background:rgba(255,255,255,.3);border-radius:20px;height:22px;margin:12px 0 10px;overflow:hidden;}
+.arely-budget-bar{height:100%;border-radius:20px;background:linear-gradient(90deg,var(--arely-white),var(--arely-lighter));display:flex;align-items:center;justify-content:flex-end;padding-right:8px;transition:width .5s ease;min-width:36px;}
+.arely-budget-bar span{font-size:.72rem;font-weight:800;color:var(--arely-dark);}
+.arely-budget-bar.bar-warning{background:linear-gradient(90deg,#ffe082,#ffb74d);}
+.arely-budget-bar.bar-danger{background:linear-gradient(90deg,#ef9a9a,#e53935);} .arely-budget-bar.bar-danger span{color:#fff;}
+
+/* Form */
+.arely-form{border-top:4px solid var(--arely);}
+.arely-form label{color:var(--arely-dark);}
+
+/* Buttons */
+.btn-arely{background:linear-gradient(135deg,var(--arely-light),var(--arely));color:#fff;border:none;padding:14px;border-radius:12px;font-weight:700;cursor:pointer;font-size:.9rem;width:100%;margin-top:14px;transition:opacity .2s;}
+.btn-arely:active{opacity:.85;}
+
+/* Category selection */
+.sel-arely{background:var(--arely)!important;color:#fff!important;border-color:var(--arely)!important;}
+
+/* Toggle buttons */
+.arely-toggle{background:var(--arely-bg);color:var(--arely);border:1.5px solid var(--arely-lighter);border-radius:14px;padding:5px 12px;font-size:.78rem;font-weight:700;cursor:pointer;}
+.arely-toggle:active{background:var(--arely);color:#fff;}
+
+/* Table header */
+thead.arely th{background:var(--arely-bg);color:var(--arely-dark);}
+
+/* Badge */
+.b-arely-cat{background:var(--arely-bg);color:var(--arely-dark);font-size:.72rem;padding:3px 8px;border-radius:10px;white-space:nowrap;}
+
+/* Nav active state */
+.a-active{color:var(--arely)!important;}
+.a-active .nav-icon{transform:scale(1.2);}
+#arelyBottomNav .nav-btn.a-active::after{content:'';position:absolute;bottom:2px;width:22px;height:3px;background:var(--arely);border-radius:3px;}
+#arelyBottomNav .nav-btn{position:relative;}
+
+/* ── Category Breakdown Rows ── */
+.arely-cat-row,.arely-budget-cat-row{display:flex;align-items:center;gap:10px;padding:10px 4px;border-bottom:1px solid #f5f0f3;}
+.arely-cat-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.arely-cat-info{flex:1;min-width:0;}
+.arely-cat-name{font-size:.82rem;font-weight:600;margin-bottom:4px;}
+.arely-cat-bar-wrap{background:#f0e8ed;border-radius:6px;height:7px;overflow:hidden;}
+.arely-cat-bar{height:100%;border-radius:6px;transition:width .4s ease;}
+.arely-cat-amt{text-align:right;min-width:70px;}
+.arely-cat-amt{font-size:.85rem;font-weight:700;color:var(--arely-dark);}
+.arely-cat-pct{display:block;font-size:.68rem;color:var(--muted);font-weight:400;}
+
+/* ── Budget Summary ── */
+.arely-budget-summary{display:flex;justify-content:space-around;padding:14px 8px;background:var(--arely-bg);border-radius:12px;margin-top:14px;font-size:.82rem;}
+
+/* ── Calendar ── */
+.arely-cal-title{text-align:center;font-size:1.1rem;font-weight:800;color:var(--arely);margin-bottom:12px;}
+.arely-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;}
+.arely-cal-hdr{font-size:.68rem;font-weight:700;color:var(--muted);padding:4px 0;}
+.arely-cal-day{padding:8px 2px;border-radius:8px;font-size:.82rem;font-weight:600;transition:all .2s;}
+.arely-cal-day.empty{visibility:hidden;}
+.cal-today-day{background:var(--arely);color:#fff;font-weight:800;box-shadow:0 2px 8px rgba(208,107,141,.4);}
+.cal-past-day{color:#bbb;text-decoration:line-through;}
+.cal-alert-day{background:#ffebee;color:#e53935;font-weight:700;border:1.5px solid #ef9a9a;}
+.arely-cal-legend{display:flex;gap:16px;justify-content:center;margin-top:14px;padding:8px 0;}
+.cal-leg-item{display:flex;align-items:center;gap:5px;font-size:.72rem;color:var(--muted);}
+.cal-leg-dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+.cal-leg-dot.cal-today{background:var(--arely);}
+.cal-leg-dot.cal-past{background:#bbb;}
+.cal-leg-dot.cal-alert{background:#e53935;}
+
+/* Calendar Budget Status */
+.arely-cal-status{padding:14px 16px;background:var(--arely-white);border-radius:12px;}
+.arely-cal-status-pct{font-size:1.8rem;font-weight:900;margin-bottom:4px;}
+.arely-cal-status-text{font-size:.88rem;font-weight:600;margin-bottom:6px;}
+.arely-cal-status-detail{font-size:.78rem;color:var(--muted);}
+
+/* ── Checklist / Todos ── */
+.arely-fab{background:var(--arely)!important;color:#fff!important;}
+.arely-todo-progress{background:var(--arely-white);border-radius:14px;padding:14px 16px;margin:10px 14px;box-shadow:var(--shadow);}
+.arely-todo-prog-text{display:flex;justify-content:space-between;font-size:.8rem;font-weight:600;color:var(--text);margin-bottom:8px;}
+.arely-todo-prog-bar-wrap{background:#f0e8ed;border-radius:8px;height:10px;overflow:hidden;}
+.arely-todo-prog-bar{height:100%;border-radius:8px;background:linear-gradient(90deg,var(--arely-lighter),var(--arely));transition:width .4s ease;}
+.arely-todo-prog-pct{text-align:center;font-size:.72rem;font-weight:700;color:var(--arely);margin-top:6px;}
+.arely-todo-section-lbl{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);padding:8px 18px 4px;}
+.arely-todo-item{display:flex;align-items:center;gap:10px;padding:10px 14px;margin:4px 14px;background:#fff;border-radius:12px;box-shadow:0 1px 6px rgba(0,0,0,.05);transition:opacity .3s;}
+.arely-todo-item.todo-done{opacity:.55;}
+.arely-todo-check{background:none;border:none;font-size:1.2rem;cursor:pointer;padding:2px;flex-shrink:0;}
+.arely-todo-body{display:flex;align-items:center;gap:6px;flex:1;min-width:0;flex-wrap:wrap;}
+.arely-todo-cat-icon{font-size:.95rem;}
+.arely-todo-title-text{font-size:.85rem;font-weight:500;}
+.arely-todo-title-text.strike{text-decoration:line-through;color:#aaa;}
+.arely-todo-due{font-size:.68rem;background:var(--arely-bg);color:var(--arely);padding:2px 8px;border-radius:8px;font-weight:600;}

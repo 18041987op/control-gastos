@@ -69,6 +69,9 @@ async function deleteTx(id, person){
   if(person === 'sharelyn'){
     loadDashboard();
     loadRecentCash();
+  } else if(person === 'arely'){
+    loadArelyData();
+    loadArelyDashboard();
   } else {
     loadTeresaData();
     if(currentUser === 'admin') loadTeresaAdminView();

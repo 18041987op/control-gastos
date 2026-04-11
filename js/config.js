@@ -9,6 +9,7 @@ const PIN_SALT = 'gastos-hn-2026';
 const ADMIN_PIN_HASH    = 'ac45faf608df85509393719a3a0328252ac5ca1f77d8e1e435de0e9303237ade';
 const SHARELYN_PIN_HASH = '6115a92948fb8f1b2e5860a3dca8c6e07fc9b328d19ebb010f69d7102901fa87';
 const TERESA_PIN_HASH   = 'b64806f18e83bfb929005a77d75b63f2c2f82fe5fadcc3f40116f6743166ec16';
+const ARELY_PIN_HASH    = '7d744c7569c2db2a8163a478719233f077665a7ab0777a727b36c684f8bdaee9';
 
 const { createClient } = supabase;
 const db = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -57,7 +58,27 @@ const TERESA_PERSONAL_CAT = {
   otros:        {label:'📦 Otros',           color:'#90a4ae', emoji:'📦'},
 };
 
-const ALL_CATS = {...CAT, ...TERESA_CAT, ...TERESA_PERSONAL_CAT};
+// ── ARELY: HOUSEHOLD EXPENSE CATEGORIES (1311 Old Robinson Trail) ──
+const ARELY_CAT = {
+  electricity:  {label:'Electricity',      color:'#D06B8D', emoji:'⚡'},
+  water:        {label:'Water',            color:'#42A5F5', emoji:'💧'},
+  gas:          {label:'Gas',              color:'#FF7043', emoji:'🔥'},
+  internet:     {label:'Internet / Cable', color:'#7E57C2', emoji:'📡'},
+  phone:        {label:'Phone',            color:'#26C6DA', emoji:'📱'},
+  groceries:    {label:'Groceries',        color:'#66BB6A', emoji:'🛒'},
+  rent:         {label:'Rent / Mortgage',  color:'#8D6E63', emoji:'🏠'},
+  sam:          {label:'Sam 🐾',           color:'#F2A0BB', emoji:'🐾'},
+  transport:    {label:'Transportation',   color:'#FFA726', emoji:'🚗'},
+  health:       {label:'Health / Medical', color:'#EF5350', emoji:'💊'},
+  maintenance:  {label:'Home Maintenance', color:'#78909C', emoji:'🧹'},
+  dining:       {label:'Dining Out',       color:'#F7971E', emoji:'🍽️'},
+  insurance:    {label:'Insurance',        color:'#5C6BC0', emoji:'🛡️'},
+  clothing:     {label:'Clothing',         color:'#AB47BC', emoji:'👗'},
+  entertainment:{label:'Entertainment',    color:'#EC407A', emoji:'🎬'},
+  other:        {label:'Other',            color:'#90A4AE', emoji:'📦'},
+};
+
+const ALL_CATS = {...CAT, ...TERESA_CAT, ...TERESA_PERSONAL_CAT, ...ARELY_CAT};
 
 // ── MÉTODOS DE PAGO ───────────────────────────────────────
 const INCOME_METHODS = [
@@ -123,6 +144,20 @@ const TERESA_TODO_CATS = [
   {k:'entrega',     label:'Material',   icon:'📦'},
 ];
 
+// Arely – household management checklist categories
+const ARELY_TODO_CATS = [
+  {k:'bills',      label:'Bills',       icon:'💡'},
+  {k:'shopping',   label:'Shopping',    icon:'🛒'},
+  {k:'sam',        label:'Sam 🐾',      icon:'🐾'},
+  {k:'cleaning',   label:'Cleaning',    icon:'🧹'},
+  {k:'repairs',    label:'Repairs',     icon:'🔧'},
+  {k:'appointment',label:'Appointment', icon:'📅'},
+  {k:'personal',   label:'Personal',    icon:'💆'},
+  {k:'other',      label:'Other',       icon:'💡'},
+];
+
+let arelySelectedTodoCat = '';
+
 // ── ESTADO GLOBAL ─────────────────────────────────────────
 let currentUser        = null;   // 'admin' | 'sharelyn' | 'teresa'
 let currentPerson      = 'sharelyn';
@@ -142,3 +177,16 @@ let selectedIngresoMethod  = '';
 let selectedGastoCat       = '';
 let selectedGastoMethod    = '';
 let currentReceiptData     = null;
+
+// ── ARELY STATE ──────────────────────────────────────────
+let arelyTx              = [];
+let arelyBudget          = 0;     // monthly budget amount
+let arelySelectedCat     = '';
+let arelyTrendChart      = null;
+let arelyDonutChart      = null;
+
+// English month names for Arely
+const MONTHS_EN = [
+  '','January','February','March','April','May','June',
+  'July','August','September','October','November','December',
+];

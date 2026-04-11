@@ -32,13 +32,15 @@ async function pinSubmit(){
   if     (h === ADMIN_PIN_HASH)    { role = 'admin';    pinHash = ADMIN_PIN_HASH; }
   else if(h === SHARELYN_PIN_HASH) { role = 'sharelyn'; pinHash = SHARELYN_PIN_HASH; }
   else if(h === TERESA_PIN_HASH)   { role = 'teresa';   pinHash = TERESA_PIN_HASH; }
+  else if(h === ARELY_PIN_HASH)    { role = 'arely';    pinHash = ARELY_PIN_HASH; }
 
   if(role){
     // ✅ PIN correcto
     secClearFails();
     await secSaveSession(role, pinHash);
-    if(role === 'admin')    unlockAdmin();
+    if(role === 'admin')         unlockAdmin();
     else if(role === 'sharelyn') unlockSharelyn();
+    else if(role === 'arely')    unlockArely();
     else                         unlockTeresa();
   } else {
     // ❌ PIN incorrecto
@@ -88,6 +90,16 @@ function unlockSharelyn(){
   loadDashboard();
 }
 
+function unlockArely(){
+  currentUser = 'arely';
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('arelyShell').classList.add('visible');
+  buildCatGrid('arelyCatGrid','opt-btn','sel-arely', Object.entries(ARELY_CAT), (k) => arelySelectedCat = k);
+  buildArelyTodoCatGrid();
+  setTodayDate('arelyExpDate');
+  arelyShow('Dashboard');
+}
+
 function unlockTeresa(){
   currentUser       = 'teresa';
   currentTeresaMode = 'obra';
@@ -120,9 +132,11 @@ window.addEventListener('DOMContentLoaded', async () => {
     admin:    ADMIN_PIN_HASH,
     sharelyn: SHARELYN_PIN_HASH,
     teresa:   TERESA_PIN_HASH,
+    arely:    ARELY_PIN_HASH,
   };
   const role = await secRestoreSession(hashMap);
-  if(role === 'admin')    unlockAdmin();
+  if(role === 'admin')         unlockAdmin();
   else if(role === 'sharelyn') unlockSharelyn();
+  else if(role === 'arely')    unlockArely();
   else if(role === 'teresa')   unlockTeresa();
 });
