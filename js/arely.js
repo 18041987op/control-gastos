@@ -122,17 +122,23 @@ function renderArelyMonthSummary(){
   const spent   = sumAmt(monthTx);
   const budgetKey = `arely_budget_${arelyViewYear}-${String(arelyViewMonth).padStart(2,'0')}`;
   const bgt = parseFloat(localStorage.getItem(budgetKey) || arelyBudget) || 0;
-  const remaining = Math.max(0, bgt - spent);
+  const over    = spent > bgt && bgt > 0;
+  const diff    = Math.abs(bgt - spent);
   const pct = bgt > 0 ? Math.min(100, (spent/bgt)*100) : 0;
   const color = pct > 90 ? 'var(--red)' : pct > 70 ? '#f59e0b' : 'var(--arely)';
   const isCurrentMonth = arelyViewMonth === (new Date().getMonth()+1) && arelyViewYear === new Date().getFullYear();
   const monthLabel = MONTHS_EN[arelyViewMonth] + ' ' + arelyViewYear;
 
+  // Bottom label: over budget or remaining
+  const bottomRight = over
+    ? `<span style="color:var(--red);font-weight:600">${fmtUSD(diff)} over budget</span>`
+    : `<span>${fmtUSD(diff)} remaining</span>`;
+
   document.getElementById('arelyMonthSummary').innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <div>
         <div style="font-size:.72rem;text-transform:uppercase;color:var(--muted);font-weight:700">${monthLabel}${isCurrentMonth?' · Current Month':''}</div>
-        <div style="font-size:1.3rem;font-weight:800;color:var(--arely-dark)">${fmtUSD(spent)} spent</div>
+        <div style="font-size:1.3rem;font-weight:800;color:${over?'var(--red)':'var(--arely-dark)'}">${fmtUSD(spent)} spent</div>
       </div>
       <div style="text-align:right">
         ${bgt > 0 ? `<div style="font-size:.72rem;color:var(--muted)">Budget</div>
@@ -145,7 +151,7 @@ function renderArelyMonthSummary(){
     </div>
     <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-top:4px">
       <span>${pct.toFixed(0)}% used</span>
-      <span>${fmtUSD(remaining)} remaining</span>
+      ${bottomRight}
     </div>` : ''}
   `;
 }
@@ -154,12 +160,22 @@ function renderArelyMonthSummary(){
 function renderArelyBanner(){
   const monthTx = getArelyCurrentMonthTx();
   const spent   = sumAmt(monthTx);
-  const remaining = Math.max(0, arelyBudget - spent);
+  const over    = spent > arelyBudget && arelyBudget > 0;
+  const diff    = Math.abs(arelyBudget - spent);
   const pct = arelyBudget > 0 ? Math.min(100, (spent / arelyBudget) * 100) : 0;
 
   document.getElementById('arelyBudgetTotal').textContent    = fmtUSD(arelyBudget);
   document.getElementById('arelyBannerSpent').textContent    = fmtUSD(spent);
-  document.getElementById('arelyBannerRemaining').textContent= fmtUSD(remaining);
+
+  const remEl = document.getElementById('arelyBannerRemaining');
+  remEl.textContent = fmtUSD(diff);
+  remEl.style.color = over ? 'var(--red)' : '';
+  // Update the label next to the remaining value
+  const remLabel = remEl.closest('.bal-chip')?.querySelector('.bc-label');
+  if(remLabel){
+    remLabel.textContent = over ? '⚠️ Over Budget' : '✅ Remaining';
+    remLabel.style.color = over ? 'var(--red)' : '';
+  }
 
   const bar = document.getElementById('arelyBudgetBar');
   bar.style.width = pct + '%';
@@ -264,7 +280,7 @@ function showCatTxPanel(filtered, catInfo){
           <td style="padding:7px 10px;font-size:.78rem;white-space:nowrap">${t.date||'—'}</td>
           <td style="padding:7px 10px;font-size:.8rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.description}">${t.description}</td>
           <td style="padding:7px 10px;text-align:right;font-weight:700;color:${catInfo.color}">${fmtUSD(t.amount)}</td>
-          <td style="padding:7px 5px"><button class="del-btn" onclick="deleteTx('${t.id}','arely')">🗑</button></td>
+          <td style="padding:7px 5px;white-space:nowrap"><button style="background:none;border:none;cursor:pointer;font-size:.85rem" onclick="openArelyCatEdit('${t.id}','${t.category}')" title="Change category">✏️</button><button class="del-btn" onclick="deleteTx('${t.id}','arely')">🗑</button></td>
         </tr>`).join('')}
       </tbody>
     </table>
@@ -375,10 +391,59 @@ function renderArelyTxTable(){
     <tr${t.edited_at?' class="was-edited"':''}>
       <td>${t.date||'—'}${t.edited_at?'<span class="edited-mark">✏️</span>':''}</td>
       <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.description}">${t.description}</td>
-      <td><span class="badge b-arely-cat">${catEmoji(t.category)} ${ARELY_CAT[t.category]?.label||t.category}</span></td>
+      <td><span class="badge b-arely-cat" style="cursor:pointer" onclick="openArelyCatEdit('${t.id}','${t.category}')" title="Tap to change category">${catEmoji(t.category)} ${ARELY_CAT[t.category]?.label||t.category} ✏️</span></td>
       <td class="amount-neg">${fmtUSD(t.amount)}</td>
       <td><button class="del-btn" onclick="deleteTx('${t.id}','arely')">🗑</button></td>
     </tr>`).join('');
+}
+
+// ── EDIT CATEGORY (inline modal) ─────────────────────────
+function openArelyCatEdit(txId, currentCat){
+  // Remove any existing picker
+  document.getElementById('arelyCatEditOverlay')?.remove();
+
+  const cats = Object.entries(ARELY_CAT);
+  const overlay = document.createElement('div');
+  overlay.id = 'arelyCatEditOverlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9000;display:flex;align-items:flex-end;justify-content:center';
+  overlay.innerHTML = `
+    <div style="background:#fff;border-radius:18px 18px 0 0;width:100%;max-width:420px;max-height:70vh;overflow-y:auto;padding:18px 14px 28px;box-shadow:0 -4px 20px rgba(0,0,0,.15)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <span style="font-weight:700;font-size:1rem;color:var(--arely-dark)">Change Category</span>
+        <button onclick="document.getElementById('arelyCatEditOverlay').remove()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px">✕</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+        ${cats.map(([k,v]) => `
+          <button onclick="saveArelyCatEdit('${txId}','${k}')"
+            style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px;border-radius:12px;border:2px solid ${k===currentCat?v.color:'#eee'};background:${k===currentCat?v.color+'15':'#fafafa'};cursor:pointer;font-size:.75rem;font-weight:${k===currentCat?'700':'500'};color:${k===currentCat?v.color:'#555'}">
+            <span style="font-size:1.4rem">${v.emoji}</span>
+            ${v.label}
+          </button>`).join('')}
+      </div>
+    </div>`;
+  overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
+  document.body.appendChild(overlay);
+}
+
+async function saveArelyCatEdit(txId, newCat){
+  const catInfo = ARELY_CAT[newCat];
+  const now = new Date().toISOString();
+  const { error } = await db.from('transactions').update({
+    category:  newCat,
+    cat_label: catInfo?.label || newCat,
+    edited_at: now,
+  }).eq('id', txId);
+
+  document.getElementById('arelyCatEditOverlay')?.remove();
+
+  if(error){
+    alert('Error updating category: ' + error.message);
+    return;
+  }
+
+  // Refresh all views
+  await loadArelyData();
+  loadArelyDashboard();
 }
 
 // ── SAVE EXPENSE ─────────────────────────────────────────
@@ -422,7 +487,7 @@ async function loadArelyRecentExp(){
   box.innerHTML = `<table style="width:100%;font-size:.78rem;border-collapse:collapse">
     ${recent.map(t => `
     <tr style="border-bottom:1px solid #f0f0f0">
-      <td style="padding:6px 5px">${catEmoji(t.category)}</td>
+      <td style="padding:6px 5px;cursor:pointer" onclick="openArelyCatEdit('${t.id}','${t.category}')" title="Tap to change category">${catEmoji(t.category)}</td>
       <td style="padding:6px 4px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description}</td>
       <td style="padding:6px 4px;color:#D06B8D;font-weight:700">${fmtUSD(t.amount)}</td>
       <td><button class="del-btn" onclick="deleteTx('${t.id}','arely')">🗑</button></td>
@@ -941,29 +1006,35 @@ const VALID_REPEATS = ['weekly','monthly','yearly'];
 async function markArelyTodoDone(id, repeating, dueDate){
   const isRepeat = VALID_REPEATS.includes(repeating);
   const hasDate  = dueDate && /^\d{4}-\d{2}-\d{2}$/.test(dueDate);
+  const now      = new Date().toISOString();
 
-  if(isRepeat && hasDate){
-    // ── REPEATING: just advance due_date, keep same DB row ──
-    const nextDate = calcNextDue(dueDate, repeating);
-    if(nextDate){
-      // Brief visual flash to confirm the action
-      const el = document.getElementById('atodo' + id);
-      if(el){ el.style.transition = 'opacity .25s'; el.style.opacity = '0.2'; }
-      await db.from('todos').update({ due_date: nextDate, completed: false }).eq('id', id);
-      setTimeout(() => loadArelyTodos(), 300);
-    }
-    return; // done — no history entry for repeating tasks
-  }
+  // Visual flash to confirm
+  const el = document.getElementById('atodo' + id);
+  if(el){ el.style.transition = 'opacity .25s'; el.style.opacity = '0.2'; }
 
-  // ── ONE-TIME: mark as completed, move to history ─────────
-  const now = new Date().toISOString();
-  // Try with completed_at first; fall back if column doesn't exist yet
+  // ── Mark current task as DONE (both repeating and one-time) ──
   const { error } = await db.from('todos')
     .update({ completed: true, completed_at: now }).eq('id', id);
   if(error){
     await db.from('todos').update({ completed: true }).eq('id', id);
   }
-  loadArelyTodos();
+
+  // ── REPEATING: also create a NEW pending task with next due date ──
+  if(isRepeat && hasDate){
+    const nextDate = calcNextDue(dueDate, repeating);
+    if(nextDate){
+      const { data: orig } = await db.from('todos').select('*').eq('id', id).single();
+      if(orig){
+        const { id: _id, completed, completed_at: _ca, created_at, ...copy } = orig;
+        copy.due_date     = nextDate;
+        copy.completed    = false;
+        copy.completed_at = null;
+        await db.from('todos').insert(copy);
+      }
+    }
+  }
+
+  setTimeout(() => loadArelyTodos(), 300);
 }
 
 function calcNextDue(dueDateStr, repeating){
