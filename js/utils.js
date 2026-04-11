@@ -63,9 +63,39 @@ function showAlert(el, msg, type){
 function hideAlert(el){ el.className = 'alert'; }
 
 // ── ELIMINAR TRANSACCIÓN (compartido) ─────────────────────
+// Archiva en deleted_transactions antes de borrar definitivamente.
 async function deleteTx(id, person){
-  if(!confirm('¿Eliminar esta transacción?')) return;
+  if(!confirm('¿Eliminar esta transacción?\nQuedarás guardada en el historial de borrados.')) return;
+
+  // 1 ── Fetch the row to archive it
+  const { data: tx } = await db.from('transactions').select('*').eq('id', id).single();
+
+  if(tx){
+    // 2 ── Insert into deleted_transactions archive
+    const archive = {
+      original_id:   tx.id,
+      date:          tx.date,
+      description:   tx.description,
+      category:      tx.category,
+      cat_label:     tx.cat_label,
+      month:         tx.month,
+      month_display: tx.month_display,
+      month_num:     tx.month_num,
+      year:          tx.year,
+      amount:        tx.amount,
+      type:          tx.type,
+      person:        tx.person,
+      direction:     tx.direction,
+      created_at:    tx.created_at,
+      deleted_by:    currentUser || person || 'unknown',
+    };
+    await db.from('deleted_transactions').insert(archive);
+  }
+
+  // 3 ── Delete from active transactions
   await db.from('transactions').delete().eq('id', id);
+
+  // 4 ── Refresh the correct user view
   if(person === 'sharelyn'){
     loadDashboard();
     loadRecentCash();
