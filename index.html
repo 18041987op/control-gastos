@@ -51,7 +51,6 @@
         <button class="p-tab sharelyn active" id="tabSharelyn" onclick="switchPerson('sharelyn')">💜 Sharelyn</button>
         <button class="p-tab teresa"           id="tabTeresa"   onclick="switchPerson('teresa')">🏠 Teresa</button>
       </div>
-      <button class="trash-access-btn" onclick="openTrash()" title="Historial de Borrados" style="margin-right:4px">🗑️</button>
       <button class="exit-btn" onclick="logout()">Salir</button>
     </div>
   </div>
@@ -422,8 +421,7 @@
       <h1 id="arelyHdrTitle">🏡 1311 Old Robinson</h1>
       <div class="sub" id="arelyHdrSub">Household Expenses</div>
     </div>
-    <div class="hdr-right" style="display:flex;gap:8px;align-items:center">
-      <button class="trash-access-btn" onclick="openTrash()" title="Deletion History">🗑️</button>
+    <div class="hdr-right">
       <button class="exit-btn" onclick="logout()">Logout</button>
     </div>
   </div>
@@ -445,26 +443,52 @@
   <div class="view active" id="avDashboard">
     <div id="aDashLoading" class="loading"><div class="spinner"></div><br>Loading…</div>
     <div id="aDashContent" style="display:none">
-      <!-- Category Breakdown Cards -->
+
+      <!-- Month Picker -->
+      <div class="arely-month-picker-wrap">
+        <div class="arely-month-picker" id="arelyMonthPicker"></div>
+      </div>
+
+      <!-- Month Budget Summary Bar -->
+      <div class="chart-card arely-month-summary" id="arelyMonthSummary"></div>
+
+      <!-- Category Breakdown (clickable) -->
       <div class="chart-card">
-        <div class="chart-hdr"><h3>📊 Spending by Category</h3></div>
+        <div class="chart-hdr">
+          <h3>📊 Spending by Category</h3>
+          <span id="arelyCatFilterBadge" style="display:none">
+            <button class="arely-filter-clear" onclick="arelySelectCatFilter(null)">✕ Clear filter</button>
+          </span>
+        </div>
         <div id="arelyCatBreakdown"></div>
       </div>
+
+      <!-- Category-filtered transactions panel (shows when category selected) -->
+      <div class="chart-card arely-cat-tx-panel" id="arelyCatTxPanel" style="display:none">
+        <div class="chart-hdr">
+          <h3 id="arelyCatTxTitle">Transactions</h3>
+          <button class="arely-filter-clear" onclick="arelySelectCatFilter(null)">✕ All</button>
+        </div>
+        <div id="arelyCatTxList"></div>
+      </div>
+
       <!-- Donut Chart -->
       <div class="chart-card">
         <div class="chart-hdr"><h3>🥧 Category Distribution</h3></div>
         <div class="chart-wrap"><canvas id="arelyDonutCanvas"></canvas></div>
       </div>
+
       <!-- Trend Timeline -->
       <div class="chart-card">
-        <div class="chart-hdr"><h3>📈 Spending Trend</h3></div>
+        <div class="chart-hdr"><h3>📈 6-Month Trend</h3></div>
         <div class="chart-wrap"><canvas id="arelyTrendCanvas"></canvas></div>
       </div>
-      <!-- Recent Transactions -->
+
+      <!-- All Transactions (collapsed by default unless filtered) -->
       <div class="chart-card">
         <div class="chart-hdr">
-          <h3>📋 Recent Transactions</h3>
-          <button class="tx-toggle-btn arely-toggle" id="arelyTxToggle" onclick="toggleTxList('arelyTxWrap','arelyTxToggle')">Show list ▼</button>
+          <h3>📋 All Transactions</h3>
+          <button class="tx-toggle-btn arely-toggle" id="arelyTxToggle" onclick="toggleTxList('arelyTxWrap','arelyTxToggle')">Show ▼</button>
         </div>
         <div id="arelyTxWrap" style="display:none">
           <div class="tx-wrap">
@@ -475,6 +499,7 @@
           </div>
         </div>
       </div>
+
     </div>
     <div id="aDashEmpty" class="empty" style="display:none"><div class="empty-icon">📭</div><p>No expenses yet.</p></div>
   </div>
@@ -572,6 +597,13 @@
       <input type="text" id="arelyTodoTitle" placeholder="e.g. Pay electric bill, buy Sam's food…" maxlength="100">
       <label>Due date <span style="font-weight:400;font-size:.72rem">(optional)</span></label>
       <input type="date" id="arelyTodoDate">
+      <label>Repeating</label>
+      <div class="arely-repeat-opts" id="arelyRepeatOpts">
+        <button class="arely-repeat-btn sel-arely" data-val="none"    onclick="arelySetRepeat(this,'none')">🚫 One-time</button>
+        <button class="arely-repeat-btn"            data-val="weekly"  onclick="arelySetRepeat(this,'weekly')">📆 Weekly</button>
+        <button class="arely-repeat-btn"            data-val="monthly" onclick="arelySetRepeat(this,'monthly')">🗓️ Monthly</button>
+        <button class="arely-repeat-btn"            data-val="yearly"  onclick="arelySetRepeat(this,'yearly')">🔁 Yearly</button>
+      </div>
       <label>Category</label>
       <div class="opt-grid cols4" id="arelyTodoCatGrid"></div>
       <div style="display:flex;gap:8px;margin-top:14px">
@@ -581,7 +613,15 @@
     </div>
     <!-- Progress summary -->
     <div class="arely-todo-progress" id="arelyTodoProgress"></div>
+    <!-- Pending Tasks -->
     <div id="arelyTodoList"></div>
+    <!-- Completed History (collapsible) -->
+    <div id="arelyDoneHistoryWrap" style="margin-top:8px">
+      <button class="arely-history-toggle" id="arelyDoneToggle" onclick="toggleArelyDoneHistory()">
+        📂 Completed History <span id="arelyDoneCount"></span> ▾
+      </button>
+      <div id="arelyDoneHistory" style="display:none"></div>
+    </div>
   </div>
 
   <!-- Nav inferior (Arely) -->
@@ -592,6 +632,7 @@
     <button class="nav-btn"          onclick="arelyShow('Checklist')"  id="anChecklist"><span class="nav-icon">✅</span><span class="nav-label">Tasks</span></button>
     <button class="nav-btn"          onclick="arelyShow('Budget')"     id="anBudget"><span class="nav-icon">💰</span><span class="nav-label">Budget</span></button>
     <button class="nav-btn"          onclick="arelyShow('Upload')"     id="anUpload"><span class="nav-icon">📤</span><span class="nav-label">CSV</span></button>
+    <button class="nav-btn"          onclick="openTrash()"             id="anTrash"><span class="nav-icon">🗑️</span><span class="nav-label">Trash</span></button>
   </nav>
 </div>
 

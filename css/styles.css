@@ -559,3 +559,41 @@ thead.arely th{background:var(--arely-bg);color:var(--arely-dark);}
 .trash-btn:hover{opacity:.85;}
 .trash-restore{background:#e8f5e9;color:#2e7d32;}
 .trash-perm{background:#ffebee;color:#c62828;}
+
+/* ── MONTH PICKER ──────────────────────────────────────── */
+.arely-month-picker-wrap{overflow-x:auto;padding:10px 14px 4px;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+.arely-month-picker-wrap::-webkit-scrollbar{display:none;}
+.arely-month-picker{display:flex;gap:7px;width:max-content;}
+.arely-month-chip{border:2px solid var(--arely-lighter);background:var(--arely-white);color:var(--arely-dark);border-radius:20px;padding:6px 14px;font-size:.76rem;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .18s;}
+.arely-month-chip:hover{border-color:var(--arely);background:var(--arely-bg);}
+.arely-month-chip.active{background:var(--arely);color:#fff;border-color:var(--arely);box-shadow:0 3px 10px rgba(208,107,141,.35);}
+
+/* ── MONTH SUMMARY CARD ────────────────────────────────── */
+.arely-month-summary{padding:16px 18px;background:linear-gradient(135deg,var(--arely-white),var(--arely-bg));border:1.5px solid var(--arely-lighter);}
+
+/* ── CATEGORY FILTER ───────────────────────────────────── */
+.arely-cat-row{cursor:pointer;border-radius:12px;transition:background .15s,box-shadow .15s;padding:8px 6px;margin:2px 0;}
+.arely-cat-row:hover{background:var(--arely-bg);}
+.arely-cat-row-active{background:var(--arely-bg) !important;box-shadow:0 0 0 2px var(--arely-light);border-radius:12px;}
+.arely-cat-count{font-size:.65rem;color:var(--muted);font-weight:400;margin-left:4px;}
+.arely-cat-arrow{font-size:.7rem;color:var(--arely);margin-left:4px;}
+.arely-filter-clear{background:var(--arely-bg);color:var(--arely);border:1.5px solid var(--arely-lighter);border-radius:20px;padding:4px 12px;font-size:.74rem;font-weight:700;cursor:pointer;transition:all .15s;}
+.arely-filter-clear:hover{background:var(--arely);color:#fff;}
+
+/* ── CATEGORY TRANSACTION PANEL ────────────────────────── */
+.arely-cat-tx-panel{border:2px solid var(--arely-lighter);background:var(--arely-white);}
+.arely-cat-tx-panel .chart-hdr{background:var(--arely-bg);}
+
+/* ── TASK: REPEATING BUTTONS ────────────────────────────── */
+.arely-repeat-opts{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.arely-repeat-btn{border:2px solid var(--arely-lighter);background:#fff;color:var(--arely-dark);border-radius:20px;padding:6px 14px;font-size:.76rem;font-weight:600;cursor:pointer;transition:all .18s;}
+.arely-repeat-btn.sel-arely{background:var(--arely);color:#fff;border-color:var(--arely);}
+.arely-repeat-badge{font-size:.64rem;background:#fce4ec;color:#c2185b;border-radius:10px;padding:2px 8px;font-weight:700;margin-left:4px;}
+.arely-due-soon{font-size:.64rem;background:#fff3e0;color:#e65100;border-radius:10px;padding:2px 8px;font-weight:700;margin-left:4px;}
+.arely-overdue{font-size:.64rem;background:#ffebee;color:#c62828;border-radius:10px;padding:2px 8px;font-weight:700;margin-left:4px;}
+
+/* ── TASK: HISTORY SECTION ─────────────────────────────── */
+.arely-history-toggle{width:calc(100% - 28px);margin:6px 14px;background:var(--arely-bg);color:var(--arely-dark);border:1.5px solid var(--arely-lighter);border-radius:12px;padding:10px 16px;text-align:left;font-size:.82rem;font-weight:600;cursor:pointer;transition:background .15s;}
+.arely-history-toggle:hover{background:var(--arely-lighter);}
+.arely-undo-btn{background:none;border:none;font-size:1.1rem;cursor:pointer;padding:4px 6px;color:var(--muted);transition:color .15s;flex-shrink:0;}
+.arely-undo-btn:hover{color:var(--arely);}

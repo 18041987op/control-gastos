@@ -27,11 +27,18 @@ function buildArelyCatGrid(containerId, onSelect){
   }).join('');
 }
 
+// ── STATE ─────────────────────────────────────────────────
+let arelyViewMonth = new Date().getMonth() + 1;  // 1-12
+let arelyViewYear  = new Date().getFullYear();
+let arelyFilterCat = null;  // null = show all categories
+let arelyRepeat    = 'none'; // current form repeat selection
+
 // ── NAVIGATION ───────────────────────────────────────────
 function arelyShow(name){
   document.querySelectorAll('#arelyShell .view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('#arelyBottomNav .nav-btn').forEach(b => b.classList.remove('active','a-active'));
-  document.getElementById('av' + name).classList.add('active');
+  const viewEl = document.getElementById('av' + name);
+  if(viewEl) viewEl.classList.add('active');
   const btn = document.getElementById('an' + name);
   if(btn){ btn.classList.add('active','a-active'); }
   if(name === 'Dashboard')  loadArelyDashboard();
@@ -62,15 +69,85 @@ function getCurrentMonthKey(){
   return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
 }
 
-function getArelyCurrentMonthTx(){
-  const now = new Date();
-  const m = now.getMonth() + 1;
-  const y = now.getFullYear();
+function getArelyMonthTx(m, y){
   return arelyTx.filter(t => {
     const mn = t.month_num || parseInt((t.date||'').split('/')[1]) || 0;
-    const yr = t.year || new Date(t.created_at).getFullYear();
-    return mn === m && yr === y && t.direction === 'expense';
+    const yr = t.year || (t.created_at ? new Date(t.created_at).getFullYear() : 0);
+    return mn === (m || arelyViewMonth) && yr === (y || arelyViewYear) && t.direction === 'expense';
   });
+}
+
+// Keep backward-compat alias
+function getArelyCurrentMonthTx(){ return getArelyMonthTx(); }
+
+// ── MONTH PICKER ─────────────────────────────────────────
+function renderArelyMonthPicker(){
+  const now = new Date();
+  const months = [];
+  for(let i = 11; i >= 0; i--){
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    months.push({ m: d.getMonth()+1, y: d.getFullYear(),
+      label: MONTHS_EN[d.getMonth()+1]?.slice(0,3) + ' ' + d.getFullYear() });
+  }
+
+  const picker = document.getElementById('arelyMonthPicker');
+  picker.innerHTML = months.map(mo => {
+    const isActive = mo.m === arelyViewMonth && mo.y === arelyViewYear;
+    return `<button class="arely-month-chip${isActive?' active':''}"
+      onclick="arelySetViewMonth(${mo.m},${mo.y})">${mo.label}</button>`;
+  }).join('');
+
+  // Scroll selected chip into view
+  setTimeout(() => {
+    const active = picker.querySelector('.active');
+    if(active) active.scrollIntoView({inline:'center', behavior:'smooth'});
+  }, 50);
+}
+
+function arelySetViewMonth(m, y){
+  arelyViewMonth = m;
+  arelyViewYear  = y;
+  arelyFilterCat = null;
+  renderArelyMonthPicker();
+  renderArelyMonthSummary();
+  renderArelyCatBreakdown(getArelyMonthTx());
+  renderArelyDonut(getArelyMonthTx());
+  renderArelyTxTable();
+  hideCatTxPanel();
+}
+
+// ── MONTH SUMMARY BAR ────────────────────────────────────
+function renderArelyMonthSummary(){
+  const monthTx = getArelyMonthTx();
+  const spent   = sumAmt(monthTx);
+  const budgetKey = `arely_budget_${arelyViewYear}-${String(arelyViewMonth).padStart(2,'0')}`;
+  const bgt = parseFloat(localStorage.getItem(budgetKey) || arelyBudget) || 0;
+  const remaining = Math.max(0, bgt - spent);
+  const pct = bgt > 0 ? Math.min(100, (spent/bgt)*100) : 0;
+  const color = pct > 90 ? 'var(--red)' : pct > 70 ? '#f59e0b' : 'var(--arely)';
+  const isCurrentMonth = arelyViewMonth === (new Date().getMonth()+1) && arelyViewYear === new Date().getFullYear();
+  const monthLabel = MONTHS_EN[arelyViewMonth] + ' ' + arelyViewYear;
+
+  document.getElementById('arelyMonthSummary').innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <div>
+        <div style="font-size:.72rem;text-transform:uppercase;color:var(--muted);font-weight:700">${monthLabel}${isCurrentMonth?' · Current Month':''}</div>
+        <div style="font-size:1.3rem;font-weight:800;color:var(--arely-dark)">${fmtUSD(spent)} spent</div>
+      </div>
+      <div style="text-align:right">
+        ${bgt > 0 ? `<div style="font-size:.72rem;color:var(--muted)">Budget</div>
+        <div style="font-size:1rem;font-weight:700;color:${color}">${fmtUSD(bgt)}</div>` : `<div style="font-size:.78rem;color:var(--muted)">No budget set</div>`}
+      </div>
+    </div>
+    ${bgt > 0 ? `
+    <div class="arely-budget-bar-wrap" style="margin:0">
+      <div class="arely-budget-bar${pct>90?' bar-danger':pct>70?' bar-warning':''}" style="width:${pct}%"></div>
+    </div>
+    <div style="display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted);margin-top:4px">
+      <span>${pct.toFixed(0)}% used</span>
+      <span>${fmtUSD(remaining)} remaining</span>
+    </div>` : ''}
+  `;
 }
 
 // ── BANNER ───────────────────────────────────────────────
@@ -98,17 +175,21 @@ async function loadArelyDashboard(){
   await loadArelyData();
   hide('aDashLoading');
 
-  const monthTx = getArelyCurrentMonthTx();
-  if(!monthTx.length && !arelyTx.length){ show('aDashEmpty'); return; }
+  if(!arelyTx.length){ show('aDashEmpty'); return; }
   show('aDashContent');
 
+  arelyFilterCat = null;
+  renderArelyMonthPicker();
+  renderArelyMonthSummary();
+  const monthTx = getArelyMonthTx();
   renderArelyCatBreakdown(monthTx);
   renderArelyDonut(monthTx);
   renderArelyTrend();
   renderArelyTxTable();
+  hideCatTxPanel();
 }
 
-// ── CATEGORY BREAKDOWN WITH PROGRESS BARS ────────────────
+// ── CATEGORY BREAKDOWN WITH PROGRESS BARS (clickable) ────
 function renderArelyCatBreakdown(tx){
   const cats = {};
   tx.forEach(t => { cats[t.category] = (cats[t.category]||0) + parseFloat(t.amount||0); });
@@ -116,20 +197,87 @@ function renderArelyCatBreakdown(tx){
   const total  = sorted.reduce((s,[,v]) => s+v, 0) || 1;
 
   document.getElementById('arelyCatBreakdown').innerHTML = sorted.map(([k, amt]) => {
-    const cat = ARELY_CAT[k] || {emoji:'📦', label:k, color:'#90A4AE'};
-    const pct = ((amt/total)*100).toFixed(1);
+    const cat    = ARELY_CAT[k] || {emoji:'📦', label:k, color:'#90A4AE'};
+    const pct    = ((amt/total)*100).toFixed(1);
+    const isActive = arelyFilterCat === k;
+    const txCount  = tx.filter(t => t.category === k).length;
     return `
-    <div class="arely-cat-row">
+    <div class="arely-cat-row${isActive?' arely-cat-row-active':''}" onclick="arelySelectCatFilter('${k}')" title="Tap to filter transactions">
       <div class="arely-cat-icon" style="background:${cat.color}20;color:${cat.color}">${k === 'sam' ? samIcon(28) : cat.emoji}</div>
       <div class="arely-cat-info">
-        <div class="arely-cat-name">${cat.label}</div>
+        <div class="arely-cat-name">${cat.label} <span class="arely-cat-count">${txCount} tx</span></div>
         <div class="arely-cat-bar-wrap">
-          <div class="arely-cat-bar" style="width:${pct}%;background:${cat.color}"></div>
+          <div class="arely-cat-bar" style="width:${pct}%;background:${cat.color};${isActive?'opacity:1':'opacity:.85'}"></div>
         </div>
       </div>
-      <div class="arely-cat-amt">${fmtUSD(amt)}<span class="arely-cat-pct">${pct}%</span></div>
+      <div class="arely-cat-amt">${fmtUSD(amt)}<span class="arely-cat-pct">${pct}%</span>
+        ${isActive ? '<span class="arely-cat-arrow">▶</span>' : ''}
+      </div>
     </div>`;
   }).join('') || '<p style="color:#aaa;text-align:center;padding:16px">No expenses this month.</p>';
+
+  // Update filter badge
+  const badge = document.getElementById('arelyCatFilterBadge');
+  if(badge) badge.style.display = arelyFilterCat ? 'inline-flex' : 'none';
+}
+
+// ── CATEGORY FILTER ──────────────────────────────────────
+function arelySelectCatFilter(cat){
+  // Toggle: clicking same category deselects it
+  arelyFilterCat = (arelyFilterCat === cat) ? null : cat;
+
+  const monthTx = getArelyMonthTx();
+  renderArelyCatBreakdown(monthTx);
+
+  if(arelyFilterCat){
+    const filtered = monthTx.filter(t => t.category === arelyFilterCat);
+    const catInfo  = ARELY_CAT[arelyFilterCat] || {label: arelyFilterCat, color:'#ccc', emoji:'📦'};
+    showCatTxPanel(filtered, catInfo);
+  } else {
+    hideCatTxPanel();
+  }
+}
+
+function showCatTxPanel(filtered, catInfo){
+  const panel = document.getElementById('arelyCatTxPanel');
+  const title = document.getElementById('arelyCatTxTitle');
+  const list  = document.getElementById('arelyCatTxList');
+  if(!panel) return;
+
+  title.innerHTML = `${catInfo.emoji} ${catInfo.label} <span style="font-size:.75rem;color:var(--muted);font-weight:400">${filtered.length} transaction${filtered.length===1?'':'s'}</span>`;
+
+  const total = sumAmt(filtered);
+  list.innerHTML = filtered.length === 0
+    ? '<p style="color:var(--muted);text-align:center;padding:14px;font-size:.85rem">No transactions in this category.</p>'
+    : `<div style="padding:8px 14px 4px;font-size:.78rem;font-weight:700;color:${catInfo.color}">Total: ${fmtUSD(total)}</div>
+    <div class="tx-wrap" style="margin:0;max-height:320px;overflow-y:auto">
+    <table>
+      <thead><tr style="background:${catInfo.color}15">
+        <th style="padding:6px 10px">Date</th>
+        <th style="padding:6px 10px">Description</th>
+        <th style="padding:6px 10px;text-align:right">Amount</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+        ${filtered.map(t => `
+        <tr style="border-bottom:1px solid #f5f0f3;background:${catInfo.color}08">
+          <td style="padding:7px 10px;font-size:.78rem;white-space:nowrap">${t.date||'—'}</td>
+          <td style="padding:7px 10px;font-size:.8rem;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.description}">${t.description}</td>
+          <td style="padding:7px 10px;text-align:right;font-weight:700;color:${catInfo.color}">${fmtUSD(t.amount)}</td>
+          <td style="padding:7px 5px"><button class="del-btn" onclick="deleteTx('${t.id}','arely')">🗑</button></td>
+        </tr>`).join('')}
+      </tbody>
+    </table>
+    </div>`;
+
+  panel.style.display = 'block';
+  // Smooth scroll to panel
+  setTimeout(() => panel.scrollIntoView({behavior:'smooth', block:'nearest'}), 80);
+}
+
+function hideCatTxPanel(){
+  const panel = document.getElementById('arelyCatTxPanel');
+  if(panel) panel.style.display = 'none';
 }
 
 // ── DONUT CHART ──────────────────────────────────────────
@@ -215,14 +363,15 @@ function renderArelyTrend(){
   });
 }
 
-// ── TRANSACTIONS TABLE ───────────────────────────────────
+// ── TRANSACTIONS TABLE (for selected month) ──────────────
 function renderArelyTxTable(){
-  const tx = arelyTx.filter(t => t.direction === 'expense');
+  const tx = getArelyMonthTx();
+  const body = document.getElementById('arelyTxBody');
   if(!tx.length){
-    document.getElementById('arelyTxBody').innerHTML = '<tr><td colspan="5" style="text-align:center;padding:18px;color:#aaa">No transactions</td></tr>';
+    body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:18px;color:#aaa">No transactions this month.</td></tr>';
     return;
   }
-  document.getElementById('arelyTxBody').innerHTML = tx.slice(0,30).map(t => `
+  body.innerHTML = tx.map(t => `
     <tr${t.edited_at?' class="was-edited"':''}>
       <td>${t.date||'—'}${t.edited_at?'<span class="edited-mark">✏️</span>':''}</td>
       <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.description}">${t.description}</td>
@@ -626,9 +775,24 @@ function arelyCancelUpload(){
 }
 
 // ── CHECKLIST / TODOS ────────────────────────────────────
+// ── TASK FORM ────────────────────────────────────────────
 function toggleArelyTodoForm(){
   const w = document.getElementById('arelyTodoFormWrap');
-  w.style.display = w.style.display === 'none' ? 'block' : 'none';
+  const isOpen = w.style.display !== 'none';
+  w.style.display = isOpen ? 'none' : 'block';
+  if(!isOpen){
+    // Reset form
+    arelyRepeat = 'none';
+    document.querySelectorAll('#arelyRepeatOpts .arely-repeat-btn').forEach(b => {
+      b.classList.toggle('sel-arely', b.dataset.val === 'none');
+    });
+  }
+}
+
+function arelySetRepeat(btn, val){
+  arelyRepeat = val;
+  document.querySelectorAll('#arelyRepeatOpts .arely-repeat-btn').forEach(b => b.classList.remove('sel-arely'));
+  btn.classList.add('sel-arely');
 }
 
 function buildArelyTodoCatGrid(){
@@ -645,74 +809,175 @@ async function saveArelyTodo(){
   if(!title){ showAlert(al, 'Please enter a task description.', 'error'); return; }
   const {error} = await db.from('todos').insert([{
     title, due_date: due, person: 'arely',
-    category: arelySelectedTodoCat || 'other',
+    category:  arelySelectedTodoCat || 'other',
     completed: false,
+    repeating: arelyRepeat || 'none',
   }]);
   if(error){ showAlert(al, 'Error: ' + error.message, 'error'); return; }
   showAlert(al, '✅ Task saved!', 'success');
   document.getElementById('arelyTodoTitle').value = '';
   document.getElementById('arelyTodoDate').value  = '';
   arelySelectedTodoCat = '';
+  arelyRepeat = 'none';
   document.querySelectorAll('#arelyTodoCatGrid .opt-btn').forEach(b => b.classList.remove('sel','sel-arely'));
+  document.querySelectorAll('#arelyRepeatOpts .arely-repeat-btn').forEach(b => {
+    b.classList.toggle('sel-arely', b.dataset.val === 'none');
+  });
   loadArelyTodos();
 }
 
+// ── TASKS: LOAD ──────────────────────────────────────────
 async function loadArelyTodos(){
   const {data} = await db.from('todos')
-    .select('id,title,due_date,completed,category,created_at')
+    .select('id,title,due_date,completed,completed_at,category,created_at,repeating')
     .eq('person','arely')
-    .order('completed').order('due_date',{ascending:true,nullsFirst:false}).order('created_at',{ascending:false});
-  const todos = data || [];
-  const done  = todos.filter(t => t.completed);
-  const pending = todos.filter(t => !t.completed);
+    .order('completed',{ascending:true})
+    .order('due_date',{ascending:true,nullsFirst:false})
+    .order('created_at',{ascending:false});
 
-  // Progress bar
+  const todos   = data || [];
+  const pending = todos.filter(t => !t.completed);
+  const done    = todos.filter(t => t.completed);
+
+  // Progress bar (pending-only ratio for clarity)
   const total = todos.length;
-  const pct   = total > 0 ? ((done.length / total) * 100).toFixed(0) : 0;
+  const pct   = total > 0 ? Math.round((done.length / total) * 100) : 0;
   document.getElementById('arelyTodoProgress').innerHTML = total > 0 ? `
     <div class="arely-todo-prog-text">
-      <span>✅ ${done.length} done</span>
-      <span>⏳ ${pending.length} remaining</span>
+      <span>✅ ${done.length} completed</span>
+      <span>⏳ ${pending.length} pending</span>
     </div>
-    <div class="arely-todo-prog-bar-wrap">
-      <div class="arely-todo-prog-bar" style="width:${pct}%"></div>
-    </div>
-    <div class="arely-todo-prog-pct">${pct}% complete</div>
-  ` : '';
+    <div class="arely-todo-prog-bar-wrap"><div class="arely-todo-prog-bar" style="width:${pct}%"></div></div>
+    <div class="arely-todo-prog-pct">${pct}% complete</div>` : '';
 
-  // List
-  const renderItem = (t) => {
-    const catInfo = ARELY_TODO_CATS.find(c => c.k === t.category) || {icon:'💡', label:'Other'};
-    const dueStr  = t.due_date ? `<span class="arely-todo-due">${t.due_date}</span>` : '';
-    return `
-    <div class="arely-todo-item ${t.completed ? 'todo-done' : ''}">
-      <button class="arely-todo-check" onclick="toggleArelyTodo('${t.id}',${!t.completed})">
-        ${t.completed ? '☑️' : '⬜'}
-      </button>
-      <div class="arely-todo-body">
-        <span class="arely-todo-cat-icon">${catInfo.icon}</span>
-        <span class="arely-todo-title-text ${t.completed ? 'strike' : ''}">${escHtml(t.title)}</span>
-        ${dueStr}
-      </div>
-      <button class="del-btn" onclick="deleteArelyTodo('${t.id}')">🗑</button>
-    </div>`;
-  };
-
+  // Pending tasks
   document.getElementById('arelyTodoList').innerHTML =
-    (pending.length ? '<div class="arely-todo-section-lbl">⏳ Pending</div>' + pending.map(renderItem).join('') : '') +
-    (done.length ? '<div class="arely-todo-section-lbl" style="margin-top:16px">✅ Completed</div>' + done.map(renderItem).join('') : '') +
-    (!todos.length ? '<div class="empty" style="padding:20px"><div class="empty-icon">📋</div><p>No tasks yet. Add one!</p></div>' : '');
+    pending.length
+      ? '<div class="arely-todo-section-lbl">⏳ To Do</div>' + pending.map(t => renderArelyTodoItem(t, false)).join('')
+      : '<div class="empty" style="padding:20px"><div class="empty-icon">📋</div><p>No pending tasks. You\'re all caught up!</p></div>';
+
+  // Done count badge
+  const doneCountEl = document.getElementById('arelyDoneCount');
+  if(doneCountEl) doneCountEl.textContent = done.length ? `(${done.length})` : '';
+
+  // Completed history (populated separately on toggle)
+  const doneDiv = document.getElementById('arelyDoneHistory');
+  if(doneDiv && doneDiv.style.display !== 'none'){
+    renderArelyDoneHistory(done);
+  }
 }
 
-async function toggleArelyTodo(id, completed){
-  await db.from('todos').update({completed}).eq('id', id);
+function renderArelyTodoItem(t, isHistory){
+  const catInfo  = ARELY_TODO_CATS.find(c => c.k === t.category) || {icon:'💡', label:'Other'};
+  const repeat   = t.repeating && t.repeating !== 'none' ? t.repeating : null;
+  const repeatBadge = repeat
+    ? `<span class="arely-repeat-badge">🔁 ${repeat.charAt(0).toUpperCase()+repeat.slice(1)}</span>` : '';
+
+  // Due-soon indicator
+  let dueBadge = '';
+  if(!isHistory && t.due_date){
+    const daysLeft = Math.ceil((new Date(t.due_date) - new Date()) / 86400000);
+    if(daysLeft <= 3 && daysLeft >= 0){
+      dueBadge = `<span class="arely-due-soon">⚡ ${daysLeft === 0 ? 'Today!' : daysLeft === 1 ? 'Tomorrow' : `${daysLeft} days`}</span>`;
+    } else if(daysLeft < 0){
+      dueBadge = `<span class="arely-overdue">⚠️ Overdue</span>`;
+    } else {
+      dueBadge = `<span class="arely-todo-due">📅 ${t.due_date}</span>`;
+    }
+  }
+
+  const completedWhen = isHistory && t.completed_at
+    ? `<span style="font-size:.66rem;color:#aaa">Done ${new Date(t.completed_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>`
+    : '';
+
+  return `
+  <div class="arely-todo-item" id="atodo${t.id}">
+    <button class="arely-todo-check" onclick="markArelyTodoDone('${t.id}','${t.repeating||'none'}','${t.due_date||''}')">
+      ${isHistory ? '☑️' : '⬜'}
+    </button>
+    <div class="arely-todo-body">
+      <span class="arely-todo-cat-icon">${catInfo.icon}</span>
+      <span class="arely-todo-title-text${isHistory?' strike':''}">${escHtml(t.title)}</span>
+      ${dueBadge}${repeatBadge}${completedWhen}
+    </div>
+    ${isHistory
+      ? `<button class="arely-undo-btn" onclick="undoArelyTodo('${t.id}')" title="Restore">↩️</button>`
+      : ''}
+  </div>`;
+}
+
+function renderArelyDoneHistory(done){
+  const div = document.getElementById('arelyDoneHistory');
+  if(!div) return;
+  div.innerHTML = done.length
+    ? done.map(t => renderArelyTodoItem(t, true)).join('')
+    : '<p style="color:var(--muted);text-align:center;padding:14px;font-size:.82rem">No completed tasks yet.</p>';
+}
+
+function toggleArelyDoneHistory(){
+  const div  = document.getElementById('arelyDoneHistory');
+  const btn  = document.getElementById('arelyDoneToggle');
+  if(!div || !btn) return;
+  const open = div.style.display !== 'none';
+  div.style.display = open ? 'none' : 'block';
+  btn.innerHTML = `📂 Completed History <span id="arelyDoneCount">(${document.getElementById('arelyDoneCount')?.textContent||''})</span> ${open ? '▾' : '▴'}`;
+  if(!open){
+    // Lazy load history
+    db.from('todos').select('id,title,due_date,completed,completed_at,category,created_at,repeating')
+      .eq('person','arely').eq('completed',true)
+      .order('completed_at',{ascending:false})
+      .then(({data}) => renderArelyDoneHistory(data||[]));
+  }
+}
+
+// ── TASKS: MARK DONE (with repeating logic) ───────────────
+async function markArelyTodoDone(id, repeating, dueDate){
+  const now = new Date().toISOString();
+
+  // Mark current task as completed
+  await db.from('todos').update({ completed: true, completed_at: now }).eq('id', id);
+
+  // If repeating, create the next occurrence
+  if(repeating && repeating !== 'none' && dueDate){
+    const nextDate = calcNextDue(dueDate, repeating);
+    if(nextDate){
+      const {data: orig} = await db.from('todos').select('*').eq('id', id).single();
+      if(orig){
+        await db.from('todos').insert([{
+          title:     orig.title,
+          due_date:  nextDate,
+          person:    orig.person,
+          category:  orig.category,
+          completed: false,
+          repeating: orig.repeating,
+        }]);
+      }
+    }
+  }
+
   loadArelyTodos();
 }
 
-async function deleteArelyTodo(id){
-  if(!confirm('Delete this task?')) return;
-  await db.from('todos').delete().eq('id', id);
+function calcNextDue(dueDateStr, repeating){
+  const d = new Date(dueDateStr + 'T12:00:00'); // noon to avoid DST issues
+  if(isNaN(d)) return null;
+  if(repeating === 'weekly')  d.setDate(d.getDate() + 7);
+  if(repeating === 'monthly') d.setMonth(d.getMonth() + 1);
+  if(repeating === 'yearly')  d.setFullYear(d.getFullYear() + 1);
+  return d.toISOString().slice(0,10);
+}
+
+// ── TASKS: RESTORE (undo complete) ───────────────────────
+async function undoArelyTodo(id){
+  await db.from('todos').update({ completed: false, completed_at: null }).eq('id', id);
   loadArelyTodos();
+  const div = document.getElementById('arelyDoneHistory');
+  if(div && div.style.display !== 'none'){
+    db.from('todos').select('id,title,due_date,completed,completed_at,category,created_at,repeating')
+      .eq('person','arely').eq('completed',true)
+      .order('completed_at',{ascending:false})
+      .then(({data}) => renderArelyDoneHistory(data||[]));
+  }
 }
 
 // HTML escape helper (if not already available)
