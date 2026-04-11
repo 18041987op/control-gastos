@@ -933,45 +933,36 @@ function toggleArelyDoneHistory(){
   }
 }
 
-// ── TASKS: MARK DONE (with repeating logic) ───────────────
+// ── TASKS: MARK DONE ─────────────────────────────────────
+// Repeating tasks: advance due_date on the SAME row (no new rows created)
+// One-time tasks: mark as completed → moves to history
 const VALID_REPEATS = ['weekly','monthly','yearly'];
 
 async function markArelyTodoDone(id, repeating, dueDate){
-  const now = new Date().toISOString();
-
-  // Try to mark as completed (handles missing completed_at column gracefully)
-  const updatePayload = { completed: true };
-  try { updatePayload.completed_at = now; } catch(e){}
-
-  const { error: upErr } = await db.from('todos')
-    .update(updatePayload).eq('id', id);
-
-  if(upErr){
-    // completed_at column might not exist yet — retry without it
-    await db.from('todos').update({ completed: true }).eq('id', id);
-  }
-
-  // Only create next occurrence if genuinely repeating AND has a valid due date
   const isRepeat = VALID_REPEATS.includes(repeating);
   const hasDate  = dueDate && /^\d{4}-\d{2}-\d{2}$/.test(dueDate);
 
   if(isRepeat && hasDate){
+    // ── REPEATING: just advance due_date, keep same DB row ──
     const nextDate = calcNextDue(dueDate, repeating);
     if(nextDate){
-      const {data: orig} = await db.from('todos').select('*').eq('id', id).single();
-      if(orig){
-        await db.from('todos').insert([{
-          title:     orig.title,
-          due_date:  nextDate,
-          person:    orig.person,
-          category:  orig.category,
-          completed: false,
-          repeating: orig.repeating,
-        }]);
-      }
+      // Brief visual flash to confirm the action
+      const el = document.getElementById('atodo' + id);
+      if(el){ el.style.transition = 'opacity .25s'; el.style.opacity = '0.2'; }
+      await db.from('todos').update({ due_date: nextDate, completed: false }).eq('id', id);
+      setTimeout(() => loadArelyTodos(), 300);
     }
+    return; // done — no history entry for repeating tasks
   }
 
+  // ── ONE-TIME: mark as completed, move to history ─────────
+  const now = new Date().toISOString();
+  // Try with completed_at first; fall back if column doesn't exist yet
+  const { error } = await db.from('todos')
+    .update({ completed: true, completed_at: now }).eq('id', id);
+  if(error){
+    await db.from('todos').update({ completed: true }).eq('id', id);
+  }
   loadArelyTodos();
 }
 
