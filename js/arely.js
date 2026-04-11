@@ -890,11 +890,14 @@ function renderArelyTodoItem(t, isHistory){
     ? `<span style="font-size:.66rem;color:#aaa">Done ${new Date(t.completed_at).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</span>`
     : '';
 
+  // History items show static ☑️ (no action); pending items show clickable ⬜
+  const checkBtn = isHistory
+    ? `<span class="arely-todo-check" style="cursor:default;font-size:1.2rem;padding:2px 6px">☑️</span>`
+    : `<button class="arely-todo-check" onclick="markArelyTodoDone('${t.id}','${t.repeating||'none'}','${t.due_date||''}')">⬜</button>`;
+
   return `
   <div class="arely-todo-item" id="atodo${t.id}">
-    <button class="arely-todo-check" onclick="markArelyTodoDone('${t.id}','${t.repeating||'none'}','${t.due_date||''}')">
-      ${isHistory ? '☑️' : '⬜'}
-    </button>
+    ${checkBtn}
     <div class="arely-todo-body">
       <span class="arely-todo-cat-icon">${catInfo.icon}</span>
       <span class="arely-todo-title-text${isHistory?' strike':''}">${escHtml(t.title)}</span>
@@ -931,14 +934,28 @@ function toggleArelyDoneHistory(){
 }
 
 // ── TASKS: MARK DONE (with repeating logic) ───────────────
+const VALID_REPEATS = ['weekly','monthly','yearly'];
+
 async function markArelyTodoDone(id, repeating, dueDate){
   const now = new Date().toISOString();
 
-  // Mark current task as completed
-  await db.from('todos').update({ completed: true, completed_at: now }).eq('id', id);
+  // Try to mark as completed (handles missing completed_at column gracefully)
+  const updatePayload = { completed: true };
+  try { updatePayload.completed_at = now; } catch(e){}
 
-  // If repeating, create the next occurrence
-  if(repeating && repeating !== 'none' && dueDate){
+  const { error: upErr } = await db.from('todos')
+    .update(updatePayload).eq('id', id);
+
+  if(upErr){
+    // completed_at column might not exist yet — retry without it
+    await db.from('todos').update({ completed: true }).eq('id', id);
+  }
+
+  // Only create next occurrence if genuinely repeating AND has a valid due date
+  const isRepeat = VALID_REPEATS.includes(repeating);
+  const hasDate  = dueDate && /^\d{4}-\d{2}-\d{2}$/.test(dueDate);
+
+  if(isRepeat && hasDate){
     const nextDate = calcNextDue(dueDate, repeating);
     if(nextDate){
       const {data: orig} = await db.from('todos').select('*').eq('id', id).single();
