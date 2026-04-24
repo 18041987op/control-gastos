@@ -611,7 +611,7 @@ thead.arely th{background:var(--arely-bg);color:var(--arely-dark);}
   opacity:0;transition:opacity .25s,transform .25s;
   z-index:9999;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.25);
 }
-#arelyToast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+#arelyToast.arely-toast-show{opacity:1;transform:translateX(-50%) translateY(0);}
 
 /* ── PER-CATEGORY BUDGET ROWS ───────────────────────────── */
 .arely-cat-budget-section{padding:4px 0 8px;}
@@ -777,3 +777,18 @@ thead.arely th{background:var(--arely-bg);color:var(--arely-dark);}
 /* ── ARELY TOGGLE BTN ───────────────────────────────────── */
 .arely-toggle{background:var(--arely-bg);color:var(--arely);border:1.5px solid var(--arely-lighter);}
 .arely-toggle:hover{background:var(--arely);color:#fff;}
+
+/* ── NEW CATEGORY QUICK-ACCESS BUTTONS ─────────────────── */
+.arely-newcat-btn{
+  background:var(--arely);color:#fff;border:none;
+  border-radius:20px;padding:6px 14px;font-size:.76rem;
+  font-weight:700;cursor:pointer;white-space:nowrap;
+  transition:opacity .15s;
+}
+.arely-newcat-btn:hover{opacity:.85;}
+.arely-inline-newcat{
+  background:none;border:none;color:var(--arely);
+  font-size:.76rem;font-weight:700;cursor:pointer;
+  text-decoration:underline;padding:0;
+}
+.arely-inline-newcat:hover{opacity:.7;}
