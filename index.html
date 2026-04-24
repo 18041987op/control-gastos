@@ -7,7 +7,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=20260305g">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="stylesheet" href="css/styles.css?v=20260423">
 </head>
 <body>
 
@@ -452,6 +453,9 @@
       <!-- Month Budget Summary Bar -->
       <div class="chart-card arely-month-summary" id="arelyMonthSummary"></div>
 
+      <!-- Income Summary Card -->
+      <div id="arelyIncomeCard" style="display:none"></div>
+
       <!-- Category Breakdown (clickable) -->
       <div class="chart-card">
         <div class="chart-hdr">
@@ -533,6 +537,8 @@
       <div style="text-align:center;font-size:.75rem;color:var(--muted);margin-bottom:12px" id="arelyBudgetHint">Enter your total monthly household budget</div>
       <button class="btn btn-arely" onclick="saveArelyBudget()">💾 Set Monthly Budget</button>
     </div>
+    <div id="arelyBudgetSummaryCard"></div>
+
     <div id="arelyBudgetCatCards" class="chart-card">
       <div class="chart-hdr"><h3>📊 Budget vs Spending per Category</h3></div>
       <div id="arelyBudgetCatList"></div>
@@ -567,10 +573,10 @@
            ondragleave="arelyDragLeave(event)"
            ondrop="arelyDrop(event)">
         <div class="upload-icon">📄</div>
-        <p><strong>Click</strong> or drag your CSV here</p>
-        <p style="margin-top:5px;font-size:.76rem">Credit card or bank statement</p>
+        <p><strong>Click</strong> or drag your CSV or PDF here</p>
+        <p style="margin-top:5px;font-size:.76rem">Wells Fargo CSV · Amazon Store Card PDF</p>
       </div>
-      <input type="file" id="arelyCsvInput" accept=".csv" style="display:none" onchange="arelyFileSelect(event)">
+      <input type="file" id="arelyCsvInput" accept=".csv,.pdf" style="display:none" onchange="arelyFileSelect(event)">
       <div id="arelyPreviewSection" style="display:none">
         <div style="font-size:.72rem;font-weight:700;text-transform:uppercase;color:var(--muted);margin-bottom:8px" id="arelyPreviewTitle"></div>
         <div class="preview-box" id="arelyPreviewBox"></div>
@@ -624,9 +630,16 @@
     </div>
   </div>
 
+  <!-- Vista: Income -->
+  <div class="view" id="avIncome">
+    <div id="aIncomeLoading" class="loading"><div class="spinner"></div><br>Loading…</div>
+    <div id="aIncomeContent" style="display:none"></div>
+  </div>
+
   <!-- Nav inferior (Arely) -->
   <nav class="bottom-nav" id="arelyBottomNav">
     <button class="nav-btn a-active" onclick="arelyShow('Dashboard')"  id="anDashboard"><span class="nav-icon">📊</span><span class="nav-label">Home</span></button>
+    <button class="nav-btn"          onclick="arelyShow('Income')"     id="anIncome"><span class="nav-icon">💵</span><span class="nav-label">Income</span></button>
     <button class="nav-btn"          onclick="arelyShow('AddExpense')" id="anAddExpense"><span class="nav-icon">➕</span><span class="nav-label">Expense</span></button>
     <button class="nav-btn"          onclick="arelyShow('Calendar')"   id="anCalendar"><span class="nav-icon">📅</span><span class="nav-label">Calendar</span></button>
     <button class="nav-btn"          onclick="arelyShow('Checklist')"  id="anChecklist"><span class="nav-icon">✅</span><span class="nav-label">Tasks</span></button>
@@ -745,7 +758,7 @@
 <script src="js/sharelyn.js?v=20260307"></script>
 <script src="js/teresa.js?v=20260309"></script>
 <script src="js/presupuestos.js?v=20260305g"></script>
-<script src="js/arely.js?v=20260411"></script>
+<script src="js/arely.js?v=20260423"></script>
 <script src="js/trash.js?v=20260411"></script>
 <script src="js/admin.js?v=20260307"></script>
 <script src="js/todos.js?v=20260305e"></script>

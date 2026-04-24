@@ -597,3 +597,183 @@ thead.arely th{background:var(--arely-bg);color:var(--arely-dark);}
 .arely-history-toggle:hover{background:var(--arely-lighter);}
 .arely-undo-btn{background:none;border:none;font-size:1.1rem;cursor:pointer;padding:4px 6px;color:var(--muted);transition:color .15s;flex-shrink:0;}
 .arely-undo-btn:hover{color:var(--arely);}
+
+/* ══════════════════════════════════════════════════════════
+   NEW 2026-04-23 — Income tracking, per-cat budgets,
+   custom categories, PDF import
+   ══════════════════════════════════════════════════════════ */
+
+/* ── TOAST ─────────────────────────────────────────────── */
+#arelyToast{
+  position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(16px);
+  background:#333;color:#fff;padding:10px 22px;border-radius:24px;
+  font-size:.82rem;font-weight:600;white-space:nowrap;
+  opacity:0;transition:opacity .25s,transform .25s;
+  z-index:9999;pointer-events:none;box-shadow:0 4px 18px rgba(0,0,0,.25);
+}
+#arelyToast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── PER-CATEGORY BUDGET ROWS ───────────────────────────── */
+.arely-cat-budget-section{padding:4px 0 8px;}
+.arely-cat-budget-row{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 14px;border-bottom:1px solid #f5f0f3;
+}
+.arely-cat-budget-row:last-child{border-bottom:none;}
+.arely-cb-icon{font-size:1.2rem;width:26px;text-align:center;flex-shrink:0;}
+.arely-cb-label{flex:1;font-size:.82rem;font-weight:600;color:var(--text);min-width:0;}
+.arely-cb-input{
+  width:90px;padding:6px 10px;font-size:.82rem;font-weight:700;
+  border:2px solid var(--arely-lighter);border-radius:10px;
+  text-align:right;color:var(--arely-dark);background:#fff;
+  outline:none;transition:border-color .15s;
+}
+.arely-cb-input:focus{border-color:var(--arely);}
+.arely-cb-bar-wrap{
+  width:70px;height:6px;background:#f0e8ed;border-radius:4px;
+  overflow:hidden;flex-shrink:0;
+}
+.arely-cb-bar{height:100%;border-radius:4px;transition:width .4s ease;}
+.arely-cb-pct{font-size:.68rem;color:var(--muted);width:34px;text-align:right;flex-shrink:0;}
+
+/* Budget summary banner in budget view */
+.arely-budget-summary-banner{
+  background:linear-gradient(135deg,var(--arely),#e8819f);
+  border-radius:18px;padding:16px 18px;margin:10px 14px 0;
+  color:#fff;
+}
+.arely-budget-summary-banner .abs-label{font-size:.72rem;opacity:.85;font-weight:600;}
+.arely-budget-summary-banner .abs-amount{font-size:2rem;font-weight:800;margin:2px 0;}
+.arely-budget-summary-banner .abs-row{display:flex;gap:14px;margin-top:8px;}
+.arely-budget-summary-banner .abs-chip{
+  flex:1;background:rgba(255,255,255,.2);
+  border-radius:10px;padding:6px 10px;text-align:center;
+}
+.arely-budget-summary-banner .abs-chip-lbl{font-size:.68rem;opacity:.8;}
+.arely-budget-summary-banner .abs-chip-val{font-size:.9rem;font-weight:700;}
+.arely-budget-bar-total{
+  height:8px;background:rgba(255,255,255,.3);
+  border-radius:8px;overflow:hidden;margin-top:10px;
+}
+.arely-budget-bar-fill{height:100%;border-radius:8px;background:#fff;transition:width .5s ease;}
+
+/* ── INCOME SUMMARY CARD (in Dashboard) ────────────────── */
+.arely-income-card{
+  background:linear-gradient(135deg,#e8f5e9,#f1f8e9);
+  border:1.5px solid #a5d6a7;border-radius:18px;
+  padding:14px 16px;margin:10px 14px 0;
+}
+.arely-income-card-hdr{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:10px;
+}
+.arely-income-card-hdr h4{
+  margin:0;font-size:.88rem;font-weight:700;color:#2e7d32;
+}
+.arely-income-toggle-btn{
+  background:#c8e6c9;color:#1b5e20;border:none;
+  border-radius:14px;padding:4px 12px;font-size:.72rem;
+  font-weight:700;cursor:pointer;transition:background .15s;
+}
+.arely-income-toggle-btn:hover{background:#a5d6a7;}
+.arely-income-total{font-size:1.5rem;font-weight:800;color:#1b5e20;margin-bottom:8px;}
+.arely-income-sources{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;}
+.arely-income-source-chip{
+  display:flex;align-items:center;gap:4px;
+  background:#fff;border:1.5px solid #c8e6c9;
+  border-radius:10px;padding:4px 10px;font-size:.74rem;font-weight:600;
+}
+.arely-income-source-chip .isc-lbl{color:#388e3c;}
+.arely-income-source-chip .isc-val{color:#1b5e20;margin-left:2px;}
+.arely-income-tx-list{margin-top:6px;}
+.arely-income-tx-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:7px 4px;border-bottom:1px solid #e8f5e9;font-size:.78rem;
+}
+.arely-income-tx-row:last-child{border-bottom:none;}
+.arely-income-tx-row .itx-date{color:var(--muted);font-size:.7rem;min-width:62px;}
+.arely-income-tx-row .itx-desc{flex:1;padding:0 8px;color:var(--text);font-weight:500;}
+.arely-income-tx-row .itx-src{
+  font-size:.66rem;background:#c8e6c9;color:#1b5e20;
+  border-radius:8px;padding:1px 6px;font-weight:700;margin-right:6px;
+}
+.arely-income-tx-row .itx-amt{font-weight:700;color:#1b5e20;}
+
+/* ── INCOME VIEW ────────────────────────────────────────── */
+.arely-income-view-hdr{
+  padding:14px 18px 6px;
+  font-size:1rem;font-weight:800;color:#2e7d32;
+}
+.arely-income-month-row{
+  display:flex;align-items:center;gap:8px;
+  padding:10px 14px;margin:0 0 2px;
+  background:#fff;border:1px solid #e8f5e9;
+  border-radius:12px;transition:background .15s;
+}
+.arely-income-month-row:hover{background:#f1f8e9;}
+.arely-income-month-name{flex:1;font-size:.85rem;font-weight:700;color:var(--text);}
+.arely-income-month-total{font-size:.9rem;font-weight:800;color:#1b5e20;}
+.arely-income-month-ct{font-size:.72rem;color:var(--muted);margin-left:6px;}
+
+/* Income detail table */
+.arely-income-detail-table{width:100%;border-collapse:collapse;font-size:.78rem;}
+.arely-income-detail-table th{
+  background:#e8f5e9;color:#2e7d32;font-weight:700;
+  padding:7px 10px;text-align:left;font-size:.72rem;
+}
+.arely-income-detail-table td{
+  padding:7px 10px;border-bottom:1px solid #f1f8e9;
+  color:var(--text);
+}
+.arely-income-detail-table tr:last-child td{border-bottom:none;}
+.arely-income-detail-table .inc-amt{font-weight:700;color:#1b5e20;}
+
+/* ── CUSTOM CATEGORY MODAL ──────────────────────────────── */
+#arelyCatModal{
+  display:none;position:fixed;inset:0;
+  background:rgba(0,0,0,.5);z-index:4000;
+  align-items:flex-end;justify-content:center;
+}
+#arelyCatModal.open{display:flex;}
+.arely-cat-sheet{
+  background:#fff;border-radius:22px 22px 0 0;
+  width:100%;max-width:480px;padding:22px 20px 36px;
+  box-shadow:0 -8px 40px rgba(0,0,0,.18);
+  animation:slideUpSheet .25s ease;
+}
+@keyframes slideUpSheet{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.arely-cat-sheet h3{margin:0 0 16px;font-size:1rem;font-weight:800;color:var(--arely-dark);}
+.arely-cat-sheet label{font-size:.78rem;font-weight:700;color:var(--muted);display:block;margin-bottom:4px;margin-top:12px;}
+.arely-cat-sheet input[type=text]{
+  width:100%;padding:12px 14px;font-size:.9rem;
+  border:2px solid var(--arely-lighter);border-radius:12px;
+  outline:none;box-sizing:border-box;transition:border-color .15s;
+}
+.arely-cat-sheet input[type=text]:focus{border-color:var(--arely);}
+.arely-cat-sheet input[type=color]{
+  width:52px;height:38px;border:none;background:none;cursor:pointer;
+  vertical-align:middle;
+}
+.arely-cat-emoji-row{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;}
+.arely-cat-emoji-btn{
+  font-size:1.2rem;background:#f7f3f5;border:2px solid transparent;
+  border-radius:10px;padding:5px 8px;cursor:pointer;transition:all .15s;
+}
+.arely-cat-emoji-btn.sel{border-color:var(--arely);background:var(--arely-bg);}
+.arely-cat-modal-btns{display:flex;gap:8px;margin-top:18px;}
+.arely-cat-modal-btns .btn{flex:1;}
+
+/* ── NEW CATEGORY BUTTON IN GRID ────────────────────────── */
+.arely-new-cat-btn{
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:4px;padding:8px;border-radius:12px;cursor:pointer;
+  border:2px dashed var(--arely-lighter);
+  background:var(--arely-white);color:var(--arely);
+  font-size:.74rem;font-weight:700;transition:all .15s;min-height:58px;
+}
+.arely-new-cat-btn:hover{border-color:var(--arely);background:var(--arely-bg);}
+.arely-new-cat-plus{font-size:1.4rem;line-height:1;}
+
+/* ── ARELY TOGGLE BTN ───────────────────────────────────── */
+.arely-toggle{background:var(--arely-bg);color:var(--arely);border:1.5px solid var(--arely-lighter);}
+.arely-toggle:hover{background:var(--arely);color:#fff;}

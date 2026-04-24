@@ -3,9 +3,7 @@ const SUPABASE_URL      = 'https://ozfmydiutupboupttkmz.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_TcG2qZdwO5PQuJAJ701xtg_XArHPpsG';
 
 // ── PINs: solo se guardan hashes, nunca el dígito real ─────
-// Salt fijo de la app (pepper). Cambiar esto invalida todos los PINs.
 const PIN_SALT = 'gastos-hn-2026';
-// Hashes = SHA-256(PIN + PIN_SALT)  — generados fuera del navegador
 const ADMIN_PIN_HASH    = 'ac45faf608df85509393719a3a0328252ac5ca1f77d8e1e435de0e9303237ade';
 const SHARELYN_PIN_HASH = '6115a92948fb8f1b2e5860a3dca8c6e07fc9b328d19ebb010f69d7102901fa87';
 const TERESA_PIN_HASH   = 'b64806f18e83bfb929005a77d75b63f2c2f82fe5fadcc3f40116f6743166ec16';
@@ -60,22 +58,44 @@ const TERESA_PERSONAL_CAT = {
 
 // ── ARELY: HOUSEHOLD EXPENSE CATEGORIES (1311 Old Robinson Trail) ──
 const ARELY_CAT = {
-  electricity:  {label:'Electricity',      color:'#D06B8D', emoji:'⚡'},
-  water:        {label:'Water',            color:'#42A5F5', emoji:'💧'},
-  gas:          {label:'Gas',              color:'#FF7043', emoji:'🔥'},
-  internet:     {label:'Internet / Cable', color:'#7E57C2', emoji:'📡'},
-  phone:        {label:'Phone',            color:'#26C6DA', emoji:'📱'},
-  groceries:    {label:'Groceries',        color:'#66BB6A', emoji:'🛒'},
-  rent:         {label:'Rent / Mortgage',  color:'#8D6E63', emoji:'🏠'},
-  sam:          {label:'Sam 🐾',           color:'#F2A0BB', emoji:'🐾', hasAvatar:true},
-  transport:    {label:'Transportation',   color:'#FFA726', emoji:'🚗'},
-  health:       {label:'Health / Medical', color:'#EF5350', emoji:'💊'},
-  maintenance:  {label:'Home Maintenance', color:'#78909C', emoji:'🧹'},
-  dining:       {label:'Dining Out',       color:'#F7971E', emoji:'🍽️'},
-  insurance:    {label:'Insurance',        color:'#5C6BC0', emoji:'🛡️'},
-  clothing:     {label:'Clothing',         color:'#AB47BC', emoji:'👗'},
-  entertainment:{label:'Entertainment',    color:'#EC407A', emoji:'🎬'},
-  other:        {label:'Other',            color:'#90A4AE', emoji:'📦'},
+  // ── Utilities ─────────────────────────────────────────
+  electricity:  {label:'Electricity',       color:'#D06B8D', emoji:'⚡'},
+  water:        {label:'Water',             color:'#42A5F5', emoji:'💧'},
+  gas:          {label:'Gas',               color:'#FF7043', emoji:'🔥'},
+  internet:     {label:'Internet / Cable',  color:'#7E57C2', emoji:'📡'},
+  phone:        {label:'Phone',             color:'#26C6DA', emoji:'📱'},
+  // ── Living ────────────────────────────────────────────
+  groceries:    {label:'Groceries',         color:'#66BB6A', emoji:'🛒'},
+  rent:         {label:'Rent / Mortgage',   color:'#8D6E63', emoji:'🏠'},
+  dining:       {label:'Dining Out',        color:'#F7971E', emoji:'🍽️'},
+  health:       {label:'Health / Medical',  color:'#EF5350', emoji:'💊'},
+  clothing:     {label:'Clothing',          color:'#AB47BC', emoji:'👗'},
+  sam:          {label:'Sam 🐾',            color:'#F2A0BB', emoji:'🐾', hasAvatar:true},
+  // ── Home & Transport ──────────────────────────────────
+  transport:    {label:'Transportation',    color:'#FFA726', emoji:'🚗'},
+  maintenance:  {label:'Home Maintenance',  color:'#78909C', emoji:'🧹'},
+  insurance:    {label:'Insurance',         color:'#5C6BC0', emoji:'🛡️'},
+  entertainment:{label:'Entertainment',     color:'#EC407A', emoji:'🎬'},
+  // ── Financial ─────────────────────────────────────────
+  taxes:        {label:'Taxes',             color:'#B71C1C', emoji:'🏛️'},
+  investments:  {label:'Investments',       color:'#1565C0', emoji:'📈'},
+  mortgage_sav: {label:'Mortgage/Savings',  color:'#2E7D32', emoji:'🏦'},
+  remittance:   {label:'Remittances',       color:'#E65100', emoji:'💸'},
+  creditcard:   {label:'Credit Cards',      color:'#6A1B9A', emoji:'💳'},
+  // ── Shopping & Transfers ──────────────────────────────
+  amazon:       {label:'Amazon',            color:'#FF6F00', emoji:'🛍️'},
+  transfer:     {label:'Transfers/Zelle',   color:'#006064', emoji:'📲'},
+  bankfee:      {label:'Bank Fees',         color:'#37474F', emoji:'🏧'},
+  other:        {label:'Other',             color:'#90A4AE', emoji:'📦'},
+};
+
+// ── ARELY: INCOME SOURCE TYPES ────────────────────────────────────────
+const ARELY_INCOME_SOURCES = {
+  payroll:      {label:'Payroll',           color:'#43A047', emoji:'💼'},
+  transfer_in:  {label:'Transfer In',       color:'#00ACC1', emoji:'📲'},
+  deposit:      {label:'Cash Deposit',      color:'#FB8C00', emoji:'🏧'},
+  refund:       {label:'Refund / Credit',   color:'#1E88E5', emoji:'↩️'},
+  income_other: {label:'Other Income',      color:'#8E24AA', emoji:'💰'},
 };
 
 const ALL_CATS = {...CAT, ...TERESA_CAT, ...TERESA_PERSONAL_CAT, ...ARELY_CAT};
@@ -108,7 +128,6 @@ const MONTHS_ES = [
 ];
 
 // ── TODO: CATEGORÍAS POR USUARIO ─────────────────────────
-// Sharelyn es estudiante universitaria
 const SHARELYN_TODO_CATS = [
   {k:'tarea',     label:'Tarea',      icon:'📚'},
   {k:'examen',    label:'Examen',     icon:'📝'},
@@ -120,7 +139,6 @@ const SHARELYN_TODO_CATS = [
   {k:'otro',      label:'Otro',       icon:'💡'},
 ];
 
-// Teresa Personal - vida cotidiana adulta
 const TERESA_PERSONAL_TODO_CATS = [
   {k:'comprar',   label:'Comprar',    icon:'🛒'},
   {k:'pagar',     label:'Pagar',      icon:'💳'},
@@ -132,7 +150,6 @@ const TERESA_PERSONAL_TODO_CATS = [
   {k:'otro',      label:'Otro',       icon:'💡'},
 ];
 
-// Teresa maneja un proyecto de remodelación de casas
 const TERESA_TODO_CATS = [
   {k:'material',    label:'Comprar',    icon:'🛒'},
   {k:'proveedor',   label:'Proveedor',  icon:'📞'},
@@ -144,7 +161,6 @@ const TERESA_TODO_CATS = [
   {k:'entrega',     label:'Material',   icon:'📦'},
 ];
 
-// Arely – household management checklist categories
 const ARELY_TODO_CATS = [
   {k:'bills',      label:'Bills',       icon:'💡'},
   {k:'shopping',   label:'Shopping',    icon:'🛒'},
@@ -159,14 +175,14 @@ const ARELY_TODO_CATS = [
 let arelySelectedTodoCat = '';
 
 // ── ESTADO GLOBAL ─────────────────────────────────────────
-let currentUser        = null;   // 'admin' | 'sharelyn' | 'teresa'
+let currentUser        = null;
 let currentPerson      = 'sharelyn';
-let currentTeresaMode  = 'obra'; // 'obra' | 'personal'
-let allTx              = [];     // transacciones de Sharelyn
-let teresaTx           = [];     // transacciones de Teresa (obra)
-let teresaPersonalTx   = [];     // transacciones de Teresa Personal
-let currentFilter = 'all';  // month: 'all' | 'enero' | ...
-let currentYear   = null;   // integer, set on first load
+let currentTeresaMode  = 'obra';
+let allTx              = [];
+let teresaTx           = [];
+let teresaPersonalTx   = [];
+let currentFilter = 'all';
+let currentYear   = null;
 let taFilter      = 'all';
 let tHistFilter   = 'all';
 let donutChart    = null;
@@ -180,12 +196,11 @@ let currentReceiptData     = null;
 
 // ── ARELY STATE ──────────────────────────────────────────
 let arelyTx              = [];
-let arelyBudget          = 0;     // monthly budget amount
+let arelyBudget          = 0;
 let arelySelectedCat     = '';
 let arelyTrendChart      = null;
 let arelyDonutChart      = null;
 
-// English month names for Arely
 const MONTHS_EN = [
   '','January','February','March','April','May','June',
   'July','August','September','October','November','December',
