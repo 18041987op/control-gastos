@@ -159,7 +159,8 @@ function arelyCategorize(desc){
   // ── Remittances ───────────────────────────────────────
   if(/REMITLY|RMTLY\*|WESTERN UNION|MONEYGRAM|MONEY TRANSFER.*RMTLY/.test(d)) return 'remittance';
   // ── Credit Card Payments ──────────────────────────────
-  if(/WF CREDIT CARD|AMERICAN EXPRESS ACH|AMZ_STORECRD_PMT|VISA SIGNATURE CARD|AUTO PAY.*CREDIT|CREDIT CARD.*PAY/.test(d)) return 'creditcard';
+  // Credit card PAYMENT transactions (from checking) → skip from totals
+  if(/AMZ_STORECRD_PMT|STORECRD.*PMT|PMT.*STORECRD|AMERICAN EXPRESS ACH|AMEX.*PAYMENT|WF CREDIT CARD|CITI.*CARD.*PAY|CHASE.*CREDIT.*PAY|CAPITAL ONE.*AUTOPAY|DISCOVER.*AUTOPAY|AUTO PAY.*CREDIT|CREDIT CARD.*PAY|CARD PMT|CREDITCARD PMT/.test(d)) return 'cc_payment';
   // ── Amazon ────────────────────────────────────────────
   if(/AMAZON|AMZN/.test(d)) return 'amazon';
   // ── Bank Fees ─────────────────────────────────────────
@@ -247,6 +248,16 @@ function getCurrentMonthKey(){
 }
 
 function getArelyMonthTx(m, y){
+  return arelyTx.filter(t => {
+    const mn = t.month_num || parseInt((t.date||'').split('/')[1]) || 0;
+    const yr = t.year || (t.created_at ? new Date(t.created_at).getFullYear() : 0);
+    const isCCPayment = ARELY_CAT[t.category]?.skip === true;
+    return mn === (m || arelyViewMonth) && yr === (y || arelyViewYear)
+      && t.direction === 'expense' && !isCCPayment;
+  });
+}
+// All expenses including skipped categories (for full transaction list view)
+function getArelyMonthTxAll(m, y){
   return arelyTx.filter(t => {
     const mn = t.month_num || parseInt((t.date||'').split('/')[1]) || 0;
     const yr = t.year || (t.created_at ? new Date(t.created_at).getFullYear() : 0);
@@ -729,7 +740,7 @@ function renderArelyTrend(){
 
 // ── TRANSACTIONS TABLE ───────────────────────────────────
 function renderArelyTxTable(){
-  const tx = getArelyMonthTx();
+  const tx = getArelyMonthTxAll();
   const body = document.getElementById('arelyTxBody');
   if(!tx.length){
     body.innerHTML = '<tr><td colspan="5" style="text-align:center;padding:18px;color:#aaa">No transactions this month.</td></tr>';
@@ -739,8 +750,8 @@ function renderArelyTxTable(){
     <tr${t.edited_at?' class="was-edited"':''}>
       <td>${t.date||'—'}${t.edited_at?'<span class="edited-mark">✏️</span>':''}</td>
       <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.description}">${t.description}</td>
-      <td><span class="badge b-arely-cat" style="cursor:pointer" onclick="openArelyCatEdit('${t.id}','${t.category}')" title="Tap to change category">${catEmoji(t.category)} ${ARELY_CAT[t.category]?.label||t.category} ✏️</span></td>
-      <td class="amount-neg">${fmtUSD(t.amount)}</td>
+      <td><span class="badge b-arely-cat" style="cursor:pointer" onclick="openArelyCatEdit('${t.id}','${t.category}')" title="Tap to change category">${catEmoji(t.category)} ${ARELY_CAT[t.category]?.label||t.category} ✏️</span>${ARELY_CAT[t.category]?.skip?'<span style="font-size:.62rem;background:#eceff1;color:#607d8b;border-radius:6px;padding:1px 5px;margin-left:3px;font-weight:700">excluded</span>':''}</td>
+      <td class="amount-neg" style="color:${ARELY_CAT[t.category]?.skip?'#b0bec5':''}">${fmtUSD(t.amount)}</td>
       <td><button class="del-btn" onclick="deleteTx('${t.id}','arely')">🗑</button></td>
     </tr>`).join('');
 }

@@ -86,6 +86,7 @@ const ARELY_CAT = {
   amazon:       {label:'Amazon',            color:'#FF6F00', emoji:'🛍️'},
   transfer:     {label:'Transfers/Zelle',   color:'#006064', emoji:'📲'},
   bankfee:      {label:'Bank Fees',         color:'#37474F', emoji:'🏧'},
+  cc_payment:   {label:'CC Payment',        color:'#B0BEC5', emoji:'🚫', skip:true},  // excluded from totals
   other:        {label:'Other',             color:'#90A4AE', emoji:'📦'},
 };
 
