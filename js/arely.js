@@ -1095,78 +1095,81 @@ async function arelyParsePDF(file){
 }
 
 function parseSynchronyStatement(textItems, stmtYear, filename){
-  const txns = [];
-  // Group text items by y-position (same row = same y within ±4px)
+  // FIX: sort pages ASCENDING so we process page 1→N in reading order.
+  // Within each page sort y DESCENDING (PDF y=0 is bottom, so high y = top of page).
+  textItems.sort((a,b) => a.page !== b.page ? a.page - b.page : b.y - a.y);
+
+  // Group adjacent items into rows (same page, y within ±3px).
+  // Because items are already sorted, we only need to check the last row.
   const rows = [];
   textItems.forEach(item => {
-    const existingRow = rows.find(r => Math.abs(r.y - item.y) <= 4 && r.page === item.page);
-    if(existingRow){ existingRow.items.push(item); }
-    else { rows.push({y: item.y, page: item.page, items: [item]}); }
+    const last = rows[rows.length - 1];
+    if(last && last.page === item.page && Math.abs(last.y - item.y) <= 3){
+      last.items.push(item);
+    } else {
+      rows.push({y: item.y, page: item.page, items: [item]});
+    }
   });
+  // rows is now top-to-bottom, page 1 first — no re-sort needed.
 
-  // Sort rows top-to-bottom (higher y = higher on page in PDF coords)
-  rows.sort((a,b) => b.page - a.page || b.y - a.y);
-
-  // Detect transaction rows: first token looks like MM/DD date
   const dateRe = /^(\d{1,2})\/(\d{2})$/;
+  const refRe  = /^[A-Z0-9]{10,}$/;
   let inTransactions = false;
+  const txns = [];
 
   for(const row of rows){
-    const sorted  = row.items.sort((a,b) => a.x - b.x);
-    const tokens  = sorted.map(i=>i.str);
-    const joined  = tokens.join(' ');
+    const sorted = row.items.sort((a,b) => a.x - b.x);
+    const tokens = sorted.map(i => i.str.trim()).filter(Boolean);
+    if(!tokens.length) continue;
+    const joined = tokens.join(' ');
 
-    // Start parsing after "Purchases and Other Debits" or "Transaction Detail"
-    if(/Transaction Detail|Purchases.*Debits/.test(joined)) { inTransactions = true; continue; }
-    if(/Total Fees|Total Interest|Interest Charge Calculation/.test(joined)) break;
+    // Start capturing after "Transaction Detail" or "Purchases and Other Debits"
+    if(/Transaction Detail|Purchases.*Debits/.test(joined)){ inTransactions = true; continue; }
+    // Stop only at the per-period totals line (not the YTD section)
+    if(/Total Fees Charged This Period|Total Interest Charged This Period/.test(joined)) break;
     if(!inTransactions) continue;
 
-    // First token must be a date
-    const dateMatch = tokens[0] && tokens[0].match(dateRe);
+    // Transaction rows start with MM/DD
+    const dateMatch = tokens[0].match(dateRe);
     if(!dateMatch) continue;
-
-    const mm   = parseInt(dateMatch[1]);
-    const dd   = dateMatch[2];
+    const mm = parseInt(dateMatch[1]);
+    const dd = dateMatch[2];
     if(mm < 1 || mm > 12) continue;
 
-    // Last token must look like a dollar amount
+    // Last token must be a dollar amount, optionally negative
     const lastToken = tokens[tokens.length - 1];
-    const amtMatch  = lastToken.match(/^-?\$?([\d,]+\.\d{2})$/);
+    const amtMatch  = lastToken.match(/^(-)?\$?([\d,]+\.\d{2})$/);
     if(!amtMatch) continue;
-
-    const amount = parseFloat(amtMatch[1].replace(/,/g,''));
+    const amount = parseFloat(amtMatch[2].replace(/,/g,''));
     if(isNaN(amount) || amount === 0) continue;
 
-    // Description: everything between date and amount, minus reference number
-    const midTokens = tokens.slice(1, tokens.length - 1);
-    // Skip reference code (all-uppercase alphanumeric, 10+ chars)
-    const descTokens = midTokens.filter(t => !(/^[A-Z0-9]{10,}$/.test(t)));
+    // Description = middle tokens minus the reference code
+    const midTokens  = tokens.slice(1, tokens.length - 1);
+    const descTokens = midTokens.filter(t => !refRe.test(t));
     const desc = descTokens.join(' ').replace(/\s{2,}/g,' ').trim();
     if(!desc) continue;
 
-    const isNegative = lastToken.startsWith('-');
-    const direction  = isNegative ? 'income' : 'expense'; // CC: positive=charge, negative=credit/refund
+    const isNeg = !!amtMatch[1];
 
+    // Skip autopay confirmation lines
+    if(/AUTOMATIC PAYMENT|THANK YOU FOR YOUR PAYMENT/i.test(desc)) continue;
+
+    const direction = isNeg ? 'income' : 'expense';
     const cat = direction === 'expense' ? arelyCategorize(desc) : arelyIncomeSource(desc);
     if(cat === 'SKIP') continue;
 
-    const fmtDate = `${String(mm).padStart(2,'0')}/${dd}`;
-    if(direction === 'expense'){
-      txns.push({
-        date: fmtDate, description: desc,
-        category: cat, cat_label: ARELY_CAT[cat]?.label || cat,
-        month: MONTHS_EN[mm].toLowerCase(), month_display: MONTHS_EN[mm], month_num: mm, year: stmtYear,
-        amount, type: 'credit_card', person: 'arely', direction: 'expense',
-      });
-    } else {
-      const src = arelyIncomeSource(desc);
-      txns.push({
-        date: fmtDate, description: desc,
-        category: src, cat_label: ARELY_INCOME_SOURCES[src]?.label || 'Refund',
-        month: MONTHS_EN[mm].toLowerCase(), month_display: MONTHS_EN[mm], month_num: mm, year: stmtYear,
-        amount, type: 'credit_card', person: 'arely', direction: 'income',
-      });
-    }
+    const fmtDate   = `${String(mm).padStart(2,'0')}/${dd}`;
+    const catLabel  = direction === 'expense'
+      ? (ARELY_CAT[cat]?.label || cat)
+      : (ARELY_INCOME_SOURCES[cat]?.label || 'Income');
+
+    txns.push({
+      date: fmtDate, description: desc,
+      category: cat, cat_label: catLabel,
+      month: MONTHS_EN[mm].toLowerCase(), month_display: MONTHS_EN[mm],
+      month_num: mm, year: stmtYear,
+      amount, type: 'credit_card', person: 'arely', direction,
+    });
   }
   return txns;
 }
