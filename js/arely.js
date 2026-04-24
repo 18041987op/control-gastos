@@ -1106,25 +1106,23 @@ async function arelyParsePDF(file){
 }
 
 function parseSynchronyStatement(textItems, stmtYear, filename){
-  // FIX: sort pages ASCENDING so we process page 1→N in reading order.
-  // Within each page sort y DESCENDING (PDF y=0 is bottom, so high y = top of page).
+  // Sort: pages ascending, y descending within page (PDF y=0 at bottom → high y = top of page)
   textItems.sort((a,b) => a.page !== b.page ? a.page - b.page : b.y - a.y);
 
-  // Group adjacent items into rows (same page, y within ±3px).
-  // Because items are already sorted, we only need to check the last row.
+  // Group adjacent items into rows (same page, y within ±4px)
   const rows = [];
   textItems.forEach(item => {
     const last = rows[rows.length - 1];
-    if(last && last.page === item.page && Math.abs(last.y - item.y) <= 3){
+    if(last && last.page === item.page && Math.abs(last.y - item.y) <= 4){
       last.items.push(item);
     } else {
       rows.push({y: item.y, page: item.page, items: [item]});
     }
   });
-  // rows is now top-to-bottom, page 1 first — no re-sort needed.
 
   const dateRe = /^(\d{1,2})\/(\d{2})$/;
   const refRe  = /^[A-Z0-9]{10,}$/;
+  const amtRe  = /^(-)?\$?([\d,]+\.\d{2})$/;
   let inTransactions = false;
   const txns = [];
 
@@ -1134,43 +1132,53 @@ function parseSynchronyStatement(textItems, stmtYear, filename){
     if(!tokens.length) continue;
     const joined = tokens.join(' ');
 
-    // Start capturing after "Transaction Detail" or "Purchases and Other Debits"
-    if(/Transaction Detail|Purchases.*Debits/.test(joined)){ inTransactions = true; continue; }
-    // Stop only at the per-period totals line (not the YTD section)
+    // Stop at period totals line
     if(/Total Fees Charged This Period|Total Interest Charged This Period/.test(joined)) break;
+
+    // Section headers mark start of transaction section — don't skip the row
+    // because the first transaction may appear on the same line as the header
+    if(/Transaction Detail|Purchases.*Debits/.test(joined)) inTransactions = true;
     if(!inTransactions) continue;
 
-    // Transaction rows start with MM/DD
-    const dateMatch = tokens[0].match(dateRe);
-    if(!dateMatch) continue;
-    const mm = parseInt(dateMatch[1]);
-    const dd = dateMatch[2];
+    // Find first date-shaped token (MM/DD) — may not be at index 0 if section
+    // header text appears to the left of the date column
+    const dateIdx = tokens.findIndex(t => dateRe.test(t));
+    if(dateIdx === -1) continue;
+
+    const dm  = tokens[dateIdx].match(dateRe);
+    const mm  = parseInt(dm[1]);
+    const dd  = dm[2];
     if(mm < 1 || mm > 12) continue;
 
-    // Last token must be a dollar amount, optionally negative
-    const lastToken = tokens[tokens.length - 1];
-    const amtMatch  = lastToken.match(/^(-)?\$?([\d,]+\.\d{2})$/);
-    if(!amtMatch) continue;
-    const amount = parseFloat(amtMatch[2].replace(/,/g,''));
-    if(isNaN(amount) || amount === 0) continue;
+    // Work with tokens from the date column onwards
+    const rowToks = tokens.slice(dateIdx);
+    if(rowToks.length < 2) continue;
 
-    // Description = middle tokens minus the reference code
-    const midTokens  = tokens.slice(1, tokens.length - 1);
-    const descTokens = midTokens.filter(t => !refRe.test(t));
-    const desc = descTokens.join(' ').replace(/\s{2,}/g,' ').trim();
+    // Last token must be a dollar amount
+    const lastTok = rowToks[rowToks.length - 1];
+    const amtM = lastTok.match(amtRe);
+    if(!amtM) continue;
+    const amount = parseFloat(amtM[2].replace(/,/g,''));
+    if(!amount) continue;
+
+    // Description = middle tokens, strip reference codes AND stray dollar amounts
+    // (section totals like "$1,706.60" can appear in the same row as the first txn)
+    const mid      = rowToks.slice(1, -1);
+    const descToks = mid.filter(t => !refRe.test(t) && !amtRe.test(t));
+    const desc     = descToks.join(' ').replace(/\s{2,}/g,' ').trim();
     if(!desc) continue;
 
-    const isNeg = !!amtMatch[1];
+    const isNeg = !!amtM[1];
 
-    // Skip autopay confirmation lines
+    // Skip autopay confirmation rows
     if(/AUTOMATIC PAYMENT|THANK YOU FOR YOUR PAYMENT/i.test(desc)) continue;
 
     const direction = isNeg ? 'income' : 'expense';
-    const cat = direction === 'expense' ? arelyCategorize(desc) : arelyIncomeSource(desc);
+    const cat       = direction === 'expense' ? arelyCategorize(desc) : arelyIncomeSource(desc);
     if(cat === 'SKIP') continue;
 
-    const fmtDate   = `${String(mm).padStart(2,'0')}/${dd}`;
-    const catLabel  = direction === 'expense'
+    const fmtDate  = `${String(mm).padStart(2,'0')}/${dd}`;
+    const catLabel = direction === 'expense'
       ? (ARELY_CAT[cat]?.label || cat)
       : (ARELY_INCOME_SOURCES[cat]?.label || 'Income');
 
