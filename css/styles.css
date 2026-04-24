@@ -792,3 +792,38 @@ thead.arely th{background:var(--arely-bg);color:var(--arely-dark);}
   text-decoration:underline;padding:0;
 }
 .arely-inline-newcat:hover{opacity:.7;}
+
+/* ── EXPANDABLE TRANSACTION DESCRIPTIONS ────────────────── */
+.arely-desc-cell{
+  cursor:pointer;
+  max-width:130px;
+  vertical-align:middle;
+}
+.arely-desc-cell.small{
+  max-width:110px;
+  padding:6px 4px;
+}
+.arely-desc-short{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  font-size:.8rem;
+  color:var(--text);
+}
+.arely-desc-full{
+  display:none;
+  font-size:.78rem;
+  color:#555;
+  white-space:normal;
+  word-break:break-word;
+  line-height:1.4;
+  padding-top:2px;
+}
+/* When expanded: hide truncated, show full */
+.arely-desc-cell.expanded .arely-desc-short{ display:none; }
+.arely-desc-cell.expanded .arely-desc-full{ display:block; }
+/* Tap hint underline on hover */
+.arely-desc-cell:not(.expanded):hover .arely-desc-short{
+  text-decoration:underline dotted var(--arely);
+}

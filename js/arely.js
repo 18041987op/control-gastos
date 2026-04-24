@@ -162,6 +162,17 @@ function arelyCategorize(desc){
   // Credit card PAYMENT transactions (from checking) → skip from totals
   if(/AMZ_STORECRD_PMT|STORECRD.*PMT|PMT.*STORECRD|AMERICAN EXPRESS ACH|AMEX.*PAYMENT|WF CREDIT CARD|CITI.*CARD.*PAY|CHASE.*CREDIT.*PAY|CAPITAL ONE.*AUTOPAY|DISCOVER.*AUTOPAY|AUTO PAY.*CREDIT|CREDIT CARD.*PAY|CARD PMT|CREDITCARD PMT/.test(d)) return 'cc_payment';
   // ── Amazon ────────────────────────────────────────────
+  // Amazon Fresh / grocery delivery (AMZN CON PRIME NOW, PRM NOW TIP)
+  if(/AMZN CON PRIME NOW|AMZN.*PRM NOW TIP|AMZN.*FRESH|WHOLE FOODS MARKET/.test(d)) return 'groceries';
+  // Amazon Prime / subscriptions
+  if(/AMAZON PRIME CONS|AMAZON PRIME MEM|PRIME MEMBERSHIP|AMZN PRIME/.test(d)) return 'streaming';
+  // Amazon Pharmacy / health
+  if(/AMAZON PHARMACY|AMZN PHARMACY/.test(d)) return 'health';
+  // Amazon Music / digital content
+  if(/AMAZON MUSIC|AMAZON VIDEO|AMAZON DIGITAL|AMZN DIGITAL/.test(d)) return 'streaming';
+  // Amazon Web Services
+  if(/AMAZON WEB SERVICE|AWS\.AMAZON/.test(d)) return 'bankfee';
+  // Generic Amazon purchase
   if(/AMAZON|AMZN/.test(d)) return 'amazon';
   // ── Bank Fees ─────────────────────────────────────────
   if(/MONTHLY SERVICE FEE|OVERDRAFT|NSF FEE|SERVICE FEE|ROCKET MONEY/.test(d)) return 'bankfee';
@@ -749,7 +760,7 @@ function renderArelyTxTable(){
   body.innerHTML = tx.map(t => `
     <tr${t.edited_at?' class="was-edited"':''}>
       <td>${t.date||'—'}${t.edited_at?'<span class="edited-mark">✏️</span>':''}</td>
-      <td style="max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.description}">${t.description}</td>
+      <td class="arely-desc-cell" onclick="this.classList.toggle('expanded')" title="Tap to expand"><span class="arely-desc-short">${t.description}</span><span class="arely-desc-full">${t.description}</span></td>
       <td><span class="badge b-arely-cat" style="cursor:pointer" onclick="openArelyCatEdit('${t.id}','${t.category}')" title="Tap to change category">${catEmoji(t.category)} ${ARELY_CAT[t.category]?.label||t.category} ✏️</span>${ARELY_CAT[t.category]?.skip?'<span style="font-size:.62rem;background:#eceff1;color:#607d8b;border-radius:6px;padding:1px 5px;margin-left:3px;font-weight:700">excluded</span>':''}</td>
       <td class="amount-neg" style="color:${ARELY_CAT[t.category]?.skip?'#b0bec5':''}">${fmtUSD(t.amount)}</td>
       <td><button class="del-btn" onclick="deleteTx('${t.id}','arely')">🗑</button></td>
@@ -837,7 +848,7 @@ async function loadArelyRecentExp(){
     ${recent.map(t => `
     <tr style="border-bottom:1px solid #f0f0f0">
       <td style="padding:6px 5px;cursor:pointer" onclick="openArelyCatEdit('${t.id}','${t.category}')" title="Tap to change category">${catEmoji(t.category)}</td>
-      <td style="padding:6px 4px;max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.description}</td>
+      <td class="arely-desc-cell small" onclick="this.classList.toggle('expanded')" title="Tap to expand"><span class="arely-desc-short">${t.description}</span><span class="arely-desc-full">${t.description}</span></td>
       <td style="padding:6px 4px;color:#D06B8D;font-weight:700">${fmtUSD(t.amount)}</td>
       <td><button class="del-btn" onclick="deleteTx('${t.id}','arely')">🗑</button></td>
     </tr>`).join('')}
@@ -1187,7 +1198,7 @@ function parseSynchronyStatement(textItems, stmtYear, filename){
       category: cat, cat_label: catLabel,
       month: MONTHS_EN[mm].toLowerCase(), month_display: MONTHS_EN[mm],
       month_num: mm, year: stmtYear,
-      amount, type: 'credit_card', person: 'arely', direction,
+      amount, type: 'bank', person: 'arely', direction,
     });
   }
   return txns;
