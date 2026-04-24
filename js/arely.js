@@ -103,13 +103,26 @@ function showToast(msg){
 
 // Custom category grid for Arely
 function buildArelyCatGrid(containerId, onSelect){
-  document.getElementById(containerId).innerHTML = Object.entries(ARELY_CAT).map(([k,v]) => {
-    const icon = k === 'sam' ? samIcon(20) : `<span class="opt-icon">${v.emoji}</span>`;
-    return `<button class="opt-btn" onclick="this.parentElement.querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('sel','sel-arely'));this.classList.add('sel-arely');(${onSelect.toString()})('${k}')">
-    ${icon}${v.label.replace(/^[^\s]+\s/,'')}</button>`;
-  }).join('') +
-  `<button class="opt-btn" style="border:2px dashed var(--arely-lighter);color:var(--arely)" onclick="openCreateCategoryModal()">
-    <span class="opt-icon">➕</span>New</button>`;
+  // Group categories by parent
+  const groups = {};
+  Object.entries(ARELY_CAT).forEach(([k, v]) => {
+    const p = v.parent || 'otros';
+    if(!groups[p]) groups[p] = [];
+    groups[p].push([k, v]);
+  });
+
+  let html = '';
+  Object.entries(ARELY_PARENT_CATS).forEach(([pk, pcat]) => {
+    const cats = groups[pk];
+    if(!cats || !cats.length) return;
+    html += `<div class="arely-catgrid-group-label" style="color:${pcat.color}">${pcat.emoji} ${pcat.label}</div>`;
+    cats.forEach(([k, v]) => {
+      const icon = k === 'sam' ? samIcon(20) : `<span class="opt-icon">${v.emoji}</span>`;
+      html += `<button class="opt-btn" data-cat="${k}" onclick="this.closest('[id]').querySelectorAll('.opt-btn').forEach(b=>b.classList.remove('sel','sel-arely'));this.classList.add('sel-arely');(${onSelect.toString()})('${k}')">${icon}${v.label.replace(/^[^\s]+\s/,'')}</button>`;
+    });
+  });
+  html += `<button class="opt-btn" style="border:2px dashed var(--arely-lighter);color:var(--arely)" onclick="openCreateCategoryModal()"><span class="opt-icon">➕</span>New</button>`;
+  document.getElementById(containerId).innerHTML = html;
 }
 
 // ── PER-CATEGORY BUDGETS ──────────────────────────────────
@@ -150,6 +163,9 @@ let arelyRepeat    = 'none';
 // ── AUTO-CATEGORIZER ─────────────────────────────────────
 function arelyCategorize(desc){
   const d = desc.toUpperCase();
+  // ── Vendor memory (user-taught overrides) ─────────────
+  const memorized = lookupVendorCat(desc);
+  if(memorized) return memorized;
   // ── Taxes ─────────────────────────────────────────────
   if(/\bIRS\b|USATAXPYMT|NC DEPT REVENUE|TAX PYMT|STATE.*TAX|DEPT.*REVENUE/.test(d)) return 'taxes';
   // ── Investments ───────────────────────────────────────
@@ -221,6 +237,50 @@ function arelyIncomeSource(desc){
   if(/ATM CASH DEPOSIT|MOBILE DEPOSIT|CASH DEPOSIT/.test(d)) return 'deposit';
   if(/REFUND|STATEMENT CREDIT|CREDIT ADJ/.test(d)) return 'refund';
   return 'income_other';
+}
+
+// ── VENDOR MEMORY ────────────────────────────────────────
+// Learns vendor→category mappings from manual edits.
+// Key: localStorage 'arely_vendor_cats' = { "DUKE ENERGY": "electricity", ... }
+
+function getVendorCats(){
+  try { return JSON.parse(localStorage.getItem('arely_vendor_cats') || '{}'); }
+  catch(e){ return {}; }
+}
+
+function setVendorCat(description, category){
+  if(!description || !category) return;
+  const key   = vendorKey(description);
+  const store = getVendorCats();
+  store[key]  = category;
+  localStorage.setItem('arely_vendor_cats', JSON.stringify(store));
+}
+
+// Normalize description to a stable vendor key:
+// Keep first 3–5 significant words, strip trailing amounts/IDs
+function vendorKey(desc){
+  return desc.toUpperCase()
+    .replace(/[*#]/g, ' ')
+    .replace(/\b\d{4,}\b/g, '')          // strip long numbers
+    .replace(/\b\d{2}\/\d{2}\b/g, '')   // strip dates MM/DD
+    .replace(/\s{2,}/g, ' ')
+    .trim()
+    .split(' ').slice(0, 5).join(' ');
+}
+
+// Look up vendor memory — returns category string or null
+function lookupVendorCat(description){
+  if(!description) return null;
+  const store = getVendorCats();
+  const key   = vendorKey(description);
+  // Exact key match
+  if(store[key]) return store[key];
+  // Partial match: any stored key that is a prefix of this description
+  const descUp = description.toUpperCase();
+  for(const [k, cat] of Object.entries(store)){
+    if(descUp.includes(k) || k.includes(vendorKey(descUp))) return cat;
+  }
+  return null;
 }
 
 // ── NAVIGATION ───────────────────────────────────────────
@@ -314,8 +374,11 @@ function arelySetViewMonth(m, y){
   arelyBudget = getTotalBudgetForMonth();
   renderArelyMonthPicker();
   renderArelyMonthSummary();
-  renderArelyCatBreakdown(getArelyMonthTx());
-  renderArelyDonut(getArelyMonthTx());
+  arelyFilterParent = null;
+  const monthTxForView = getArelyMonthTx();
+  renderArelyParentBreakdown(monthTxForView);
+  renderArelyCatBreakdown(monthTxForView);
+  renderArelyDonut(monthTxForView);
   renderArelyTxTable();
   renderArelyIncomeSummaryCard();
   hideCatTxPanel();
@@ -571,9 +634,11 @@ async function loadArelyDashboard(){
   show('aDashContent');
 
   arelyFilterCat = null;
+  arelyFilterParent = null;
   renderArelyMonthPicker();
   renderArelyMonthSummary();
   const monthTx = getArelyMonthTx();
+  renderArelyParentBreakdown(monthTx);
   renderArelyCatBreakdown(monthTx);
   renderArelyDonut(monthTx);
   renderArelyTrend();
@@ -583,6 +648,52 @@ async function loadArelyDashboard(){
 }
 
 // ── CATEGORY BREAKDOWN ───────────────────────────────────
+function renderArelyParentBreakdown(tx){
+  const totals = {};
+  tx.forEach(t => {
+    const p = ARELY_CAT[t.category]?.parent || 'otros';
+    totals[p] = (totals[p]||0) + parseFloat(t.amount||0);
+  });
+  const grand = Object.values(totals).reduce((s,v)=>s+v,0) || 1;
+  const el = document.getElementById('arelyParentBreakdown');
+  if(!el) return;
+
+  const sorted = Object.entries(totals).sort((a,b)=>b[1]-a[1]);
+  el.innerHTML = sorted.map(([pk, amt]) => {
+    const pcat = ARELY_PARENT_CATS[pk] || {emoji:'📦', label:pk, color:'#90A4AE'};
+    const pct  = ((amt/grand)*100).toFixed(0);
+    return `<div class="arely-parent-chip" style="border-color:${pcat.color}50;background:${pcat.color}0d" onclick="arelyFilterByParent('${pk}')">
+      <span style="font-size:1.15rem;line-height:1">${pcat.emoji}</span>
+      <div style="min-width:0">
+        <div style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:${pcat.color};white-space:nowrap">${pcat.label}</div>
+        <div style="font-size:.82rem;font-weight:800;color:var(--arely-dark)">${fmtUSD(amt)}</div>
+        <div style="font-size:.62rem;color:var(--muted)">${pct}%</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+let arelyFilterParent = null;
+function arelyFilterByParent(pk){
+  // Toggle: if same parent clicked twice, clear filter
+  arelyFilterParent = (arelyFilterParent === pk) ? null : pk;
+  // Filter tx list to just that parent's categories
+  let monthTx = getArelyMonthTx();
+  if(arelyFilterParent){
+    monthTx = monthTx.filter(t => (ARELY_CAT[t.category]?.parent||'otros') === arelyFilterParent);
+  }
+  renderArelyCatBreakdown(monthTx);
+  renderArelyDonut(monthTx);
+  // Highlight active chip
+  document.querySelectorAll('.arely-parent-chip').forEach(c => c.classList.remove('active-chip'));
+  if(arelyFilterParent){
+    const chips = document.querySelectorAll('.arely-parent-chip');
+    chips.forEach(c => { if(c.getAttribute('onclick')?.includes(`'${arelyFilterParent}'`)) c.classList.add('active-chip'); });
+  }
+  const clearBtn = document.getElementById('arelyParentClearBtn');
+  if(clearBtn) clearBtn.style.display = arelyFilterParent ? 'inline' : 'none';
+}
+
 function renderArelyCatBreakdown(tx){
   const cats = {};
   tx.forEach(t => { cats[t.category] = (cats[t.category]||0) + parseFloat(t.amount||0); });
@@ -780,13 +891,22 @@ function openArelyCatEdit(txId, currentCat){
         <span style="font-weight:700;font-size:1rem;color:var(--arely-dark)">Change Category</span>
         <button onclick="document.getElementById('arelyCatEditOverlay').remove()" style="background:none;border:none;font-size:1.3rem;cursor:pointer;padding:4px">✕</button>
       </div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
-        ${cats.map(([k,v]) => `
-          <button onclick="saveArelyCatEdit('${txId}','${k}')"
-            style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px;border-radius:12px;border:2px solid ${k===currentCat?v.color:'#eee'};background:${k===currentCat?v.color+'15':'#fafafa'};cursor:pointer;font-size:.75rem;font-weight:${k===currentCat?'700':'500'};color:${k===currentCat?v.color:'#555'}">
-            <span style="font-size:1.4rem">${v.emoji}</span>
-            ${v.label}
-          </button>`).join('')}
+      <div id="arelyCatEditGrid">
+        ${Object.entries(ARELY_PARENT_CATS).map(([pk, pcat]) => {
+          const entries = cats.filter(([k,v]) => (v.parent||'otros') === pk);
+          if(!entries.length) return '';
+          return `<div style="margin-bottom:10px">
+            <div style="font-size:.68rem;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:${pcat.color};padding:4px 2px 6px">${pcat.emoji} ${pcat.label}</div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">
+              ${entries.map(([k,v]) => `
+                <button onclick="saveArelyCatEdit('${txId}','${k}')"
+                  style="display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 6px;border-radius:12px;border:2px solid ${k===currentCat?v.color:'#eee'};background:${k===currentCat?v.color+'15':'#fafafa'};cursor:pointer;font-size:.75rem;font-weight:${k===currentCat?'700':'500'};color:${k===currentCat?v.color:'#555'}">
+                  <span style="font-size:1.3rem">${v.emoji}</span>
+                  ${v.label.replace(/Sam 🐾/, 'Sam')}
+                </button>`).join('')}
+            </div>
+          </div>`;
+        }).join('')}
       </div>
     </div>`;
   overlay.addEventListener('click', e => { if(e.target === overlay) overlay.remove(); });
@@ -803,6 +923,9 @@ async function saveArelyCatEdit(txId, newCat){
   }).eq('id', txId);
   document.getElementById('arelyCatEditOverlay')?.remove();
   if(error){ alert('Error updating category: ' + error.message); return; }
+  // Remember vendor → category for future imports
+  const tx = arelyTx.find(t => t.id === txId);
+  if(tx?.description) setVendorCat(tx.description, newCat);
   await loadArelyData();
   loadArelyDashboard();
 }
@@ -858,6 +981,13 @@ async function loadArelyRecentExp(){
 // ── BUDGET VIEW (per-category) ────────────────────────────
 function loadArelyBudgetView(){
   renderArelyBudgetCategories();
+  renderVendorMemorySection();
+  // Update vendor count badge
+  const ct = document.getElementById('arelyVendorCount');
+  if(ct){
+    const n = Object.keys(getVendorCats()).length;
+    ct.textContent = n > 0 ? `${n} rule${n===1?'':'s'}` : 'no rules yet';
+  }
 }
 
 function renderArelyBudgetCategories(){
@@ -903,10 +1033,15 @@ function renderArelyBudgetCategories(){
   const listEl = document.getElementById('arelyBudgetCatList');
   if(!listEl) return;
 
-  // All categories (for setting budgets even with no spending yet)
-  const allCats = Object.entries(ARELY_CAT);
+  // Group categories by parent
+  const groups = {};
+  Object.entries(ARELY_CAT).forEach(([k, cat]) => {
+    const p = cat.parent || 'otros';
+    if(!groups[p]) groups[p] = [];
+    groups[p].push([k, cat]);
+  });
 
-  listEl.innerHTML = allCats.map(([k, cat]) => {
+  function makeCatRow(k, cat){
     const spent  = spending[k] || 0;
     const budget = catBudgets[k] || 0;
     const pct    = budget > 0 ? Math.min(100,(spent/budget)*100) : 0;
@@ -938,7 +1073,79 @@ function renderArelyBudgetCategories(){
         ${budget > 0 ? `<span style="font-size:.66rem;color:var(--muted)">budget</span>` : ''}
       </div>
     </div>`;
+  }
+
+  listEl.innerHTML = Object.entries(ARELY_PARENT_CATS).map(([pk, pcat]) => {
+    const cats = groups[pk] || [];
+    if(!cats.length) return '';
+    const groupSpent  = cats.reduce((s,[k]) => s + (spending[k]||0), 0);
+    const groupBudget = cats.reduce((s,[k]) => s + (catBudgets[k]||0), 0);
+    const gPct  = groupBudget > 0 ? Math.min(100,(groupSpent/groupBudget)*100).toFixed(0) : 0;
+    const gOver = groupSpent > groupBudget && groupBudget > 0;
+    const sortedCats = [...cats].sort((a,b) => (spending[b[0]]||0) - (spending[a[0]]||0));
+    return `
+    <details class="arely-parent-group" open>
+      <summary class="arely-parent-group-hdr">
+        <span class="arely-parent-group-icon" style="background:${pcat.color}15;color:${pcat.color}">${pcat.emoji}</span>
+        <span class="arely-parent-group-name">${pcat.label}</span>
+        <span class="arely-parent-group-meta">
+          ${groupSpent > 0 ? `<span style="font-weight:700;color:${gOver?'var(--red)':pcat.color}">${fmtUSD(groupSpent)}</span>` : ''}
+          ${groupBudget > 0 ? `<span style="font-size:.68rem;color:var(--muted)"> / ${fmtUSD(groupBudget)}</span>` : ''}
+        </span>
+        ${groupBudget > 0 ? `<div class="arely-parent-bar-wrap"><div class="arely-parent-bar" style="width:${gPct}%;background:${gOver?'var(--red)':pcat.color}"></div></div>` : ''}
+        <span class="arely-parent-chevron">▾</span>
+      </summary>
+      <div class="arely-parent-body">
+        ${sortedCats.map(([k,cat]) => makeCatRow(k, cat)).join('')}
+      </div>
+    </details>`;
   }).join('');
+}
+
+// ── VENDOR MEMORY UI ─────────────────────────────────────
+function renderVendorMemorySection(){
+  const el = document.getElementById('arelyVendorMemory');
+  if(!el) return;
+  const store = getVendorCats();
+  const entries = Object.entries(store);
+  if(!entries.length){
+    el.innerHTML = '<p style="font-size:.78rem;color:var(--muted);padding:4px 0">No vendor rules yet. Categorize a transaction manually to teach the app.</p>';
+    return;
+  }
+  el.innerHTML = `
+    <div style="max-height:220px;overflow-y:auto">
+      <table style="width:100%;font-size:.75rem;border-collapse:collapse">
+        <thead><tr style="background:#f9f5fc">
+          <th style="padding:6px 10px;text-align:left;font-weight:700;color:var(--muted)">Vendor</th>
+          <th style="padding:6px 10px;text-align:left;font-weight:700;color:var(--muted)">Category</th>
+          <th style="width:30px"></th>
+        </tr></thead>
+        <tbody>
+          ${entries.sort((a,b)=>a[0].localeCompare(b[0])).map(([k, cat]) => {
+            const catInfo = ARELY_CAT[cat] || {emoji:'📦', label:cat, color:'#90A4AE'};
+            return `<tr style="border-bottom:1px solid #f5f0f8">
+              <td style="padding:6px 10px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-family:monospace;font-size:.72rem;color:#555">${k}</td>
+              <td style="padding:6px 10px"><span style="background:${catInfo.color}18;color:${catInfo.color};padding:2px 7px;border-radius:8px;font-weight:600;font-size:.72rem">${catInfo.emoji} ${catInfo.label}</span></td>
+              <td style="padding:6px 5px"><button onclick="forgetVendorCat('${k.replace(/'/g,"\'")}')" style="background:none;border:none;cursor:pointer;color:#aaa;font-size:.85rem" title="Remove rule">✕</button></td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+    </div>
+    <button onclick="clearAllVendorCats()" style="margin-top:8px;background:none;border:1px solid #ddd;border-radius:8px;padding:5px 12px;font-size:.72rem;color:var(--muted);cursor:pointer">🗑 Clear all rules</button>`;
+}
+
+function forgetVendorCat(key){
+  const store = getVendorCats();
+  delete store[key];
+  localStorage.setItem('arely_vendor_cats', JSON.stringify(store));
+  renderVendorMemorySection();
+}
+
+function clearAllVendorCats(){
+  if(!confirm('Clear all vendor category rules?')) return;
+  localStorage.removeItem('arely_vendor_cats');
+  renderVendorMemorySection();
 }
 
 // ── CALENDAR ─────────────────────────────────────────────

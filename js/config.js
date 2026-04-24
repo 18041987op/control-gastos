@@ -57,37 +57,53 @@ const TERESA_PERSONAL_CAT = {
 };
 
 // ── ARELY: HOUSEHOLD EXPENSE CATEGORIES (1311 Old Robinson Trail) ──
+// ── ARELY: PARENT CATEGORY GROUPS ─────────────────────────────────────
+const ARELY_PARENT_CATS = {
+  hogar:        { label:'Hogar',          emoji:'🏠', color:'#5C6BC0' },
+  alimentacion: { label:'Alimentación',   emoji:'🍽️', color:'#66BB6A' },
+  transporte:   { label:'Transporte',     emoji:'🚗', color:'#FFA726' },
+  salud:        { label:'Salud',          emoji:'💊', color:'#EF5350' },
+  personal:     { label:'Personal',       emoji:'✨', color:'#AB47BC' },
+  finanzas:     { label:'Finanzas',       emoji:'💰', color:'#1565C0' },
+  compras:      { label:'Compras',        emoji:'🛍️', color:'#FF6F00' },
+  otros:        { label:'Otros',          emoji:'📦', color:'#90A4AE' },
+};
+
 const ARELY_CAT = {
-  // ── Utilities ─────────────────────────────────────────
-  electricity:  {label:'Electricity',       color:'#D06B8D', emoji:'⚡'},
-  water:        {label:'Water',             color:'#42A5F5', emoji:'💧'},
-  gas:          {label:'Gas',               color:'#FF7043', emoji:'🔥'},
-  internet:     {label:'Internet / Cable',  color:'#7E57C2', emoji:'📡'},
-  phone:        {label:'Phone',             color:'#26C6DA', emoji:'📱'},
-  // ── Living ────────────────────────────────────────────
-  groceries:    {label:'Groceries',         color:'#66BB6A', emoji:'🛒'},
-  rent:         {label:'Rent / Mortgage',   color:'#8D6E63', emoji:'🏠'},
-  dining:       {label:'Dining Out',        color:'#F7971E', emoji:'🍽️'},
-  health:       {label:'Health / Medical',  color:'#EF5350', emoji:'💊'},
-  clothing:     {label:'Clothing',          color:'#AB47BC', emoji:'👗'},
-  sam:          {label:'Sam 🐾',            color:'#F2A0BB', emoji:'🐾', hasAvatar:true},
-  // ── Home & Transport ──────────────────────────────────
-  transport:    {label:'Transportation',    color:'#FFA726', emoji:'🚗'},
-  maintenance:  {label:'Home Maintenance',  color:'#78909C', emoji:'🧹'},
-  insurance:    {label:'Insurance',         color:'#5C6BC0', emoji:'🛡️'},
-  entertainment:{label:'Entertainment',     color:'#EC407A', emoji:'🎬'},
-  // ── Financial ─────────────────────────────────────────
-  taxes:        {label:'Taxes',             color:'#B71C1C', emoji:'🏛️'},
-  investments:  {label:'Investments',       color:'#1565C0', emoji:'📈'},
-  mortgage_sav: {label:'Mortgage/Savings',  color:'#2E7D32', emoji:'🏦'},
-  remittance:   {label:'Remittances',       color:'#E65100', emoji:'💸'},
-  creditcard:   {label:'Credit Cards',      color:'#6A1B9A', emoji:'💳'},
-  // ── Shopping & Transfers ──────────────────────────────
-  amazon:       {label:'Amazon',            color:'#FF6F00', emoji:'🛍️'},
-  transfer:     {label:'Transfers/Zelle',   color:'#006064', emoji:'📲'},
-  bankfee:      {label:'Bank Fees',         color:'#37474F', emoji:'🏧'},
-  cc_payment:   {label:'CC Payment',        color:'#B0BEC5', emoji:'🚫', skip:true},  // excluded from totals
-  other:        {label:'Other',             color:'#90A4AE', emoji:'📦'},
+  // ── Hogar ─────────────────────────────────────────────
+  electricity:  {label:'Electricity',       color:'#D06B8D', emoji:'⚡', parent:'hogar'},
+  water:        {label:'Water',             color:'#42A5F5', emoji:'💧', parent:'hogar'},
+  gas:          {label:'Gas',               color:'#FF7043', emoji:'🔥', parent:'hogar'},
+  internet:     {label:'Internet / Cable',  color:'#7E57C2', emoji:'📡', parent:'hogar'},
+  phone:        {label:'Phone',             color:'#26C6DA', emoji:'📱', parent:'hogar'},
+  rent:         {label:'Rent / Mortgage',   color:'#8D6E63', emoji:'🏠', parent:'hogar'},
+  maintenance:  {label:'Home Maintenance',  color:'#78909C', emoji:'🧹', parent:'hogar'},
+  // ── Alimentación ──────────────────────────────────────
+  groceries:    {label:'Groceries',         color:'#66BB6A', emoji:'🛒', parent:'alimentacion'},
+  dining:       {label:'Dining Out',        color:'#F7971E', emoji:'🍽️', parent:'alimentacion'},
+  // ── Transporte ────────────────────────────────────────
+  transport:    {label:'Transportation',    color:'#FFA726', emoji:'🚗', parent:'transporte'},
+  insurance:    {label:'Insurance',         color:'#5C6BC0', emoji:'🛡️', parent:'transporte'},
+  // ── Salud ─────────────────────────────────────────────
+  health:       {label:'Health / Medical',  color:'#EF5350', emoji:'💊', parent:'salud'},
+  sam:          {label:'Sam 🐾',            color:'#F2A0BB', emoji:'🐾', hasAvatar:true, parent:'salud'},
+  // ── Personal ──────────────────────────────────────────
+  clothing:     {label:'Clothing',          color:'#AB47BC', emoji:'👗', parent:'personal'},
+  entertainment:{label:'Entertainment',     color:'#EC407A', emoji:'🎬', parent:'personal'},
+  streaming:    {label:'Streaming',         color:'#7B1FA2', emoji:'📺', parent:'personal'},
+  // ── Finanzas ──────────────────────────────────────────
+  taxes:        {label:'Taxes',             color:'#B71C1C', emoji:'🏛️', parent:'finanzas'},
+  investments:  {label:'Investments',       color:'#1565C0', emoji:'📈', parent:'finanzas'},
+  mortgage_sav: {label:'Mortgage/Savings',  color:'#2E7D32', emoji:'🏦', parent:'finanzas'},
+  remittance:   {label:'Remittances',       color:'#E65100', emoji:'💸', parent:'finanzas'},
+  creditcard:   {label:'Credit Cards',      color:'#6A1B9A', emoji:'💳', parent:'finanzas'},
+  transfer:     {label:'Transfers/Zelle',   color:'#006064', emoji:'📲', parent:'finanzas'},
+  bankfee:      {label:'Bank Fees',         color:'#37474F', emoji:'🏧', parent:'finanzas'},
+  cc_payment:   {label:'CC Payment',        color:'#B0BEC5', emoji:'🚫', skip:true, parent:'finanzas'},
+  // ── Compras ───────────────────────────────────────────
+  amazon:       {label:'Amazon',            color:'#FF6F00', emoji:'🛍️', parent:'compras'},
+  // ── Otros ─────────────────────────────────────────────
+  other:        {label:'Other',             color:'#90A4AE', emoji:'📦', parent:'otros'},
 };
 
 // ── ARELY: INCOME SOURCE TYPES ────────────────────────────────────────

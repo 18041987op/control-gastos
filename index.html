@@ -8,7 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<link rel="stylesheet" href="css/styles.css?v=20260423d">
+<link rel="stylesheet" href="css/styles.css?v=20260424a">
 </head>
 <body>
 
@@ -453,6 +453,15 @@
       <!-- Month Budget Summary Bar -->
       <div class="chart-card arely-month-summary" id="arelyMonthSummary"></div>
 
+      <!-- Parent Group Breakdown -->
+      <div class="chart-card" style="padding:12px 14px">
+        <div class="chart-hdr" style="margin-bottom:10px">
+          <h3>🗂 Spending by Group</h3>
+          <button id="arelyParentClearBtn" style="display:none;background:none;border:none;font-size:.72rem;color:var(--arely);cursor:pointer;font-weight:700" onclick="arelyFilterByParent(arelyFilterParent)">✕ Clear</button>
+        </div>
+        <div id="arelyParentBreakdown" class="arely-parent-chips-wrap"></div>
+      </div>
+
       <!-- Income Summary Card -->
       <div id="arelyIncomeCard" style="display:none"></div>
 
@@ -544,6 +553,20 @@
       <div class="chart-hdr"><h3>📊 Budget vs Spending per Category</h3></div>
       <div id="arelyBudgetCatList"></div>
     </div>
+
+    <!-- Vendor Memory -->
+    <details class="chart-card" style="padding:14px 16px">
+      <summary style="cursor:pointer;font-size:.85rem;font-weight:700;color:var(--arely-dark);list-style:none;display:flex;align-items:center;gap:8px;user-select:none">
+        <span style="font-size:1rem">🧠</span>
+        <span style="flex:1">Vendor Category Rules</span>
+        <span style="font-size:.72rem;color:var(--muted)" id="arelyVendorCount"></span>
+        <span style="font-size:.8rem;color:var(--muted)">▾</span>
+      </summary>
+      <div style="margin-top:10px;font-size:.75rem;color:var(--muted);line-height:1.5;margin-bottom:8px">
+        When you manually change a category, the app remembers that vendor for future imports.
+      </div>
+      <div id="arelyVendorMemory"></div>
+    </details>
   </div>
 
   <!-- Vista: Calendar -->
@@ -759,7 +782,7 @@
 <script src="js/sharelyn.js?v=20260307"></script>
 <script src="js/teresa.js?v=20260309"></script>
 <script src="js/presupuestos.js?v=20260305g"></script>
-<script src="js/arely.js?v=20260423d"></script>
+<script src="js/arely.js?v=20260424a"></script>
 <script src="js/trash.js?v=20260411"></script>
 <script src="js/admin.js?v=20260307"></script>
 <script src="js/todos.js?v=20260305e"></script>
