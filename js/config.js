@@ -94,10 +94,10 @@ const ARELY_CAT = {
   // ── Finanzas ──────────────────────────────────────────
   taxes:        {label:'Taxes',             color:'#B71C1C', emoji:'🏛️', parent:'finanzas'},
   investments:  {label:'Investments',       color:'#1565C0', emoji:'📈', parent:'finanzas'},
-  mortgage_sav: {label:'Mortgage/Savings',  color:'#2E7D32', emoji:'🏦', parent:'finanzas'},
+  mortgage_sav: {label:'Mortgage/Savings',  color:'#2E7D32', emoji:'🏦', skip:true, parent:'finanzas'},
   remittance:   {label:'Remittances',       color:'#E65100', emoji:'💸', parent:'finanzas'},
-  creditcard:   {label:'Credit Cards',      color:'#6A1B9A', emoji:'💳', parent:'finanzas'},
-  transfer:     {label:'Transfers/Zelle',   color:'#006064', emoji:'📲', parent:'finanzas'},
+  creditcard:   {label:'Credit Cards',      color:'#6A1B9A', emoji:'💳', skip:true, parent:'finanzas'},
+  transfer:     {label:'Transfers/Zelle',   color:'#006064', emoji:'📲', skip:true, parent:'finanzas'},
   bankfee:      {label:'Bank Fees',         color:'#37474F', emoji:'🏧', parent:'finanzas'},
   cc_payment:   {label:'CC Payment',        color:'#B0BEC5', emoji:'🚫', skip:true, parent:'finanzas'},
   // ── Compras ───────────────────────────────────────────
