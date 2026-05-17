@@ -8,11 +8,16 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+/* ─── PIN gate con 2 roles ───
+   1987 → dueño  (acceso total)
+   2026 → contratista (solo registra avance + sube fotos) */
 (function(){
-  var PIN = "1987";
-  var KEY = "duplex_pin_ok_v1";
-  if(sessionStorage.getItem(KEY) === "1") return;
+  var OWNER_PIN = "1987";
+  var CONTRACTOR_PIN = "2026";
+  var KEY = "duplex_role_v2";
+  if(sessionStorage.getItem(KEY)) return;
   document.write(
     '<div id="pin-gate" style="position:fixed;inset:0;z-index:99999;background:#2d4f29;'+
     'display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif">'+
@@ -20,7 +25,7 @@
     'box-shadow:0 20px 60px rgba(0,0,0,.3);width:300px;text-align:center">'+
     '<div style="font-size:36px;margin-bottom:8px">🔒</div>'+
     '<h2 style="margin:0 0 6px;font-family:Georgia,serif;color:#1f2421;font-size:20px">Acceso restringido</h2>'+
-    '<p style="margin:0 0 18px;font-size:13px;color:#5b6159">Ingresa el PIN para ver la obra.</p>'+
+    '<p style="margin:0 0 18px;font-size:13px;color:#5b6159">Ingresa tu PIN.</p>'+
     '<input id="pin-input" type="password" inputmode="numeric" autocomplete="off" autofocus '+
     'style="width:100%;padding:12px;border:1px solid #e0dccf;border-radius:10px;'+
     'font-size:18px;text-align:center;letter-spacing:.3em;font-family:inherit">'+
@@ -37,14 +42,18 @@
     document.body.style.overflow = "hidden";
     form.addEventListener("submit", function(e){
       e.preventDefault();
-      if(input.value === PIN){
-        sessionStorage.setItem(KEY, "1");
-        gate.remove();
-        document.body.style.overflow = "";
+      var v = input.value.trim();
+      if(v === OWNER_PIN){
+        sessionStorage.setItem(KEY, "owner");
+        gate.remove(); document.body.style.overflow = "";
+        if(window.__onRoleReady) window.__onRoleReady();
+      } else if(v === CONTRACTOR_PIN){
+        sessionStorage.setItem(KEY, "contractor");
+        gate.remove(); document.body.style.overflow = "";
+        if(window.__onRoleReady) window.__onRoleReady();
       } else {
         err.textContent = "PIN incorrecto";
-        input.value = "";
-        input.focus();
+        input.value = ""; input.focus();
       }
     });
   });
@@ -71,7 +80,6 @@
   body{padding:0 0 80px}
   h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-.01em}
 
-  /* ---------- HEADER ---------- */
   header{
     background:var(--green-deep);
     color:#f4f1ea;
@@ -87,16 +95,29 @@
   .eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600}
   header h1{font-size:clamp(26px,4vw,40px);margin:8px 0 6px;color:#fff}
   header p{color:#c3cdbd;font-size:15px;max-width:560px}
+  .head-meta{
+    margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;
+  }
   .save-tag{
-    margin-top:16px;display:inline-flex;align-items:center;gap:8px;
+    display:inline-flex;align-items:center;gap:8px;
     font-size:12.5px;color:#aebfa6;background:rgba(255,255,255,.06);
     padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.08)
   }
   .save-tag .dot{width:7px;height:7px;border-radius:50%;background:var(--gold)}
+  .save-tag.sync .dot{background:#7ed987;animation:pulse 1.4s infinite}
+  .save-tag.err .dot{background:#ff8a73}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+  .role-tag{
+    display:inline-flex;align-items:center;gap:6px;
+    font-size:12.5px;font-weight:600;
+    padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.07);color:#f4f1ea;cursor:pointer
+  }
+  .role-tag.owner{color:#ffe9a8}
+  .role-tag.contractor{color:#bde7b3}
 
   main{max-width:1120px;margin:0 auto;padding:0 24px}
 
-  /* ---------- KPI STRIP ---------- */
   .kpis{
     display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
     margin-top:-30px;position:relative;z-index:5
@@ -112,7 +133,6 @@
   .kpi.accent-clay .value{color:var(--clay)}
   .kpi.accent-blue .value{color:var(--blue)}
 
-  /* ---------- SECTION ---------- */
   section{margin-top:34px}
   .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:14px;flex-wrap:wrap}
   .sec-head h2{font-size:21px}
@@ -120,23 +140,23 @@
 
   .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
 
-  /* ---------- PAYMENT PANEL ---------- */
   .pay-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}
   .pay-box{padding:22px}
   .pay-box h3{font-size:16px;margin-bottom:14px}
   .field{margin-bottom:14px}
   .field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:6px}
-  .field input{
+  .field input,.field textarea{
     width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;
     font-family:'Outfit',sans-serif;font-size:15px;background:#fff;color:var(--ink)
   }
-  .field input:focus{outline:2px solid var(--green-soft);border-color:var(--green)}
-  .row2{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}
+  .field textarea{min-height:72px;resize:vertical}
+  .field input:focus,.field textarea:focus{outline:2px solid var(--green-soft);border-color:var(--green)}
   .btn{
     border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-weight:600;
     font-size:14px;padding:11px 18px;cursor:pointer;transition:transform .08s,filter .15s
   }
   .btn:active{transform:scale(.97)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
   .btn-green{background:var(--green);color:#fff}
   .btn-green:hover{filter:brightness(1.08)}
   .btn-ghost{background:transparent;color:var(--green);border:1px solid var(--green)}
@@ -152,21 +172,18 @@
   .mini .l{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--green-deep);font-weight:600}
   .mini .v{font-family:'Fraunces',serif;font-size:19px;font-weight:600;margin-top:3px;color:var(--green-deep)}
 
-  /* alert when overpaying */
   .alert{
     margin-top:6px;font-size:12.5px;padding:9px 12px;border-radius:9px;
     background:#f6e7e4;color:var(--red);border:1px solid #e3c9c4;display:none
   }
   .alert.show{display:block}
 
-  /* ---------- CHARTS ---------- */
   .charts{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   .chart-card{padding:20px}
   .chart-card h3{font-size:15px;margin-bottom:6px}
   .chart-card .csub{font-size:12px;color:var(--ink-soft);margin-bottom:12px}
   .chart-wrap{position:relative;height:230px}
 
-  /* ---------- BUDGET GROUPS ---------- */
   .group{margin-bottom:16px;overflow:hidden}
   .group-head{
     display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;
@@ -186,44 +203,78 @@
   .group.collapsed .chevron{transform:rotate(-90deg)}
   .group.collapsed .group-body{display:none}
 
-  /* ITEM ROW */
   .item{
-    display:grid;grid-template-columns:1fr 130px 150px 120px;gap:14px;
-    padding:14px 20px;border-bottom:1px solid var(--line);align-items:center
+    display:grid;grid-template-columns:1fr 130px 170px 120px;gap:14px;
+    padding:14px 20px;border-bottom:1px solid var(--line);align-items:start
   }
   .item:last-child{border-bottom:none}
-  .item .iname{font-size:13.5px;line-height:1.35}
-  .item .iname .icode{font-size:11px;color:var(--ink-soft);font-weight:600}
-  .item .icost{font-size:13.5px;font-weight:600;text-align:right}
+  .item .iname{font-size:13.5px;line-height:1.35;padding-top:4px}
+  .item .iname .icode{font-size:11px;color:var(--ink-soft);font-weight:600;display:block;margin-top:2px}
+  .item .icost{font-size:13.5px;font-weight:600;text-align:right;padding-top:4px}
   .item .icost .ic-lbl{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
   .prog-cell{display:flex;flex-direction:column;gap:5px}
   .prog-cell .ptop{display:flex;justify-content:space-between;font-size:12px}
   .prog-cell .pval{font-weight:700;color:var(--green)}
+  .prog-cell .updated{font-size:10.5px;color:var(--ink-soft);margin-top:2px}
+  .prog-cell .row-actions{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap}
+  .prog-cell .row-actions button{
+    background:none;border:1px solid var(--line);border-radius:7px;padding:3px 9px;
+    font-size:11px;font-family:inherit;cursor:pointer;color:var(--ink-soft);font-weight:500
+  }
+  .prog-cell .row-actions button:hover{background:#f4f1ea;border-color:var(--green)}
+  .prog-cell .row-actions button.has-imgs{color:var(--green);border-color:var(--green)}
   .slider{
     -webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:5px;
     background:var(--line);outline:none
   }
   .slider::-webkit-slider-thumb{
-    -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    -webkit-appearance:none;width:20px;height:20px;border-radius:50%;
     background:var(--green);cursor:pointer;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25)
   }
   .slider::-moz-range-thumb{
-    width:18px;height:18px;border-radius:50%;background:var(--green);
+    width:20px;height:20px;border-radius:50%;background:var(--green);
     cursor:pointer;border:3px solid #fff
   }
-  .item .ipay{text-align:right}
+  .slider:disabled{opacity:.4;cursor:not-allowed}
+  .item .ipay{text-align:right;padding-top:4px}
   .item .ipay .amt{font-family:'Fraunces',serif;font-size:15px;font-weight:600;color:var(--green-deep)}
   .item .ipay .ip-lbl{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
-  .done-check{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-soft);margin-top:3px;cursor:pointer}
+  .done-check{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-soft);margin-top:5px;cursor:pointer}
   .done-check input{accent-color:var(--green);width:14px;height:14px}
 
   .item-head-row{
-    display:grid;grid-template-columns:1fr 130px 150px 120px;gap:14px;
+    display:grid;grid-template-columns:1fr 130px 170px 120px;gap:14px;
     padding:9px 20px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
     color:var(--ink-soft);font-weight:600;background:#faf8f1;border-bottom:1px solid var(--line)
   }
-  .item-head-row span:nth-child(2),.item-head-row span:nth-child(3),.item-head-row span:nth-child(4){text-align:right}
-  .item-head-row span:nth-child(3){text-align:left}
+  .item-head-row span:nth-child(2),.item-head-row span:nth-child(4){text-align:right}
+
+  /* expanded log/images panel under an item */
+  .item-detail{
+    grid-column:1/-1;background:#faf8f1;padding:14px 20px;border-top:1px solid var(--line);
+    margin:8px -20px -14px;
+  }
+  .item-detail h4{font-family:'Fraunces',serif;font-size:13px;margin-bottom:10px;color:var(--green-deep)}
+  .img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:8px;margin-bottom:14px}
+  .img-grid .thumb{
+    aspect-ratio:1;background:var(--line) center/cover no-repeat;border-radius:8px;cursor:pointer;
+    border:1px solid var(--line);position:relative
+  }
+  .img-grid .thumb:hover{filter:brightness(.92)}
+  .log-list{display:flex;flex-direction:column;gap:8px}
+  .log-entry{
+    background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 12px;
+    font-size:12.5px;display:flex;gap:10px;align-items:flex-start
+  }
+  .log-entry .lbadge{
+    font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+    padding:3px 7px;border-radius:5px;flex-shrink:0
+  }
+  .lbadge.owner{background:#f6efd9;color:#8a6d1f}
+  .lbadge.contractor{background:#e8efe3;color:var(--green-deep)}
+  .log-entry .ltext{flex:1;line-height:1.4}
+  .log-entry .lwhen{color:var(--ink-soft);font-size:11px}
+  .log-entry .lnote{margin-top:3px;color:var(--ink-soft);font-style:italic}
 
   /* EDIT MODE */
   .edit-input{
@@ -240,10 +291,16 @@
   body.edit-mode .item-head-row{grid-template-columns:1fr 130px 60px}
   body.edit-mode .group-body .slider,body.edit-mode .done-check{pointer-events:none;opacity:.4}
 
+  /* CONTRACTOR ROLE: hide owner-only controls */
+  body.role-contractor .owner-only{display:none!important}
+  body.role-contractor .edit-input,
+  body.role-contractor .editable-name,
+  body.role-contractor #proj-start,
+  body.role-contractor #proj-end{pointer-events:none;background:#faf8f1;color:var(--ink-soft)}
+
   .add-item-row{padding:12px 20px;background:#faf8f1}
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 
-  /* SCHEDULE */
   .sched-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
   .sched-box{padding:20px}
   .sched-box h3{font-size:15px;margin-bottom:14px}
@@ -260,8 +317,60 @@
 
   .pill{display:inline-block;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;letter-spacing:.04em}
   .pill-green{background:var(--green-soft);color:var(--green-deep)}
-  .pill-gold{background:#f6efd9;color:#8a6d1f}
-  .pill-clay{background:#f3e3d8;color:#94532c}
+
+  /* MODAL */
+  .modal-backdrop{
+    position:fixed;inset:0;background:rgba(31,36,33,.55);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;z-index:5000;padding:18px
+  }
+  .modal-backdrop.show{display:flex}
+  .modal{
+    background:var(--panel);border-radius:18px;width:100%;max-width:480px;max-height:90vh;
+    overflow:auto;box-shadow:0 30px 80px rgba(0,0,0,.4)
+  }
+  .modal-head{padding:20px 22px 12px;border-bottom:1px solid var(--line)}
+  .modal-head h3{font-family:'Fraunces',serif;font-size:18px;color:var(--green-deep)}
+  .modal-head .mh-sub{font-size:13px;color:var(--ink-soft);margin-top:4px}
+  .modal-body{padding:18px 22px}
+  .modal-foot{padding:14px 22px 18px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--line)}
+  .prog-preview{
+    display:flex;gap:14px;align-items:center;justify-content:center;
+    padding:14px;background:var(--green-soft);border-radius:12px;margin-bottom:16px
+  }
+  .prog-preview .ppold,.prog-preview .ppnew{
+    font-family:'Fraunces',serif;font-size:28px;font-weight:600
+  }
+  .prog-preview .ppold{color:var(--ink-soft);text-decoration:line-through;text-decoration-color:#bbb}
+  .prog-preview .ppnew{color:var(--green-deep)}
+  .prog-preview .pparrow{font-size:22px;color:var(--green)}
+  .file-drop{
+    border:2px dashed var(--line);border-radius:12px;padding:18px;text-align:center;
+    color:var(--ink-soft);font-size:13px;cursor:pointer;background:#fff;margin-bottom:14px
+  }
+  .file-drop:hover{border-color:var(--green);color:var(--green)}
+  .file-drop input{display:none}
+  .file-preview{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px;margin-bottom:14px}
+  .file-preview .fp{
+    aspect-ratio:1;background:#eee center/cover no-repeat;border-radius:7px;position:relative
+  }
+  .file-preview .fp button{
+    position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:none;
+    background:rgba(31,36,33,.7);color:#fff;font-size:12px;cursor:pointer;line-height:1
+  }
+  .upload-spin{display:none;color:var(--ink-soft);font-size:12px;margin-top:8px;text-align:center}
+  .upload-spin.show{display:block}
+
+  /* IMG VIEWER */
+  .viewer{
+    position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;
+    align-items:center;justify-content:center;z-index:6000;cursor:zoom-out
+  }
+  .viewer.show{display:flex}
+  .viewer img{max-width:95vw;max-height:90vh;border-radius:8px}
+  .viewer .vclose{
+    position:absolute;top:20px;right:20px;color:#fff;background:rgba(255,255,255,.15);
+    border:none;border-radius:50%;width:38px;height:38px;font-size:18px;cursor:pointer
+  }
 
   @media(max-width:860px){
     .kpis{grid-template-columns:1fr 1fr}
@@ -281,7 +390,10 @@
     <div class="eyebrow">Control de Obra · Pago por Avance</div>
     <h1>Remodelación Dúplex</h1>
     <p>El Progreso, Yoro · Honduras. Seguimiento de avance del contratista, cálculo automático de pagos y línea de tiempo del proyecto.</p>
-    <div class="save-tag"><span class="dot"></span> Los avances y pagos se guardan automáticamente en este dispositivo</div>
+    <div class="head-meta">
+      <span class="save-tag" id="sync-tag"><span class="dot"></span> <span id="sync-text">Cargando…</span></span>
+      <span class="role-tag" id="role-tag" onclick="logout()" title="Cerrar sesión"></span>
+    </div>
   </div>
 </header>
 
@@ -319,20 +431,22 @@
     </div>
     <div class="card pay-grid">
       <div class="pay-box" style="border-right:1px solid var(--line)">
-        <h3>Registrar un pago</h3>
-        <div class="field">
-          <label>Monto del pago (Lempiras)</label>
-          <input type="number" id="pay-amount" placeholder="Ej: 50000" min="0">
+        <h3 id="pay-h3">Registrar un pago</h3>
+        <div class="owner-only">
+          <div class="field">
+            <label>Monto del pago (Lempiras)</label>
+            <input type="number" id="pay-amount" placeholder="Ej: 50000" min="0">
+          </div>
+          <div class="field">
+            <label>Fecha</label>
+            <input type="date" id="pay-date">
+          </div>
+          <div class="field">
+            <label>Nota (opcional)</label>
+            <input type="text" id="pay-note" placeholder="Ej: Anticipo, pago por terminar electricidad...">
+          </div>
+          <button class="btn btn-green" onclick="addPayment()" style="width:100%">+ Agregar pago</button>
         </div>
-        <div class="field">
-          <label>Fecha</label>
-          <input type="date" id="pay-date">
-        </div>
-        <div class="field">
-          <label>Nota (opcional)</label>
-          <input type="text" id="pay-note" placeholder="Ej: Anticipo, pago por terminar electricidad...">
-        </div>
-        <button class="btn btn-green" onclick="addPayment()" style="width:100%">+ Agregar pago</button>
         <div id="pay-list" style="margin-top:16px"></div>
       </div>
 
@@ -427,109 +541,219 @@
   <section>
     <div class="sec-head">
       <h2>Presupuesto y Avance Detallado</h2>
-      <div class="toolbar">
+      <div class="toolbar owner-only">
         <button class="btn btn-ghost btn-sm" id="editToggle" onclick="toggleEdit()">✎ Editar presupuesto</button>
-        <button class="btn btn-ghost btn-sm" onclick="resetData()">↺ Reiniciar todo</button>
       </div>
     </div>
     <div id="groups-container"></div>
   </section>
 
   <footer>
-    <p><b>Cómo funciona el pago por avance:</b> cada partida tiene un costo. Cuando marcas que está, por ejemplo, al 60%, el sistema calcula que el contratista ha "ganado" el 60% del costo de esa partida. La suma de todo eso es el <b>pago ganado</b>. El <b>saldo a pagar hoy</b> es el pago ganado menos lo que ya pagaste — eso es lo que puedes pagar sin adelantarte al trabajo real.</p>
-    <p style="margin-top:10px">El presupuesto base proviene del PDF del contratista (marcado <i>"únicamente por una unidad habitacional"</i>). Si esa cifra corresponde a una sola unidad del dúplex, usa <b>Editar presupuesto</b> para duplicar los montos o agregar las partidas de la segunda unidad.</p>
+    <p><b>Cómo funciona el pago por avance:</b> cada partida tiene un costo. Cuando se marca al, por ejemplo, 60%, el sistema calcula que el contratista ha "ganado" el 60% del costo de esa partida. La suma de todo eso es el <b>pago ganado</b>. El <b>saldo a pagar hoy</b> es el pago ganado menos lo que ya se pagó.</p>
+    <p style="margin-top:10px">El presupuesto base proviene del PDF del contratista. Cada cambio de avance queda registrado con fecha, autor y opcionalmente fotos en el historial de la partida.</p>
   </footer>
 
 </main>
 
+<!-- ─── Modal: confirmar cambio de avance ─── -->
+<div class="modal-backdrop" id="prog-modal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="pm-title">Actualizar avance</h3>
+      <div class="mh-sub" id="pm-sub"></div>
+    </div>
+    <div class="modal-body">
+      <div class="prog-preview">
+        <div class="ppold" id="pm-old">0%</div>
+        <div class="pparrow">→</div>
+        <div class="ppnew" id="pm-new">0%</div>
+      </div>
+      <label class="file-drop" id="pm-drop">
+        <input type="file" id="pm-files" accept="image/*" capture="environment" multiple>
+        📷 <b>Toca para tomar foto</b> o adjuntar imágenes
+        <div style="font-size:11px;margin-top:4px">Opcional · máx 5 MB c/u</div>
+      </label>
+      <div class="file-preview" id="pm-preview"></div>
+      <div class="field" style="margin:0">
+        <label>Comentario (opcional)</label>
+        <textarea id="pm-note" placeholder="Ej: terminé de instalar 12 tomacorrientes, faltan 13..."></textarea>
+      </div>
+      <div class="upload-spin" id="pm-spin">Guardando y subiendo fotos…</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeProgModal()">Cancelar</button>
+      <button class="btn btn-green" id="pm-confirm" onclick="confirmProg()">Confirmar avance</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Image viewer ─── -->
+<div class="viewer" id="viewer" onclick="closeViewer(event)">
+  <button class="vclose" onclick="closeViewer(event)">✕</button>
+  <img id="viewer-img" src="">
+</div>
+
 <script>
 /* ============================================================
-   DATOS BASE — extraídos del PDF y de las imágenes de adiciones
+   CONFIG
+   ============================================================ */
+const SUPABASE_URL      = 'https://ozfmydiutupboupttkmz.supabase.co';
+const SUPABASE_ANON_KEY = 'sb_publishable_TcG2qZdwO5PQuJAJ701xtg_XArHPpsG';
+const BUCKET            = 'duplex-progress';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let ROLE = sessionStorage.getItem('duplex_role_v2'); // 'owner' | 'contractor'
+
+/* ============================================================
+   DATOS BASE (solo para sembrar Supabase la primera vez)
    ============================================================ */
 const DEFAULT_DATA = {
-  projStart:"", projEnd:"",
   groups:[
     {
       id:"base", code:"A", name:"Presupuesto Base (PDF)",
       desc:"Remodelación de vivienda — presupuesto original del contratista",
-      collapsed:false,
       items:[
-        {id:"b1", code:"1.1", name:"Tomacorrientes 120v aterrizado (25 und)", cost:17125, prog:0, done:false},
-        {id:"b2", code:"1.2", name:"Tomacorrientes 220v aterrizado (6 und)", cost:5010, prog:0, done:false},
-        {id:"b3", code:"1.3", name:"Luminarias tipo spot (14 und)", cost:9100, prog:0, done:false},
-        {id:"b4", code:"1.4", name:"Ventilador de techo 52\" (sala)", cost:4375, prog:0, done:false},
-        {id:"b5", code:"1.5", name:"Panel eléctrico 24 espacios + acometida", cost:15000, prog:0, done:false},
-        {id:"b6", code:"2.1", name:"Reparación tubería sanitaria y potable en baños", cost:5870, prog:0, done:false},
-        {id:"b7", code:"2.2", name:"Ducha tipo lluvia", cost:1100, prog:0, done:false},
-        {id:"b8", code:"2.3", name:"Sanitario Laguna de dos piezas redondo", cost:4250, prog:0, done:false},
-        {id:"b9", code:"2.4", name:"Accesorios AN y AP (válvulas, sifón, grifos)", cost:2220, prog:0, done:false},
-        {id:"b10",code:"2.5", name:"Enchape área de ducha cerámica 30x60", cost:7214.40, prog:0, done:false},
-        {id:"b11",code:"3.1", name:"Fundición de losa lavandería y acera lateral", cost:23454.25, prog:0, done:false},
-        {id:"b12",code:"3.2", name:"Resanar paredes (manguereado tomacorrientes)", cost:6450.75, prog:0, done:false},
-        {id:"b13",code:"3.3", name:"Pared divisoria de lavandería, repello y pulido", cost:2600, prog:0, done:false},
-        {id:"b14",code:"3.4", name:"Demolición de cocina", cost:900, prog:0, done:false},
-        {id:"b15",code:"4.1", name:"Cielo falso de PVC (72 m²)", cost:56160, prog:0, done:false},
-        {id:"b16",code:"4.2", name:"Cocina: mueble inferior cedro/MDF, top granito", cost:85000, prog:0, done:false},
-        {id:"b17",code:"5.1", name:"Cerca de separación reja galvanizada verde", cost:20154, prog:0, done:false},
-        {id:"b18",code:"5.2", name:"Portón peatonal y vehicular 2 en 1", cost:28552, prog:0, done:false},
-        {id:"b19",code:"5.3", name:"Rampa de acceso vehicular", cost:8250, prog:0, done:false},
-        {id:"b20",code:"5.4", name:"Relleno frontal del terreno con material selecto", cost:17200, prog:0, done:false},
-        {id:"b21",code:"5.5", name:"Reemplazo de ventanas PVC blanco vidrio bronce", cost:49500, prog:0, done:false},
-        {id:"b22",code:"5.6", name:"Estructura + tanque 1,100 L + lavadero", cost:25135, prog:0, done:false}
+        {id:"b1", code:"1.1", name:"Tomacorrientes 120v aterrizado (25 und)", cost:17125},
+        {id:"b2", code:"1.2", name:"Tomacorrientes 220v aterrizado (6 und)", cost:5010},
+        {id:"b3", code:"1.3", name:"Luminarias tipo spot (14 und)", cost:9100},
+        {id:"b4", code:"1.4", name:"Ventilador de techo 52\" (sala)", cost:4375},
+        {id:"b5", code:"1.5", name:"Panel eléctrico 24 espacios + acometida", cost:15000},
+        {id:"b6", code:"2.1", name:"Reparación tubería sanitaria y potable en baños", cost:5870},
+        {id:"b7", code:"2.2", name:"Ducha tipo lluvia", cost:1100},
+        {id:"b8", code:"2.3", name:"Sanitario Laguna de dos piezas redondo", cost:4250},
+        {id:"b9", code:"2.4", name:"Accesorios AN y AP (válvulas, sifón, grifos)", cost:2220},
+        {id:"b10",code:"2.5", name:"Enchape área de ducha cerámica 30x60", cost:7214.40},
+        {id:"b11",code:"3.1", name:"Fundición de losa lavandería y acera lateral", cost:23454.25},
+        {id:"b12",code:"3.2", name:"Resanar paredes (manguereado tomacorrientes)", cost:6450.75},
+        {id:"b13",code:"3.3", name:"Pared divisoria de lavandería, repello y pulido", cost:2600},
+        {id:"b14",code:"3.4", name:"Demolición de cocina", cost:900},
+        {id:"b15",code:"4.1", name:"Cielo falso de PVC (72 m²)", cost:56160},
+        {id:"b16",code:"4.2", name:"Cocina: mueble inferior cedro/MDF, top granito", cost:85000},
+        {id:"b17",code:"5.1", name:"Cerca de separación reja galvanizada verde", cost:20154},
+        {id:"b18",code:"5.2", name:"Portón peatonal y vehicular 2 en 1", cost:28552},
+        {id:"b19",code:"5.3", name:"Rampa de acceso vehicular", cost:8250},
+        {id:"b20",code:"5.4", name:"Relleno frontal del terreno con material selecto", cost:17200},
+        {id:"b21",code:"5.5", name:"Reemplazo de ventanas PVC blanco vidrio bronce", cost:49500},
+        {id:"b22",code:"5.6", name:"Estructura + tanque 1,100 L + lavadero", cost:25135}
       ]
     },
     {
       id:"add1", code:"B", name:"Adiciones — Acabados",
       desc:"Porcelanato, resane, pintura y tubería (mensaje 1)",
-      collapsed:false,
       items:[
-        {id:"a1", code:"B1", name:"Instalar porcelanato en una unidad", cost:64875, prog:0, done:false},
-        {id:"a2", code:"B2", name:"Resanar paredes de una unidad", cost:35500, prog:0, done:false},
-        {id:"a3", code:"B3", name:"Pintar completa una unidad", cost:6000, prog:0, done:false},
-        {id:"a4", code:"B4", name:"Conectar tubería de agua potable (2 unidades)", cost:5200, prog:0, done:false}
+        {id:"a1", code:"B1", name:"Instalar porcelanato en una unidad", cost:64875},
+        {id:"a2", code:"B2", name:"Resanar paredes de una unidad", cost:35500},
+        {id:"a3", code:"B3", name:"Pintar completa una unidad", cost:6000},
+        {id:"a4", code:"B4", name:"Conectar tubería de agua potable (2 unidades)", cost:5200}
       ]
     },
     {
       id:"add2", code:"C", name:"Adiciones — Instalaciones y Baño",
       desc:"Electricidad Quimistán, cerámica, sanitario, ducha (mensaje 2)",
-      collapsed:false,
       items:[
-        {id:"c1", code:"C3", name:"Electricidad en casa de Quimistán", cost:18500, prog:0, done:false},
-        {id:"c2", code:"C4", name:"Cerámica de baño", cost:7050, prog:0, done:false},
-        {id:"c3", code:"C5", name:"1 Sanitario", cost:3900, prog:0, done:false},
-        {id:"c4", code:"C6", name:"Accesorios de sanitario y lavamano", cost:1900, prog:0, done:false},
-        {id:"c5", code:"C7", name:"1 Ducha", cost:1100, prog:0, done:false}
+        {id:"c1", code:"C3", name:"Electricidad en casa de Quimistán", cost:18500},
+        {id:"c2", code:"C4", name:"Cerámica de baño", cost:7050},
+        {id:"c3", code:"C5", name:"1 Sanitario", cost:3900},
+        {id:"c4", code:"C6", name:"Accesorios de sanitario y lavamano", cost:1900},
+        {id:"c5", code:"C7", name:"1 Ducha", cost:1100}
       ]
     }
-  ],
-  payments:[]
+  ]
 };
 
 /* ============================================================
-   ESTADO + PERSISTENCIA
+   ESTADO
    ============================================================ */
-const STORE_KEY = "remodelacion_duplex_yoro_v1";
-let state;
+let state = {
+  groups:[],        // [{id,code,name,description,sort_order,collapsed,items:[...]}]
+  payments:[],
+  projStart:"", projEnd:"",
+  logs:[],          // all log entries (grouped per item on render)
+  images:[]         // all images (grouped per item on render)
+};
+let expandedItem = null; // id of item with detail panel open
 
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORE_KEY);
-    if(raw){ state = JSON.parse(raw); return; }
-  }catch(e){}
-  state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+/* ============================================================
+   SUPABASE I/O
+   ============================================================ */
+function setSync(kind, text){
+  const tag = document.getElementById('sync-tag');
+  tag.classList.remove('sync','err');
+  if(kind==='sync') tag.classList.add('sync');
+  if(kind==='err')  tag.classList.add('err');
+  document.getElementById('sync-text').textContent = text;
 }
-function saveState(){
-  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+
+async function loadFromDB(){
+  setSync('sync','Sincronizando…');
+  try{
+    const [g, i, p, m, l, im] = await Promise.all([
+      sb.from('duplex_groups').select('*').order('sort_order'),
+      sb.from('duplex_items').select('*').order('sort_order'),
+      sb.from('duplex_payments').select('*').order('created_at'),
+      sb.from('duplex_meta').select('*'),
+      sb.from('duplex_progress_log').select('*').order('created_at',{ascending:false}),
+      sb.from('duplex_progress_images').select('*').order('created_at',{ascending:false}),
+    ]);
+    for(const r of [g,i,p,m,l,im]) if(r.error) throw r.error;
+
+    if(!g.data || g.data.length===0){
+      await seedDefaults();
+      return loadFromDB();
+    }
+
+    state.groups = g.data.map(gr => ({
+      ...gr,
+      items: (i.data||[]).filter(it => it.group_id === gr.id)
+    }));
+    state.payments = p.data || [];
+    state.logs     = l.data || [];
+    state.images   = im.data || [];
+
+    const meta = Object.fromEntries((m.data||[]).map(r=>[r.key, r.value]));
+    state.projStart = meta.projStart || "";
+    state.projEnd   = meta.projEnd   || "";
+
+    document.getElementById('proj-start').value = state.projStart;
+    document.getElementById('proj-end').value   = state.projEnd;
+
+    setSync('','En vivo · Supabase');
+  }catch(err){
+    console.error(err);
+    setSync('err','Sin conexión a Supabase');
+  }
+}
+
+async function seedDefaults(){
+  setSync('sync','Sembrando datos iniciales…');
+  const grows = DEFAULT_DATA.groups.map((g,i)=>({
+    id:g.id, code:g.code, name:g.name, description:g.desc, sort_order:i, collapsed:false
+  }));
+  const { error: ge } = await sb.from('duplex_groups').insert(grows);
+  if(ge) throw ge;
+  const irows = [];
+  DEFAULT_DATA.groups.forEach(g => g.items.forEach((it,ii)=>{
+    irows.push({
+      id:it.id, group_id:g.id, code:it.code, name:it.name,
+      cost:it.cost, prog:0, done:false, sort_order:ii
+    });
+  }));
+  const { error: ie } = await sb.from('duplex_items').insert(irows);
+  if(ie) throw ie;
+}
+
+async function setMeta(key, value){
+  await sb.from('duplex_meta').upsert({key, value, updated_at: new Date().toISOString()});
 }
 
 /* ============================================================
    CÁLCULOS
    ============================================================ */
 const L = n => "L " + (Math.round(n)).toLocaleString("es-HN");
-const L2 = n => "L " + n.toLocaleString("es-HN",{minimumFractionDigits:2,maximumFractionDigits:2});
+const L2 = n => "L " + Number(n).toLocaleString("es-HN",{minimumFractionDigits:2,maximumFractionDigits:2});
 
-function groupTotal(g){ return g.items.reduce((s,it)=>s+it.cost,0); }
-function groupEarned(g){ return g.items.reduce((s,it)=>s+it.cost*(it.prog/100),0); }
+function groupTotal(g){ return g.items.reduce((s,it)=>s+Number(it.cost),0); }
+function groupEarned(g){ return g.items.reduce((s,it)=>s+Number(it.cost)*(Number(it.prog)/100),0); }
 function projectTotal(){ return state.groups.reduce((s,g)=>s+groupTotal(g),0); }
 function projectEarned(){ return state.groups.reduce((s,g)=>s+groupEarned(g),0); }
 function totalPaid(){ return state.payments.reduce((s,p)=>s+Number(p.amount||0),0); }
@@ -537,19 +761,41 @@ function progressPct(){
   const t=projectTotal();
   return t>0 ? (projectEarned()/t*100) : 0;
 }
+function logsForItem(id){ return state.logs.filter(l=>l.item_id===id); }
+function imagesForItem(id){ return state.images.filter(im=>im.item_id===id); }
+function lastUpdateFor(id){
+  const ls = logsForItem(id);
+  return ls.length ? ls[0] : null;
+}
 
 /* ============================================================
-   RENDER PRINCIPAL
+   RENDER
    ============================================================ */
 let chartMoney, chartGroups;
 
 function render(){
+  renderRoleUI();
   renderGroups();
   renderPayments();
   renderKPIs();
   renderSchedule();
   renderCharts();
-  saveState();
+}
+
+function renderRoleUI(){
+  document.body.classList.toggle('role-contractor', ROLE==='contractor');
+  document.body.classList.toggle('role-owner',      ROLE==='owner');
+  const tag = document.getElementById('role-tag');
+  tag.classList.remove('owner','contractor');
+  if(ROLE==='owner'){
+    tag.classList.add('owner');
+    tag.innerHTML = '👑 Dueño · <span style="opacity:.7;font-weight:400">cerrar sesión</span>';
+  } else {
+    tag.classList.add('contractor');
+    tag.innerHTML = '🛠 Contratista · <span style="opacity:.7;font-weight:400">cerrar sesión</span>';
+  }
+  const h3 = document.getElementById('pay-h3');
+  if(h3) h3.textContent = ROLE==='owner' ? 'Registrar un pago' : 'Pagos recibidos';
 }
 
 function renderKPIs(){
@@ -563,7 +809,6 @@ function renderKPIs(){
   document.getElementById("kpi-total").textContent = L(total);
   document.getElementById("kpi-total-sub").textContent = state.groups.length+" grupos de obra";
 
-  // panel resumen
   const dueNow = Math.max(0, earned - paid);
   const remaining = Math.max(0, total - paid);
   const paidPct = total>0 ? Math.min(100, paid/total*100) : 0;
@@ -594,47 +839,62 @@ function renderGroups(){
       </div>`;
 
     g.items.forEach((it,ii)=>{
-      const earned=it.cost*(it.prog/100);
-      itemsHTML += `<div class="item">
+      const earned=Number(it.cost)*(Number(it.prog)/100);
+      const imgs = imagesForItem(it.id);
+      const lastLog = lastUpdateFor(it.id);
+      const lastTxt = lastLog
+        ? `Última: ${fmtDate(lastLog.created_at)} · ${lastLog.changed_by==='owner'?'dueño':'contratista'}`
+        : `Sin actualizaciones aún`;
+      const expanded = expandedItem === it.id;
+      itemsHTML += `<div class="item" data-item="${it.id}">
         <div class="iname">
-          <span class="view-only">${it.name}</span>
-          <span class="view-only icode">${it.code}</span>
+          <span class="view-only">${escapeHTML(it.name)}</span>
+          <span class="view-only icode">${escapeHTML(it.code||'')}</span>
           <input class="editable-name edit-only" value="${escapeAttr(it.name)}"
-            onchange="editItemName(${gi},${ii},this.value)">
+            onchange="editItemName('${it.id}',this.value)">
         </div>
         <div class="icost">
           <span class="ic-lbl">Costo</span>
           <span class="view-only">${L2(it.cost)}</span>
           <input type="number" class="edit-input edit-only" value="${it.cost}"
-            onchange="editItemCost(${gi},${ii},this.value)">
+            onchange="editItemCost('${it.id}',this.value)">
         </div>
         <div class="prog-cell view-only">
           <div class="ptop"><span>Avance</span><span class="pval">${it.prog}%</span></div>
           <input type="range" class="slider" min="0" max="100" step="5" value="${it.prog}"
-            oninput="updateProg(${gi},${ii},this.value)">
+            data-prev="${it.prog}"
+            onchange="onSliderChange('${it.id}',this)">
           <label class="done-check">
-            <input type="checkbox" ${it.done?"checked":""} onchange="toggleDone(${gi},${ii},this.checked)">
+            <input type="checkbox" ${it.done?"checked":""}
+              onchange="onDoneToggle('${it.id}',${it.prog},this.checked,this)">
             Marcar como 100% terminado
           </label>
+          <div class="updated">${lastTxt}</div>
+          <div class="row-actions">
+            <button onclick="toggleDetail('${it.id}')" class="${imgs.length?'has-imgs':''}">
+              ${expanded?'▴ Ocultar':'▾ Ver'} historial${imgs.length?` · ${imgs.length} 📷`:''}
+            </button>
+          </div>
         </div>
         <div class="ipay view-only">
           <span class="ip-lbl">Ganado</span>
           <span class="amt">${L(earned)}</span>
         </div>
-        <button class="btn btn-danger btn-sm edit-only" onclick="deleteItem(${gi},${ii})">Eliminar</button>
+        <button class="btn btn-danger btn-sm edit-only" onclick="deleteItem('${it.id}')">Eliminar</button>
+        ${expanded ? renderItemDetail(it) : ''}
       </div>`;
     });
 
     itemsHTML += `<div class="add-item-row edit-only">
-      <button class="btn btn-ghost btn-sm" onclick="addItem(${gi})">+ Agregar partida a este grupo</button>
+      <button class="btn btn-ghost btn-sm" onclick="addItem('${g.id}')">+ Agregar partida a este grupo</button>
     </div>`;
 
     div.innerHTML = `
-      <div class="group-head" onclick="toggleGroup(${gi},event)">
+      <div class="group-head" onclick="toggleGroup('${g.id}',event)">
         <div class="gicon">${g.code}</div>
         <div class="gtitle">
-          <div class="gt">${g.name}</div>
-          <div class="gd">${g.desc} · ${g.items.length} partidas</div>
+          <div class="gt">${escapeHTML(g.name)}</div>
+          <div class="gd">${escapeHTML(g.description||'')} · ${g.items.length} partidas</div>
         </div>
         <div class="gtotals">
           <div class="gt-pay">${L(gTot)}</div>
@@ -647,6 +907,39 @@ function renderGroups(){
   });
 }
 
+function renderItemDetail(it){
+  const logs = logsForItem(it.id);
+  const imgs = imagesForItem(it.id);
+  let imgsHTML = imgs.length
+    ? `<div class="img-grid">${imgs.map(im=>`
+        <div class="thumb" style="background-image:url('${escapeAttr(im.public_url)}')"
+          onclick="openViewer('${escapeAttr(im.public_url)}')" title="${escapeAttr(im.caption||'')}"></div>
+      `).join('')}</div>`
+    : `<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px">Aún no hay fotos para esta partida.</div>`;
+
+  let logsHTML = logs.length
+    ? `<div class="log-list">${logs.map(lg=>{
+        const arr = lg.prog_old==null
+          ? `Inicial → <b>${lg.prog_new}%</b>`
+          : `${lg.prog_old}% → <b>${lg.prog_new}%</b>`;
+        return `<div class="log-entry">
+          <span class="lbadge ${lg.changed_by}">${lg.changed_by==='owner'?'Dueño':'Contratista'}</span>
+          <div class="ltext">
+            <div>${arr} · <span class="lwhen">${fmtDate(lg.created_at)}</span></div>
+            ${lg.note ? `<div class="lnote">"${escapeHTML(lg.note)}"</div>` : ''}
+          </div>
+        </div>`;
+      }).join('')}</div>`
+    : `<div style="font-size:12px;color:var(--ink-soft)">Sin historial de cambios.</div>`;
+
+  return `<div class="item-detail">
+    <h4>📷 Fotos del avance</h4>
+    ${imgsHTML}
+    <h4>📋 Historial de cambios</h4>
+    ${logsHTML}
+  </div>`;
+}
+
 function renderPayments(){
   const list=document.getElementById("pay-list");
   if(state.payments.length===0){
@@ -654,24 +947,20 @@ function renderPayments(){
     return;
   }
   let html="";
-  // most recent first
-  [...state.payments].map((p,idx)=>({p,idx})).reverse().forEach(({p,idx})=>{
+  [...state.payments].reverse().forEach(p=>{
     html += `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;background:#fff">
       <div style="font-size:12.5px;line-height:1.3">
         <b style="font-family:'Fraunces',serif;font-size:14px;color:var(--green-deep)">${L(Number(p.amount))}</b>
-        <span style="color:var(--ink-soft)"> · ${p.date||"sin fecha"}</span>
+        <span style="color:var(--ink-soft)"> · ${p.paid_on||"sin fecha"}</span>
         ${p.note?`<div style="color:var(--ink-soft);margin-top:1px">${escapeHTML(p.note)}</div>`:""}
       </div>
-      <button class="btn btn-danger btn-sm" onclick="deletePayment(${idx})">✕</button>
+      <button class="btn btn-danger btn-sm owner-only" onclick="deletePayment('${p.id}')">✕</button>
     </div>`;
   });
   list.innerHTML=html;
 }
 
 function renderSchedule(){
-  const s=document.getElementById("proj-start").value;
-  const e=document.getElementById("proj-end").value;
-  state.projStart=s; state.projEnd=e;
   const tsTotal=document.getElementById("ts-total");
   const tsElapsed=document.getElementById("ts-elapsed");
   const tsLeft=document.getElementById("ts-left");
@@ -683,6 +972,7 @@ function renderSchedule(){
   const prog=progressPct();
   timeProg.textContent=prog.toFixed(0)+"%";
 
+  const s=state.projStart, e=state.projEnd;
   if(!s||!e){
     tsTotal.textContent=tsElapsed.textContent=tsLeft.textContent="—";
     tsStatus.textContent="Define las fechas";
@@ -704,7 +994,6 @@ function renderSchedule(){
   timeBar.style.width=tElapsedPct+"%";
   timePct.textContent=tElapsedPct.toFixed(0)+"%";
 
-  // estado: comparar avance de obra vs tiempo transcurrido
   let status, cls;
   if(left<0 && prog<100){ status="Retrasado"; cls="ts-v red"; }
   else if(prog>=100){ status="Obra completada"; cls="ts-v green"; }
@@ -714,122 +1003,235 @@ function renderSchedule(){
   tsStatus.className=cls;
 }
 
-/* ============================================================
-   GRÁFICAS
-   ============================================================ */
 function renderCharts(){
   const total=projectTotal(), earned=projectEarned(), paid=totalPaid();
-
-  // chart 1: dinero
   const mData=[paid, earned, total];
   if(chartMoney){
-    chartMoney.data.datasets[0].data=mData;
-    chartMoney.update();
+    chartMoney.data.datasets[0].data=mData; chartMoney.update();
   }else{
     chartMoney=new Chart(document.getElementById("chartMoney"),{
       type:"bar",
-      data:{
-        labels:["Pagado","Ganado por avance","Presupuesto total"],
-        datasets:[{
-          data:mData,
-          backgroundColor:["#bf6b3f","#3f6b3a","#c9c3b0"],
-          borderRadius:8, barThickness:54
-        }]
-      },
-      options:{
-        responsive:true, maintainAspectRatio:false,
-        plugins:{legend:{display:false},
-          tooltip:{callbacks:{label:c=>"L "+c.raw.toLocaleString("es-HN")}}},
-        scales:{
-          y:{beginAtZero:true,ticks:{callback:v=>"L"+(v/1000)+"k",font:{family:"Outfit"}},grid:{color:"#eceadf"}},
-          x:{ticks:{font:{family:"Outfit",size:11}},grid:{display:false}}
-        }
-      }
+      data:{labels:["Pagado","Ganado por avance","Presupuesto total"],
+        datasets:[{data:mData,backgroundColor:["#bf6b3f","#3f6b3a","#c9c3b0"],borderRadius:8,barThickness:54}]},
+      options:{responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>"L "+c.raw.toLocaleString("es-HN")}}},
+        scales:{y:{beginAtZero:true,ticks:{callback:v=>"L"+(v/1000)+"k",font:{family:"Outfit"}},grid:{color:"#eceadf"}},
+                x:{ticks:{font:{family:"Outfit",size:11}},grid:{display:false}}}}
     });
   }
-
-  // chart 2: avance por grupo (doughnut de progreso promedio? -> barras)
   const gLabels=state.groups.map(g=>g.name);
-  const gVals=state.groups.map(g=>{
-    const t=groupTotal(g); return t>0?(groupEarned(g)/t*100):0;
-  });
+  const gVals=state.groups.map(g=>{const t=groupTotal(g); return t>0?(groupEarned(g)/t*100):0;});
   if(chartGroups){
     chartGroups.data.labels=gLabels;
-    chartGroups.data.datasets[0].data=gVals;
-    chartGroups.update();
+    chartGroups.data.datasets[0].data=gVals; chartGroups.update();
   }else{
     chartGroups=new Chart(document.getElementById("chartGroups"),{
       type:"bar",
-      data:{labels:gLabels,datasets:[{
-        data:gVals,
-        backgroundColor:["#3f6b3a","#5a8a4f","#88ad6f"],
-        borderRadius:8, barThickness:40
-      }]},
-      options:{
-        indexAxis:"y",
-        responsive:true, maintainAspectRatio:false,
-        plugins:{legend:{display:false},
-          tooltip:{callbacks:{label:c=>c.raw.toFixed(1)+"% completado"}}},
-        scales:{
-          x:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%",font:{family:"Outfit"}},grid:{color:"#eceadf"}},
-          y:{ticks:{font:{family:"Outfit",size:11}},grid:{display:false}}
-        }
-      }
+      data:{labels:gLabels,datasets:[{data:gVals,backgroundColor:["#3f6b3a","#5a8a4f","#88ad6f","#a8c590","#c4d9b2"],borderRadius:8,barThickness:40}]},
+      options:{indexAxis:"y",responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw.toFixed(1)+"% completado"}}},
+        scales:{x:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%",font:{family:"Outfit"}},grid:{color:"#eceadf"}},
+                y:{ticks:{font:{family:"Outfit",size:11}},grid:{display:false}}}}
     });
   }
 }
 
 /* ============================================================
-   ACCIONES
+   ACCIONES — PROGRESS (modal confirmación + fotos)
    ============================================================ */
-function updateProg(gi,ii,val){
-  state.groups[gi].items[ii].prog=Number(val);
-  state.groups[gi].items[ii].done=(Number(val)===100);
-  render();
+let pendingProg = null; // {itemId, oldProg, newProg, sliderEl?, checkboxEl?}
+let pendingFiles = [];
+
+function onSliderChange(itemId, el){
+  const newVal = Number(el.value);
+  const oldVal = Number(el.dataset.prev);
+  if(newVal === oldVal) return;
+  openProgModal(itemId, oldVal, newVal, el, null);
 }
-function toggleDone(gi,ii,checked){
-  state.groups[gi].items[ii].done=checked;
-  state.groups[gi].items[ii].prog=checked?100:0;
-  render();
+function onDoneToggle(itemId, currentProg, checked, el){
+  const newVal = checked ? 100 : 0;
+  if(newVal === currentProg){ return; }
+  openProgModal(itemId, currentProg, newVal, null, el);
 }
-function toggleGroup(gi,ev){
-  if(ev.target.closest("input,button,label,.slider")) return;
-  state.groups[gi].collapsed=!state.groups[gi].collapsed;
-  render();
+
+function openProgModal(itemId, oldProg, newProg, sliderEl, checkboxEl){
+  const it = findItem(itemId);
+  pendingProg = { itemId, oldProg, newProg, sliderEl, checkboxEl };
+  pendingFiles = [];
+  document.getElementById('pm-title').textContent = `Confirmar avance — ${it.name}`;
+  document.getElementById('pm-sub').textContent   = `Partida ${it.code||''} · ${L2(it.cost)}`;
+  document.getElementById('pm-old').textContent = oldProg+'%';
+  document.getElementById('pm-new').textContent = newProg+'%';
+  document.getElementById('pm-note').value = '';
+  document.getElementById('pm-files').value = '';
+  renderFilePreview();
+  document.getElementById('pm-spin').classList.remove('show');
+  document.getElementById('pm-confirm').disabled = false;
+  document.getElementById('prog-modal').classList.add('show');
 }
-function editItemName(gi,ii,val){ state.groups[gi].items[ii].name=val; saveState(); }
-function editItemCost(gi,ii,val){
-  state.groups[gi].items[ii].cost=Math.max(0,Number(val)||0);
-  render();
+
+function closeProgModal(){
+  // revert UI to pre-modal state
+  if(pendingProg){
+    if(pendingProg.sliderEl){
+      pendingProg.sliderEl.value = pendingProg.oldProg;
+    }
+    if(pendingProg.checkboxEl){
+      pendingProg.checkboxEl.checked = (pendingProg.oldProg===100);
+    }
+  }
+  pendingProg = null; pendingFiles = [];
+  document.getElementById('prog-modal').classList.remove('show');
 }
-function addItem(gi){
-  const g=state.groups[gi];
-  g.items.push({id:"new"+Date.now(),code:"+",name:"Nueva partida",cost:0,prog:0,done:false});
-  render();
+
+document.getElementById('pm-files').addEventListener('change', e=>{
+  for(const f of e.target.files){
+    if(f.size > 5*1024*1024){ alert(`"${f.name}" pasa de 5 MB`); continue; }
+    pendingFiles.push(f);
+  }
+  e.target.value='';
+  renderFilePreview();
+});
+
+function renderFilePreview(){
+  const wrap = document.getElementById('pm-preview');
+  wrap.innerHTML='';
+  pendingFiles.forEach((f, idx)=>{
+    const url = URL.createObjectURL(f);
+    const div = document.createElement('div');
+    div.className = 'fp';
+    div.style.backgroundImage = `url('${url}')`;
+    div.innerHTML = `<button onclick="removePendingFile(${idx})">✕</button>`;
+    wrap.appendChild(div);
+  });
 }
-function deleteItem(gi,ii){
-  if(confirm("¿Eliminar esta partida?")){
-    state.groups[gi].items.splice(ii,1);
+function removePendingFile(idx){
+  pendingFiles.splice(idx,1);
+  renderFilePreview();
+}
+
+async function confirmProg(){
+  if(!pendingProg) return;
+  const { itemId, oldProg, newProg } = pendingProg;
+  const note = document.getElementById('pm-note').value.trim() || null;
+  document.getElementById('pm-confirm').disabled = true;
+  document.getElementById('pm-spin').classList.add('show');
+
+  try{
+    // 1) update item
+    const upd = await sb.from('duplex_items').update({
+      prog: newProg, done: newProg===100, updated_at: new Date().toISOString()
+    }).eq('id', itemId);
+    if(upd.error) throw upd.error;
+
+    // 2) insert log
+    const ins = await sb.from('duplex_progress_log').insert({
+      item_id: itemId, prog_old: oldProg, prog_new: newProg,
+      changed_by: ROLE, note
+    }).select().single();
+    if(ins.error) throw ins.error;
+    const logId = ins.data.id;
+
+    // 3) upload images
+    for(const f of pendingFiles){
+      const safe = f.name.replace(/[^\w.\-]+/g,'_').slice(0,60);
+      const path = `${itemId}/${Date.now()}_${Math.random().toString(36).slice(2,8)}_${safe}`;
+      const up = await sb.storage.from(BUCKET).upload(path, f, { contentType: f.type || 'image/jpeg' });
+      if(up.error){ console.error('upload err', up.error); continue; }
+      const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(path);
+      const imgIns = await sb.from('duplex_progress_images').insert({
+        log_id: logId, item_id: itemId,
+        storage_path: path, public_url: pub.publicUrl,
+        uploaded_by: ROLE
+      });
+      if(imgIns.error) console.error('img insert err', imgIns.error);
+    }
+
+    pendingProg = null; pendingFiles = [];
+    document.getElementById('prog-modal').classList.remove('show');
+    expandedItem = itemId; // show updated history right away
+    await loadFromDB();
     render();
+  }catch(err){
+    console.error(err);
+    alert('No se pudo guardar el cambio:\n'+(err.message||err));
+    document.getElementById('pm-confirm').disabled = false;
+    document.getElementById('pm-spin').classList.remove('show');
   }
 }
-function addPayment(){
-  const amt=document.getElementById("pay-amount").value;
-  const date=document.getElementById("pay-date").value;
-  const note=document.getElementById("pay-note").value;
-  if(!amt||Number(amt)<=0){ alert("Ingresa un monto válido."); return; }
-  state.payments.push({amount:Number(amt),date:date,note:note});
+
+/* ============================================================
+   ACCIONES — RESTO (solo dueño)
+   ============================================================ */
+function findItem(id){
+  for(const g of state.groups) for(const it of g.items) if(it.id===id) return it;
+  return null;
+}
+function findGroup(id){ return state.groups.find(g=>g.id===id); }
+
+async function toggleGroup(gid,ev){
+  if(ev.target.closest("input,button,label,.slider")) return;
+  const g = findGroup(gid);
+  g.collapsed = !g.collapsed;
+  if(ROLE==='owner'){
+    await sb.from('duplex_groups').update({collapsed:g.collapsed}).eq('id',gid);
+  }
+  render();
+}
+
+function toggleDetail(itemId){
+  expandedItem = (expandedItem===itemId) ? null : itemId;
+  render();
+}
+
+async function editItemName(id, val){
+  if(ROLE!=='owner') return;
+  await sb.from('duplex_items').update({name:val}).eq('id',id);
+  await loadFromDB(); render();
+}
+async function editItemCost(id, val){
+  if(ROLE!=='owner') return;
+  await sb.from('duplex_items').update({cost: Math.max(0,Number(val)||0)}).eq('id',id);
+  await loadFromDB(); render();
+}
+async function addItem(gid){
+  if(ROLE!=='owner') return;
+  const g = findGroup(gid);
+  const id = 'new_'+Date.now().toString(36);
+  await sb.from('duplex_items').insert({
+    id, group_id: gid, code:'+', name:'Nueva partida', cost:0, prog:0, done:false,
+    sort_order: g.items.length
+  });
+  await loadFromDB(); render();
+}
+async function deleteItem(id){
+  if(ROLE!=='owner') return;
+  if(!confirm("¿Eliminar esta partida? Se borrarán también sus fotos e historial.")) return;
+  await sb.from('duplex_items').delete().eq('id', id);
+  await loadFromDB(); render();
+}
+async function addPayment(){
+  if(ROLE!=='owner') return;
+  const amt  = document.getElementById("pay-amount").value;
+  const date = document.getElementById("pay-date").value || null;
+  const note = document.getElementById("pay-note").value || null;
+  if(!amt || Number(amt)<=0){ alert("Ingresa un monto válido."); return; }
+  const { error } = await sb.from('duplex_payments').insert({
+    amount: Number(amt), paid_on: date, note
+  });
+  if(error){ alert("Error guardando pago: "+error.message); return; }
   document.getElementById("pay-amount").value="";
   document.getElementById("pay-note").value="";
-  render();
+  await loadFromDB(); render();
 }
-function deletePayment(idx){
-  if(confirm("¿Eliminar este pago?")){
-    state.payments.splice(idx,1);
-    render();
-  }
+async function deletePayment(id){
+  if(ROLE!=='owner') return;
+  if(!confirm("¿Eliminar este pago?")) return;
+  await sb.from('duplex_payments').delete().eq('id', id);
+  await loadFromDB(); render();
 }
 function toggleEdit(){
+  if(ROLE!=='owner') return;
   document.body.classList.toggle("edit-mode");
   const btn=document.getElementById("editToggle");
   if(document.body.classList.contains("edit-mode")){
@@ -840,29 +1242,80 @@ function toggleEdit(){
     btn.classList.add("btn-ghost"); btn.classList.remove("btn-green");
   }
 }
-function resetData(){
-  if(confirm("Esto borrará TODOS los avances, pagos y cambios al presupuesto, y volverá a los datos originales del PDF. ¿Continuar?")){
-    state=JSON.parse(JSON.stringify(DEFAULT_DATA));
-    document.getElementById("proj-start").value="";
-    document.getElementById("proj-end").value="";
-    render();
-  }
+
+function logout(){
+  if(!confirm("¿Cerrar sesión y volver al PIN?")) return;
+  sessionStorage.removeItem('duplex_role_v2');
+  location.reload();
 }
 
-/* utilidades */
-function escapeHTML(s){return (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
-function escapeAttr(s){return (s||"").replace(/"/g,"&quot;");}
+/* ============================================================
+   IMG VIEWER
+   ============================================================ */
+function openViewer(url){
+  document.getElementById('viewer-img').src = url;
+  document.getElementById('viewer').classList.add('show');
+}
+function closeViewer(ev){
+  if(ev && ev.target.tagName==='IMG') return;
+  document.getElementById('viewer').classList.remove('show');
+}
 
 /* ============================================================
-   INICIO
+   UTIL
    ============================================================ */
-loadState();
-document.getElementById("proj-start").value=state.projStart||"";
-document.getElementById("proj-end").value=state.projEnd||"";
-document.getElementById("pay-date").value=new Date().toISOString().slice(0,10);
-document.getElementById("proj-start").addEventListener("change",renderSchedule);
-document.getElementById("proj-end").addEventListener("change",()=>{renderSchedule();saveState();});
-render();
+function escapeHTML(s){return (s==null?"":String(s)).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+function escapeAttr(s){return (s==null?"":String(s)).replace(/"/g,"&quot;");}
+function fmtDate(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleString('es-HN',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+
+/* ============================================================
+   INIT
+   ============================================================ */
+async function init(){
+  ROLE = sessionStorage.getItem('duplex_role_v2');
+  if(!ROLE){ return; } // PIN gate handles it
+
+  document.getElementById("pay-date").value = new Date().toISOString().slice(0,10);
+
+  document.getElementById("proj-start").addEventListener("change", async e=>{
+    state.projStart = e.target.value;
+    if(ROLE==='owner') await setMeta('projStart', state.projStart);
+    renderSchedule();
+  });
+  document.getElementById("proj-end").addEventListener("change", async e=>{
+    state.projEnd = e.target.value;
+    if(ROLE==='owner') await setMeta('projEnd', state.projEnd);
+    renderSchedule();
+  });
+
+  await loadFromDB();
+  render();
+  subscribeRealtime();
+}
+
+let rtTimer;
+function subscribeRealtime(){
+  sb.channel('duplex-sync')
+    .on('postgres_changes', {event:'*', schema:'public', table:'duplex_items'},          softRefetch)
+    .on('postgres_changes', {event:'*', schema:'public', table:'duplex_payments'},       softRefetch)
+    .on('postgres_changes', {event:'*', schema:'public', table:'duplex_progress_log'},   softRefetch)
+    .on('postgres_changes', {event:'*', schema:'public', table:'duplex_progress_images'},softRefetch)
+    .on('postgres_changes', {event:'*', schema:'public', table:'duplex_groups'},         softRefetch)
+    .subscribe();
+}
+function softRefetch(){
+  clearTimeout(rtTimer);
+  rtTimer = setTimeout(async()=>{ await loadFromDB(); render(); }, 500);
+}
+
+// arranque: si el PIN ya estaba en sesión, init() corre normal.
+// Si no, el gate llama window.__onRoleReady tras el PIN correcto.
+window.__onRoleReady = init;
+if(ROLE){ init(); }
 </script>
 </body>
 </html>
