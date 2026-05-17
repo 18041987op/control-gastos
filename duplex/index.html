@@ -299,6 +299,21 @@
   body.role-contractor #proj-end{pointer-events:none;background:#faf8f1;color:var(--ink-soft)}
 
   .add-item-row{padding:12px 20px;background:#faf8f1}
+
+  .scope-block{padding:12px 20px 16px;background:#faf8f1;border-top:1px solid var(--line)}
+  .scope-block summary{
+    cursor:pointer;font-size:12.5px;font-weight:600;color:var(--green-deep);
+    padding:4px 0;list-style:none;user-select:none
+  }
+  .scope-block summary::-webkit-details-marker{display:none}
+  .scope-block summary:hover{color:var(--green)}
+  .scope-list{
+    margin:10px 0 8px 22px;font-size:12.5px;line-height:1.5;color:var(--ink-soft);
+    columns:2;column-gap:24px
+  }
+  .scope-list li{margin-bottom:3px;break-inside:avoid}
+  .scope-note{font-size:11.5px;color:var(--clay);margin-top:8px;font-style:italic}
+  @media(max-width:860px){ .scope-list{columns:1} }
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 
   .sched-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -610,31 +625,12 @@ let ROLE = sessionStorage.getItem('duplex_role_v2'); // 'owner' | 'contractor'
 const DEFAULT_DATA = {
   groups:[
     {
-      id:"base", code:"A", name:"Presupuesto Base (PDF)",
-      desc:"Remodelación de vivienda — presupuesto original del contratista",
+      id:"base", code:"A", name:"Contrato Base (PDF Gómez & Rivera)",
+      desc:"Remodelación completa · pago por 3 hitos · total L 392,500",
       items:[
-        {id:"b1", code:"1.1", name:"Tomacorrientes 120v aterrizado (25 und)", cost:17125},
-        {id:"b2", code:"1.2", name:"Tomacorrientes 220v aterrizado (6 und)", cost:5010},
-        {id:"b3", code:"1.3", name:"Luminarias tipo spot (14 und)", cost:9100},
-        {id:"b4", code:"1.4", name:"Ventilador de techo 52\" (sala)", cost:4375},
-        {id:"b5", code:"1.5", name:"Panel eléctrico 24 espacios + acometida", cost:15000},
-        {id:"b6", code:"2.1", name:"Reparación tubería sanitaria y potable en baños", cost:5870},
-        {id:"b7", code:"2.2", name:"Ducha tipo lluvia", cost:1100},
-        {id:"b8", code:"2.3", name:"Sanitario Laguna de dos piezas redondo", cost:4250},
-        {id:"b9", code:"2.4", name:"Accesorios AN y AP (válvulas, sifón, grifos)", cost:2220},
-        {id:"b10",code:"2.5", name:"Enchape área de ducha cerámica 30x60", cost:7214.40},
-        {id:"b11",code:"3.1", name:"Fundición de losa lavandería y acera lateral", cost:23454.25},
-        {id:"b12",code:"3.2", name:"Resanar paredes (manguereado tomacorrientes)", cost:6450.75},
-        {id:"b13",code:"3.3", name:"Pared divisoria de lavandería, repello y pulido", cost:2600},
-        {id:"b14",code:"3.4", name:"Demolición de cocina", cost:900},
-        {id:"b15",code:"4.1", name:"Cielo falso de PVC (72 m²)", cost:56160},
-        {id:"b16",code:"4.2", name:"Cocina: mueble inferior cedro/MDF, top granito", cost:85000},
-        {id:"b17",code:"5.1", name:"Cerca de separación reja galvanizada verde", cost:20154},
-        {id:"b18",code:"5.2", name:"Portón peatonal y vehicular 2 en 1", cost:28552},
-        {id:"b19",code:"5.3", name:"Rampa de acceso vehicular", cost:8250},
-        {id:"b20",code:"5.4", name:"Relleno frontal del terreno con material selecto", cost:17200},
-        {id:"b21",code:"5.5", name:"Reemplazo de ventanas PVC blanco vidrio bronce", cost:49500},
-        {id:"b22",code:"5.6", name:"Estructura + tanque 1,100 L + lavadero", cost:25135}
+        {id:"base_h1", code:"1", name:"Entrada (50%) — al iniciar la obra (compra de materiales)", cost:196250},
+        {id:"base_h2", code:"2", name:"Avance intermedio (30%) — cuando la obra esté al 80%",     cost:117750},
+        {id:"base_h3", code:"3", name:"Finalización (20%) — al entregar la obra al 100%",          cost: 78500}
       ]
     },
     {
@@ -660,6 +656,43 @@ const DEFAULT_DATA = {
     }
   ]
 };
+
+/* Alcance completo del contrato base (30 tareas del PDF Gómez & Rivera).
+   No tienen precio individual — el contrato es un bundle de L 392,500.
+   Se muestran solo como referencia visual bajo el grupo base. */
+const PDF_SCOPE = [
+  "Instalación de 25 unidades de tomacorrientes 120v",
+  "Instalación de 6 unidades de tomacorrientes de 220v",
+  "Instalación de 14 spot light (2 sala, 2 comedor, 2 cocina, 1 por habitación, 1 por baño, 1 lavandería, 1 porch, 1 lateral)",
+  "Instalar 1 ventilador de techo de 52\"",
+  "Instalación de panel eléctrico",
+  "Cambiar cable de acometida",
+  "Reparación de tubería sanitaria y potable",
+  "Instalación de 2 duchas",
+  "Instalación de un sanitario de 2 piezas",
+  "Enchapar con cerámica área de ducha (8.64 m² altura 2.10)",
+  "Fundir plancha de concreto para lavadora y secadora",
+  "Hacer acera peatonal de 0.10 cm total 40.79 ml",
+  "Subir pared divisoria de lavandería altura total 2.20 m, repellar y pulir",
+  "Demoler cocina",
+  "Instalar cielo falso con tablilla PVC blanco 72 m²",
+  "Hacer mueble de lavatrastes interior de cedro con MDF",
+  "Instalación lavatrasto completo",
+  "Instalar top de porcelánica (granito básico)",
+  "Hacer torre de alacena 7 pies de alto (no incluye mueble aéreo)",
+  "Hacer cerca de separación con rejilla color verde de 1.50 m de altura",
+  "Hacer portón corredizo con portón peatonal incluido",
+  "Rellenar con selecto área frontal de terreno",
+  "Cambiar ventanas por ventanas de PVC blanco con vidrio color bronce",
+  "Hacer estructura de tanque incluye tanque de 1,100 litros",
+  "Hacer lavadero",
+  "Extender techo de casa hacia muro",
+  "Cambiar 7 contramarco de laurel",
+  "Instalar 7 puertas con sus respectivos llavines (no incluye puertas)",
+  "Reparar fisuras en pared por los 2 lados",
+  "Poner tablilla en aleros"
+];
+const PDF_NOTE = "TU compras puertas, llavines y bisagras. No incluidas en el contrato.";
 
 /* ============================================================
    ESTADO
@@ -894,6 +927,16 @@ function renderGroups(){
     itemsHTML += `<div class="add-item-row edit-only">
       <button class="btn btn-ghost btn-sm" onclick="addItem('${g.id}')">+ Agregar partida a este grupo</button>
     </div>`;
+
+    if(g.id === 'base'){
+      itemsHTML += `<details class="scope-block">
+        <summary>📋 Ver alcance del contrato (30 tareas incluidas en los L 392,500)</summary>
+        <ol class="scope-list">
+          ${PDF_SCOPE.map(t=>`<li>${escapeHTML(t)}</li>`).join('')}
+        </ol>
+        <div class="scope-note">⚠ Nota del contrato: ${escapeHTML(PDF_NOTE)}</div>
+      </details>`;
+    }
 
     div.innerHTML = `
       <div class="group-head" onclick="toggleGroup('${g.id}',event)">

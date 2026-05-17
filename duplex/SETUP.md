@@ -25,6 +25,42 @@ Eso crea:
 Para cambiar el PIN del contratista, edita la línea
 `const CONTRACTOR_PIN` arriba del `<script>` principal en `duplex/index.html`.
 
+## 2.1. Migración 002 — base como 3 hitos
+
+Si ya corriste `schema.sql` antes del cambio a "3 hitos", también corre
+[`migration_002_base_milestones.sql`](./migration_002_base_milestones.sql)
+en el mismo SQL Editor.
+
+Esa migración borra las 22 partidas inventadas del PDF base y las
+reemplaza por las 3 partidas reales del contrato:
+
+- Entrada (50%) — L 196,250
+- Evaluación de avance (30%) — L 117,750
+- Finalización (20%) — L 78,500
+
+Total: L 392,500. Las adiciones (B y C) no se tocan.
+
+Si **nunca** corriste el `schema.sql` viejo, salta este paso —
+el `schema.sql` actual ya siembra las 3 hitos correctas.
+
+## 2.2. Migración 003 — renombre de hitos
+
+Si ya corriste `migration_002` cuando los nombres decían
+"a mitad de obra", corre también
+[`migration_003_milestone_names.sql`](./migration_003_milestone_names.sql)
+para actualizar los nombres a la lógica correcta:
+
+- Hito 1 (50%) → al iniciar la obra (compra de materiales)
+- Hito 2 (30%) → **cuando la obra esté al 80%** (antes decía "a mitad")
+- Hito 3 (20%) → al entregar la obra al 100%
+
+Por qué: pagar el 30% a mitad de obra acumularía 80% pagado
+por solo 50% de trabajo terminado. Mejor liberar el 30% al
+80% de avance real.
+
+Esta migración solo cambia los nombres. No toca progreso ni
+historial. Idempotente.
+
 ## 3. Primera carga
 
 Al abrir la página por primera vez después del setup, el frontend
