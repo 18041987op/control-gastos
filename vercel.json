@@ -1,1 +1,10 @@
-{}
+{
+  "redirects": [
+    {
+      "source": "/",
+      "has": [{ "type": "host", "value": "duplex.osmanventures.io" }],
+      "destination": "/duplex/",
+      "permanent": false
+    }
+  ]
+}
