@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "duplex.osmanventures.io" }],
+      "destination": "/duplex/:path*"
+    }
+  ]
+}
