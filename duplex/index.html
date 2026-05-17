@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Remodelación Dúplex · El Progreso, Yoro</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#f4f1ea;
+    --panel:#fffdf8;
+    --ink:#1f2421;
+    --ink-soft:#5b6159;
+    --line:#e0dccf;
+    --green:#3f6b3a;
+    --green-deep:#2d4f29;
+    --green-soft:#e8efe3;
+    --clay:#bf6b3f;
+    --gold:#c9a24b;
+    --blue:#3a5a78;
+    --red:#a8473a;
+    --shadow:0 1px 2px rgba(31,36,33,.04),0 8px 24px rgba(31,36,33,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{background:var(--bg);color:var(--ink);font-family:'Outfit',sans-serif;-webkit-font-smoothing:antialiased}
+  body{padding:0 0 80px}
+  h1,h2,h3{font-family:'Fraunces',serif;font-weight:600;letter-spacing:-.01em}
+
+  /* ---------- HEADER ---------- */
+  header{
+    background:var(--green-deep);
+    color:#f4f1ea;
+    padding:34px 24px 30px;
+    position:relative;
+    overflow:hidden;
+  }
+  header::after{
+    content:"";position:absolute;right:-60px;top:-60px;width:240px;height:240px;
+    border-radius:50%;background:radial-gradient(circle,rgba(201,162,75,.22),transparent 70%);
+  }
+  .head-wrap{max-width:1120px;margin:0 auto;position:relative;z-index:2}
+  .eyebrow{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:600}
+  header h1{font-size:clamp(26px,4vw,40px);margin:8px 0 6px;color:#fff}
+  header p{color:#c3cdbd;font-size:15px;max-width:560px}
+  .save-tag{
+    margin-top:16px;display:inline-flex;align-items:center;gap:8px;
+    font-size:12.5px;color:#aebfa6;background:rgba(255,255,255,.06);
+    padding:6px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.08)
+  }
+  .save-tag .dot{width:7px;height:7px;border-radius:50%;background:var(--gold)}
+
+  main{max-width:1120px;margin:0 auto;padding:0 24px}
+
+  /* ---------- KPI STRIP ---------- */
+  .kpis{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:14px;
+    margin-top:-30px;position:relative;z-index:5
+  }
+  .kpi{
+    background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:18px 18px 16px;box-shadow:var(--shadow)
+  }
+  .kpi .label{font-size:11.5px;text-transform:uppercase;letter-spacing:.12em;color:var(--ink-soft);font-weight:600}
+  .kpi .value{font-family:'Fraunces',serif;font-size:25px;font-weight:600;margin-top:8px;line-height:1.1}
+  .kpi .sub{font-size:12.5px;color:var(--ink-soft);margin-top:4px}
+  .kpi.accent-green .value{color:var(--green)}
+  .kpi.accent-clay .value{color:var(--clay)}
+  .kpi.accent-blue .value{color:var(--blue)}
+
+  /* ---------- SECTION ---------- */
+  section{margin-top:34px}
+  .sec-head{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:14px;flex-wrap:wrap}
+  .sec-head h2{font-size:21px}
+  .sec-head .hint{font-size:13px;color:var(--ink-soft)}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)}
+
+  /* ---------- PAYMENT PANEL ---------- */
+  .pay-grid{display:grid;grid-template-columns:1.1fr 1fr;gap:18px}
+  .pay-box{padding:22px}
+  .pay-box h3{font-size:16px;margin-bottom:14px}
+  .field{margin-bottom:14px}
+  .field label{display:block;font-size:12.5px;font-weight:600;color:var(--ink-soft);margin-bottom:6px}
+  .field input{
+    width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:10px;
+    font-family:'Outfit',sans-serif;font-size:15px;background:#fff;color:var(--ink)
+  }
+  .field input:focus{outline:2px solid var(--green-soft);border-color:var(--green)}
+  .row2{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:end}
+  .btn{
+    border:none;border-radius:10px;font-family:'Outfit',sans-serif;font-weight:600;
+    font-size:14px;padding:11px 18px;cursor:pointer;transition:transform .08s,filter .15s
+  }
+  .btn:active{transform:scale(.97)}
+  .btn-green{background:var(--green);color:#fff}
+  .btn-green:hover{filter:brightness(1.08)}
+  .btn-ghost{background:transparent;color:var(--green);border:1px solid var(--green)}
+  .btn-sm{font-size:12.5px;padding:7px 12px}
+  .btn-danger{background:transparent;color:var(--red);border:1px solid #e3c9c4}
+
+  .balance-visual{display:flex;flex-direction:column;gap:14px}
+  .bar-track{height:30px;border-radius:8px;background:var(--green-soft);overflow:hidden;display:flex}
+  .bar-fill{background:linear-gradient(90deg,var(--green),var(--green-deep));height:100%;transition:width .5s ease}
+  .bar-legend{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-soft)}
+  .mini-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .mini{background:var(--green-soft);border-radius:12px;padding:13px 14px}
+  .mini .l{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--green-deep);font-weight:600}
+  .mini .v{font-family:'Fraunces',serif;font-size:19px;font-weight:600;margin-top:3px;color:var(--green-deep)}
+
+  /* alert when overpaying */
+  .alert{
+    margin-top:6px;font-size:12.5px;padding:9px 12px;border-radius:9px;
+    background:#f6e7e4;color:var(--red);border:1px solid #e3c9c4;display:none
+  }
+  .alert.show{display:block}
+
+  /* ---------- CHARTS ---------- */
+  .charts{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .chart-card{padding:20px}
+  .chart-card h3{font-size:15px;margin-bottom:6px}
+  .chart-card .csub{font-size:12px;color:var(--ink-soft);margin-bottom:12px}
+  .chart-wrap{position:relative;height:230px}
+
+  /* ---------- BUDGET GROUPS ---------- */
+  .group{margin-bottom:16px;overflow:hidden}
+  .group-head{
+    display:flex;align-items:center;gap:14px;padding:16px 20px;cursor:pointer;
+    background:var(--green-soft);border-bottom:1px solid var(--line)
+  }
+  .group-head .gicon{
+    width:34px;height:34px;border-radius:9px;background:var(--green);color:#fff;
+    display:flex;align-items:center;justify-content:center;font-family:'Fraunces',serif;font-weight:600;flex-shrink:0
+  }
+  .group-head .gtitle{flex:1}
+  .group-head .gtitle .gt{font-family:'Fraunces',serif;font-size:16px;font-weight:600}
+  .group-head .gtitle .gd{font-size:12px;color:var(--ink-soft)}
+  .group-head .gtotals{text-align:right;font-size:12.5px}
+  .group-head .gtotals .gt-pay{font-family:'Fraunces',serif;font-size:16px;font-weight:600;color:var(--green-deep)}
+  .group-head .gtotals .gt-lbl{color:var(--ink-soft)}
+  .chevron{transition:transform .25s;color:var(--green-deep);font-size:13px}
+  .group.collapsed .chevron{transform:rotate(-90deg)}
+  .group.collapsed .group-body{display:none}
+
+  /* ITEM ROW */
+  .item{
+    display:grid;grid-template-columns:1fr 130px 150px 120px;gap:14px;
+    padding:14px 20px;border-bottom:1px solid var(--line);align-items:center
+  }
+  .item:last-child{border-bottom:none}
+  .item .iname{font-size:13.5px;line-height:1.35}
+  .item .iname .icode{font-size:11px;color:var(--ink-soft);font-weight:600}
+  .item .icost{font-size:13.5px;font-weight:600;text-align:right}
+  .item .icost .ic-lbl{display:block;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft)}
+  .prog-cell{display:flex;flex-direction:column;gap:5px}
+  .prog-cell .ptop{display:flex;justify-content:space-between;font-size:12px}
+  .prog-cell .pval{font-weight:700;color:var(--green)}
+  .slider{
+    -webkit-appearance:none;appearance:none;width:100%;height:6px;border-radius:5px;
+    background:var(--line);outline:none
+  }
+  .slider::-webkit-slider-thumb{
+    -webkit-appearance:none;width:18px;height:18px;border-radius:50%;
+    background:var(--green);cursor:pointer;border:3px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25)
+  }
+  .slider::-moz-range-thumb{
+    width:18px;height:18px;border-radius:50%;background:var(--green);
+    cursor:pointer;border:3px solid #fff
+  }
+  .item .ipay{text-align:right}
+  .item .ipay .amt{font-family:'Fraunces',serif;font-size:15px;font-weight:600;color:var(--green-deep)}
+  .item .ipay .ip-lbl{display:block;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);font-weight:600}
+  .done-check{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink-soft);margin-top:3px;cursor:pointer}
+  .done-check input{accent-color:var(--green);width:14px;height:14px}
+
+  .item-head-row{
+    display:grid;grid-template-columns:1fr 130px 150px 120px;gap:14px;
+    padding:9px 20px;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-soft);font-weight:600;background:#faf8f1;border-bottom:1px solid var(--line)
+  }
+  .item-head-row span:nth-child(2),.item-head-row span:nth-child(3),.item-head-row span:nth-child(4){text-align:right}
+  .item-head-row span:nth-child(3){text-align:left}
+
+  /* EDIT MODE */
+  .edit-input{
+    width:90px;padding:5px 7px;border:1px solid var(--line);border-radius:7px;
+    font-family:'Outfit',sans-serif;font-size:13px;text-align:right
+  }
+  .editable-name{
+    width:100%;padding:5px 7px;border:1px solid var(--line);border-radius:7px;
+    font-family:'Outfit',sans-serif;font-size:13px
+  }
+  body:not(.edit-mode) .edit-only{display:none!important}
+  body.edit-mode .view-only{display:none!important}
+  body.edit-mode .item{grid-template-columns:1fr 130px 60px}
+  body.edit-mode .item-head-row{grid-template-columns:1fr 130px 60px}
+  body.edit-mode .group-body .slider,body.edit-mode .done-check{pointer-events:none;opacity:.4}
+
+  .add-item-row{padding:12px 20px;background:#faf8f1}
+  .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+  /* SCHEDULE */
+  .sched-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .sched-box{padding:20px}
+  .sched-box h3{font-size:15px;margin-bottom:14px}
+  .dates-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .timeline-stat{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px dashed var(--line);font-size:13.5px}
+  .timeline-stat:last-child{border-bottom:none}
+  .timeline-stat .ts-v{font-weight:700}
+  .ts-v.green{color:var(--green)}
+  .ts-v.clay{color:var(--clay)}
+  .ts-v.red{color:var(--red)}
+
+  footer{max-width:1120px;margin:40px auto 0;padding:22px 24px;border-top:1px solid var(--line);color:var(--ink-soft);font-size:12.5px}
+  footer b{color:var(--ink)}
+
+  .pill{display:inline-block;font-size:10.5px;font-weight:600;padding:3px 9px;border-radius:999px;letter-spacing:.04em}
+  .pill-green{background:var(--green-soft);color:var(--green-deep)}
+  .pill-gold{background:#f6efd9;color:#8a6d1f}
+  .pill-clay{background:#f3e3d8;color:#94532c}
+
+  @media(max-width:860px){
+    .kpis{grid-template-columns:1fr 1fr}
+    .pay-grid,.charts,.sched-grid{grid-template-columns:1fr}
+    .item,.item-head-row{grid-template-columns:1fr 100px 110px;gap:10px}
+    .item .ipay,.item-head-row span:nth-child(4){grid-column:2/4;text-align:right}
+    body.edit-mode .item,body.edit-mode .item-head-row{grid-template-columns:1fr 100px 50px}
+    .item-head-row span:nth-child(3){display:none}
+    .prog-cell{grid-column:1/4}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="head-wrap">
+    <div class="eyebrow">Control de Obra · Pago por Avance</div>
+    <h1>Remodelación Dúplex</h1>
+    <p>El Progreso, Yoro · Honduras. Seguimiento de avance del contratista, cálculo automático de pagos y línea de tiempo del proyecto.</p>
+    <div class="save-tag"><span class="dot"></span> Los avances y pagos se guardan automáticamente en este dispositivo</div>
+  </div>
+</header>
+
+<main>
+
+  <!-- KPI STRIP -->
+  <div class="kpis">
+    <div class="kpi accent-green">
+      <div class="label">Avance de obra</div>
+      <div class="value" id="kpi-progress">0%</div>
+      <div class="sub" id="kpi-progress-sub">ponderado por costo</div>
+    </div>
+    <div class="kpi accent-blue">
+      <div class="label">Pago ganado</div>
+      <div class="value" id="kpi-earned">L 0</div>
+      <div class="sub">según avance actual</div>
+    </div>
+    <div class="kpi accent-clay">
+      <div class="label">Pagado al contratista</div>
+      <div class="value" id="kpi-paid">L 0</div>
+      <div class="sub" id="kpi-paid-sub">0 pagos registrados</div>
+    </div>
+    <div class="kpi">
+      <div class="label">Presupuesto total</div>
+      <div class="value" id="kpi-total">L 0</div>
+      <div class="sub" id="kpi-total-sub">3 grupos de obra</div>
+    </div>
+  </div>
+
+  <!-- PAYMENT PANEL -->
+  <section>
+    <div class="sec-head">
+      <h2>Estado de Pagos</h2>
+      <span class="hint">Registra cada pago. El "saldo a pagar hoy" es el dinero que el avance ya justifica.</span>
+    </div>
+    <div class="card pay-grid">
+      <div class="pay-box" style="border-right:1px solid var(--line)">
+        <h3>Registrar un pago</h3>
+        <div class="field">
+          <label>Monto del pago (Lempiras)</label>
+          <input type="number" id="pay-amount" placeholder="Ej: 50000" min="0">
+        </div>
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" id="pay-date">
+        </div>
+        <div class="field">
+          <label>Nota (opcional)</label>
+          <input type="text" id="pay-note" placeholder="Ej: Anticipo, pago por terminar electricidad...">
+        </div>
+        <button class="btn btn-green" onclick="addPayment()" style="width:100%">+ Agregar pago</button>
+        <div id="pay-list" style="margin-top:16px"></div>
+      </div>
+
+      <div class="pay-box">
+        <h3>Resumen financiero</h3>
+        <div class="balance-visual">
+          <div>
+            <div class="bar-legend" style="margin-bottom:5px">
+              <span>Pagado <b id="bal-paid-pct">0%</b></span>
+              <span>Restante <b id="bal-rest-pct">100%</b></span>
+            </div>
+            <div class="bar-track"><div class="bar-fill" id="bal-bar" style="width:0%"></div></div>
+          </div>
+          <div class="mini-stats">
+            <div class="mini">
+              <div class="l">Saldo a pagar hoy</div>
+              <div class="v" id="bal-due-now">L 0</div>
+            </div>
+            <div class="mini">
+              <div class="l">Falta por pagar (total)</div>
+              <div class="v" id="bal-remaining">L 0</div>
+            </div>
+            <div class="mini">
+              <div class="l">Total pagado</div>
+              <div class="v" id="bal-paid">L 0</div>
+            </div>
+            <div class="mini">
+              <div class="l">Pago ganado por avance</div>
+              <div class="v" id="bal-earned">L 0</div>
+            </div>
+          </div>
+          <div class="alert" id="overpay-alert">⚠ Has pagado más de lo que el avance justifica. El contratista va adelantado en cobros respecto al trabajo terminado.</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHARTS -->
+  <section>
+    <div class="sec-head"><h2>Visualización</h2><span class="hint">Lectura rápida del progreso y los pagos.</span></div>
+    <div class="charts">
+      <div class="card chart-card">
+        <h3>Pagado vs. Ganado vs. Presupuesto</h3>
+        <div class="csub">Compara lo que ya pagaste contra lo que el avance justifica y el total.</div>
+        <div class="chart-wrap"><canvas id="chartMoney"></canvas></div>
+      </div>
+      <div class="card chart-card">
+        <h3>Avance por grupo de obra</h3>
+        <div class="csub">Qué tan completo está cada grupo de partidas.</div>
+        <div class="chart-wrap"><canvas id="chartGroups"></canvas></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCHEDULE -->
+  <section>
+    <div class="sec-head"><h2>Tiempo del Proyecto</h2><span class="hint">Define fechas para ver el avance esperado vs. el real.</span></div>
+    <div class="sched-grid">
+      <div class="card sched-box">
+        <h3>Fechas del proyecto</h3>
+        <div class="dates-row">
+          <div class="field" style="margin:0">
+            <label>Fecha de inicio</label>
+            <input type="date" id="proj-start">
+          </div>
+          <div class="field" style="margin:0">
+            <label>Fecha estimada de fin</label>
+            <input type="date" id="proj-end">
+          </div>
+        </div>
+        <div style="margin-top:8px">
+          <div class="bar-legend" style="margin-bottom:5px">
+            <span>Tiempo transcurrido <b id="time-pct">0%</b></span>
+            <span>Obra avanzada <b id="time-progress">0%</b></span>
+          </div>
+          <div class="bar-track" style="background:#ece8db">
+            <div class="bar-fill" id="time-bar" style="width:0%;background:linear-gradient(90deg,var(--blue),#2c4257)"></div>
+          </div>
+        </div>
+      </div>
+      <div class="card sched-box">
+        <h3>Indicadores de tiempo</h3>
+        <div class="timeline-stat"><span>Duración total estimada</span><span class="ts-v" id="ts-total">—</span></div>
+        <div class="timeline-stat"><span>Días transcurridos</span><span class="ts-v" id="ts-elapsed">—</span></div>
+        <div class="timeline-stat"><span>Días restantes</span><span class="ts-v" id="ts-left">—</span></div>
+        <div class="timeline-stat"><span>Estado del proyecto</span><span class="ts-v" id="ts-status">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BUDGET -->
+  <section>
+    <div class="sec-head">
+      <h2>Presupuesto y Avance Detallado</h2>
+      <div class="toolbar">
+        <button class="btn btn-ghost btn-sm" id="editToggle" onclick="toggleEdit()">✎ Editar presupuesto</button>
+        <button class="btn btn-ghost btn-sm" onclick="resetData()">↺ Reiniciar todo</button>
+      </div>
+    </div>
+    <div id="groups-container"></div>
+  </section>
+
+  <footer>
+    <p><b>Cómo funciona el pago por avance:</b> cada partida tiene un costo. Cuando marcas que está, por ejemplo, al 60%, el sistema calcula que el contratista ha "ganado" el 60% del costo de esa partida. La suma de todo eso es el <b>pago ganado</b>. El <b>saldo a pagar hoy</b> es el pago ganado menos lo que ya pagaste — eso es lo que puedes pagar sin adelantarte al trabajo real.</p>
+    <p style="margin-top:10px">El presupuesto base proviene del PDF del contratista (marcado <i>"únicamente por una unidad habitacional"</i>). Si esa cifra corresponde a una sola unidad del dúplex, usa <b>Editar presupuesto</b> para duplicar los montos o agregar las partidas de la segunda unidad.</p>
+  </footer>
+
+</main>
+
+<script>
+/* ============================================================
+   DATOS BASE — extraídos del PDF y de las imágenes de adiciones
+   ============================================================ */
+const DEFAULT_DATA = {
+  projStart:"", projEnd:"",
+  groups:[
+    {
+      id:"base", code:"A", name:"Presupuesto Base (PDF)",
+      desc:"Remodelación de vivienda — presupuesto original del contratista",
+      collapsed:false,
+      items:[
+        {id:"b1", code:"1.1", name:"Tomacorrientes 120v aterrizado (25 und)", cost:17125, prog:0, done:false},
+        {id:"b2", code:"1.2", name:"Tomacorrientes 220v aterrizado (6 und)", cost:5010, prog:0, done:false},
+        {id:"b3", code:"1.3", name:"Luminarias tipo spot (14 und)", cost:9100, prog:0, done:false},
+        {id:"b4", code:"1.4", name:"Ventilador de techo 52\" (sala)", cost:4375, prog:0, done:false},
+        {id:"b5", code:"1.5", name:"Panel eléctrico 24 espacios + acometida", cost:15000, prog:0, done:false},
+        {id:"b6", code:"2.1", name:"Reparación tubería sanitaria y potable en baños", cost:5870, prog:0, done:false},
+        {id:"b7", code:"2.2", name:"Ducha tipo lluvia", cost:1100, prog:0, done:false},
+        {id:"b8", code:"2.3", name:"Sanitario Laguna de dos piezas redondo", cost:4250, prog:0, done:false},
+        {id:"b9", code:"2.4", name:"Accesorios AN y AP (válvulas, sifón, grifos)", cost:2220, prog:0, done:false},
+        {id:"b10",code:"2.5", name:"Enchape área de ducha cerámica 30x60", cost:7214.40, prog:0, done:false},
+        {id:"b11",code:"3.1", name:"Fundición de losa lavandería y acera lateral", cost:23454.25, prog:0, done:false},
+        {id:"b12",code:"3.2", name:"Resanar paredes (manguereado tomacorrientes)", cost:6450.75, prog:0, done:false},
+        {id:"b13",code:"3.3", name:"Pared divisoria de lavandería, repello y pulido", cost:2600, prog:0, done:false},
+        {id:"b14",code:"3.4", name:"Demolición de cocina", cost:900, prog:0, done:false},
+        {id:"b15",code:"4.1", name:"Cielo falso de PVC (72 m²)", cost:56160, prog:0, done:false},
+        {id:"b16",code:"4.2", name:"Cocina: mueble inferior cedro/MDF, top granito", cost:85000, prog:0, done:false},
+        {id:"b17",code:"5.1", name:"Cerca de separación reja galvanizada verde", cost:20154, prog:0, done:false},
+        {id:"b18",code:"5.2", name:"Portón peatonal y vehicular 2 en 1", cost:28552, prog:0, done:false},
+        {id:"b19",code:"5.3", name:"Rampa de acceso vehicular", cost:8250, prog:0, done:false},
+        {id:"b20",code:"5.4", name:"Relleno frontal del terreno con material selecto", cost:17200, prog:0, done:false},
+        {id:"b21",code:"5.5", name:"Reemplazo de ventanas PVC blanco vidrio bronce", cost:49500, prog:0, done:false},
+        {id:"b22",code:"5.6", name:"Estructura + tanque 1,100 L + lavadero", cost:25135, prog:0, done:false}
+      ]
+    },
+    {
+      id:"add1", code:"B", name:"Adiciones — Acabados",
+      desc:"Porcelanato, resane, pintura y tubería (mensaje 1)",
+      collapsed:false,
+      items:[
+        {id:"a1", code:"B1", name:"Instalar porcelanato en una unidad", cost:64875, prog:0, done:false},
+        {id:"a2", code:"B2", name:"Resanar paredes de una unidad", cost:35500, prog:0, done:false},
+        {id:"a3", code:"B3", name:"Pintar completa una unidad", cost:6000, prog:0, done:false},
+        {id:"a4", code:"B4", name:"Conectar tubería de agua potable (2 unidades)", cost:5200, prog:0, done:false}
+      ]
+    },
+    {
+      id:"add2", code:"C", name:"Adiciones — Instalaciones y Baño",
+      desc:"Electricidad Quimistán, cerámica, sanitario, ducha (mensaje 2)",
+      collapsed:false,
+      items:[
+        {id:"c1", code:"C3", name:"Electricidad en casa de Quimistán", cost:18500, prog:0, done:false},
+        {id:"c2", code:"C4", name:"Cerámica de baño", cost:7050, prog:0, done:false},
+        {id:"c3", code:"C5", name:"1 Sanitario", cost:3900, prog:0, done:false},
+        {id:"c4", code:"C6", name:"Accesorios de sanitario y lavamano", cost:1900, prog:0, done:false},
+        {id:"c5", code:"C7", name:"1 Ducha", cost:1100, prog:0, done:false}
+      ]
+    }
+  ],
+  payments:[]
+};
+
+/* ============================================================
+   ESTADO + PERSISTENCIA
+   ============================================================ */
+const STORE_KEY = "remodelacion_duplex_yoro_v1";
+let state;
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){ state = JSON.parse(raw); return; }
+  }catch(e){}
+  state = JSON.parse(JSON.stringify(DEFAULT_DATA));
+}
+function saveState(){
+  try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+}
+
+/* ============================================================
+   CÁLCULOS
+   ============================================================ */
+const L = n => "L " + (Math.round(n)).toLocaleString("es-HN");
+const L2 = n => "L " + n.toLocaleString("es-HN",{minimumFractionDigits:2,maximumFractionDigits:2});
+
+function groupTotal(g){ return g.items.reduce((s,it)=>s+it.cost,0); }
+function groupEarned(g){ return g.items.reduce((s,it)=>s+it.cost*(it.prog/100),0); }
+function projectTotal(){ return state.groups.reduce((s,g)=>s+groupTotal(g),0); }
+function projectEarned(){ return state.groups.reduce((s,g)=>s+groupEarned(g),0); }
+function totalPaid(){ return state.payments.reduce((s,p)=>s+Number(p.amount||0),0); }
+function progressPct(){
+  const t=projectTotal();
+  return t>0 ? (projectEarned()/t*100) : 0;
+}
+
+/* ============================================================
+   RENDER PRINCIPAL
+   ============================================================ */
+let chartMoney, chartGroups;
+
+function render(){
+  renderGroups();
+  renderPayments();
+  renderKPIs();
+  renderSchedule();
+  renderCharts();
+  saveState();
+}
+
+function renderKPIs(){
+  const total=projectTotal(), earned=projectEarned(), paid=totalPaid();
+  const prog=progressPct();
+  document.getElementById("kpi-progress").textContent = prog.toFixed(1)+"%";
+  document.getElementById("kpi-earned").textContent = L(earned);
+  document.getElementById("kpi-paid").textContent = L(paid);
+  document.getElementById("kpi-paid-sub").textContent =
+    state.payments.length + (state.payments.length===1?" pago registrado":" pagos registrados");
+  document.getElementById("kpi-total").textContent = L(total);
+  document.getElementById("kpi-total-sub").textContent = state.groups.length+" grupos de obra";
+
+  // panel resumen
+  const dueNow = Math.max(0, earned - paid);
+  const remaining = Math.max(0, total - paid);
+  const paidPct = total>0 ? Math.min(100, paid/total*100) : 0;
+  document.getElementById("bal-due-now").textContent = L(dueNow);
+  document.getElementById("bal-remaining").textContent = L(remaining);
+  document.getElementById("bal-paid").textContent = L(paid);
+  document.getElementById("bal-earned").textContent = L(earned);
+  document.getElementById("bal-paid-pct").textContent = paidPct.toFixed(1)+"%";
+  document.getElementById("bal-rest-pct").textContent = (100-paidPct).toFixed(1)+"%";
+  document.getElementById("bal-bar").style.width = paidPct+"%";
+
+  const alert=document.getElementById("overpay-alert");
+  if(paid - earned > 1){ alert.classList.add("show"); }
+  else{ alert.classList.remove("show"); }
+}
+
+function renderGroups(){
+  const cont=document.getElementById("groups-container");
+  cont.innerHTML="";
+  state.groups.forEach((g,gi)=>{
+    const gTot=groupTotal(g), gEarn=groupEarned(g);
+    const gPct = gTot>0 ? (gEarn/gTot*100) : 0;
+    const div=document.createElement("div");
+    div.className="card group"+(g.collapsed?" collapsed":"");
+
+    let itemsHTML = `<div class="item-head-row">
+        <span>Partida</span><span>Costo</span><span>Avance del contratista</span><span>Pago ganado</span>
+      </div>`;
+
+    g.items.forEach((it,ii)=>{
+      const earned=it.cost*(it.prog/100);
+      itemsHTML += `<div class="item">
+        <div class="iname">
+          <span class="view-only">${it.name}</span>
+          <span class="view-only icode">${it.code}</span>
+          <input class="editable-name edit-only" value="${escapeAttr(it.name)}"
+            onchange="editItemName(${gi},${ii},this.value)">
+        </div>
+        <div class="icost">
+          <span class="ic-lbl">Costo</span>
+          <span class="view-only">${L2(it.cost)}</span>
+          <input type="number" class="edit-input edit-only" value="${it.cost}"
+            onchange="editItemCost(${gi},${ii},this.value)">
+        </div>
+        <div class="prog-cell view-only">
+          <div class="ptop"><span>Avance</span><span class="pval">${it.prog}%</span></div>
+          <input type="range" class="slider" min="0" max="100" step="5" value="${it.prog}"
+            oninput="updateProg(${gi},${ii},this.value)">
+          <label class="done-check">
+            <input type="checkbox" ${it.done?"checked":""} onchange="toggleDone(${gi},${ii},this.checked)">
+            Marcar como 100% terminado
+          </label>
+        </div>
+        <div class="ipay view-only">
+          <span class="ip-lbl">Ganado</span>
+          <span class="amt">${L(earned)}</span>
+        </div>
+        <button class="btn btn-danger btn-sm edit-only" onclick="deleteItem(${gi},${ii})">Eliminar</button>
+      </div>`;
+    });
+
+    itemsHTML += `<div class="add-item-row edit-only">
+      <button class="btn btn-ghost btn-sm" onclick="addItem(${gi})">+ Agregar partida a este grupo</button>
+    </div>`;
+
+    div.innerHTML = `
+      <div class="group-head" onclick="toggleGroup(${gi},event)">
+        <div class="gicon">${g.code}</div>
+        <div class="gtitle">
+          <div class="gt">${g.name}</div>
+          <div class="gd">${g.desc} · ${g.items.length} partidas</div>
+        </div>
+        <div class="gtotals">
+          <div class="gt-pay">${L(gTot)}</div>
+          <div class="gt-lbl">${gPct.toFixed(0)}% avance · ganado ${L(gEarn)}</div>
+        </div>
+        <span class="chevron">▼</span>
+      </div>
+      <div class="group-body">${itemsHTML}</div>`;
+    cont.appendChild(div);
+  });
+}
+
+function renderPayments(){
+  const list=document.getElementById("pay-list");
+  if(state.payments.length===0){
+    list.innerHTML=`<div style="font-size:12.5px;color:var(--ink-soft);padding:10px;background:#faf8f1;border-radius:9px">Aún no hay pagos registrados.</div>`;
+    return;
+  }
+  let html="";
+  // most recent first
+  [...state.payments].map((p,idx)=>({p,idx})).reverse().forEach(({p,idx})=>{
+    html += `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;margin-bottom:7px;background:#fff">
+      <div style="font-size:12.5px;line-height:1.3">
+        <b style="font-family:'Fraunces',serif;font-size:14px;color:var(--green-deep)">${L(Number(p.amount))}</b>
+        <span style="color:var(--ink-soft)"> · ${p.date||"sin fecha"}</span>
+        ${p.note?`<div style="color:var(--ink-soft);margin-top:1px">${escapeHTML(p.note)}</div>`:""}
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deletePayment(${idx})">✕</button>
+    </div>`;
+  });
+  list.innerHTML=html;
+}
+
+function renderSchedule(){
+  const s=document.getElementById("proj-start").value;
+  const e=document.getElementById("proj-end").value;
+  state.projStart=s; state.projEnd=e;
+  const tsTotal=document.getElementById("ts-total");
+  const tsElapsed=document.getElementById("ts-elapsed");
+  const tsLeft=document.getElementById("ts-left");
+  const tsStatus=document.getElementById("ts-status");
+  const timeBar=document.getElementById("time-bar");
+  const timePct=document.getElementById("time-pct");
+  const timeProg=document.getElementById("time-progress");
+
+  const prog=progressPct();
+  timeProg.textContent=prog.toFixed(0)+"%";
+
+  if(!s||!e){
+    tsTotal.textContent=tsElapsed.textContent=tsLeft.textContent="—";
+    tsStatus.textContent="Define las fechas";
+    tsStatus.className="ts-v";
+    timeBar.style.width="0%"; timePct.textContent="0%";
+    return;
+  }
+  const start=new Date(s), end=new Date(e), now=new Date();
+  const dayMs=86400000;
+  const totalDays=Math.max(1,Math.round((end-start)/dayMs));
+  const elapsed=Math.max(0,Math.round((now-start)/dayMs));
+  const left=Math.round((end-now)/dayMs);
+  const tElapsedPct=Math.max(0,Math.min(100,elapsed/totalDays*100));
+
+  tsTotal.textContent=totalDays+" días";
+  tsElapsed.textContent=Math.min(elapsed,totalDays)+" días";
+  tsLeft.textContent= left>=0 ? left+" días" : Math.abs(left)+" días de retraso";
+  tsLeft.className="ts-v"+(left<0?" red":"");
+  timeBar.style.width=tElapsedPct+"%";
+  timePct.textContent=tElapsedPct.toFixed(0)+"%";
+
+  // estado: comparar avance de obra vs tiempo transcurrido
+  let status, cls;
+  if(left<0 && prog<100){ status="Retrasado"; cls="ts-v red"; }
+  else if(prog>=100){ status="Obra completada"; cls="ts-v green"; }
+  else if(prog>=tElapsedPct-5){ status="En tiempo"; cls="ts-v green"; }
+  else{ status="Atrasado vs. cronograma"; cls="ts-v clay"; }
+  tsStatus.textContent=status;
+  tsStatus.className=cls;
+}
+
+/* ============================================================
+   GRÁFICAS
+   ============================================================ */
+function renderCharts(){
+  const total=projectTotal(), earned=projectEarned(), paid=totalPaid();
+
+  // chart 1: dinero
+  const mData=[paid, earned, total];
+  if(chartMoney){
+    chartMoney.data.datasets[0].data=mData;
+    chartMoney.update();
+  }else{
+    chartMoney=new Chart(document.getElementById("chartMoney"),{
+      type:"bar",
+      data:{
+        labels:["Pagado","Ganado por avance","Presupuesto total"],
+        datasets:[{
+          data:mData,
+          backgroundColor:["#bf6b3f","#3f6b3a","#c9c3b0"],
+          borderRadius:8, barThickness:54
+        }]
+      },
+      options:{
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:c=>"L "+c.raw.toLocaleString("es-HN")}}},
+        scales:{
+          y:{beginAtZero:true,ticks:{callback:v=>"L"+(v/1000)+"k",font:{family:"Outfit"}},grid:{color:"#eceadf"}},
+          x:{ticks:{font:{family:"Outfit",size:11}},grid:{display:false}}
+        }
+      }
+    });
+  }
+
+  // chart 2: avance por grupo (doughnut de progreso promedio? -> barras)
+  const gLabels=state.groups.map(g=>g.name);
+  const gVals=state.groups.map(g=>{
+    const t=groupTotal(g); return t>0?(groupEarned(g)/t*100):0;
+  });
+  if(chartGroups){
+    chartGroups.data.labels=gLabels;
+    chartGroups.data.datasets[0].data=gVals;
+    chartGroups.update();
+  }else{
+    chartGroups=new Chart(document.getElementById("chartGroups"),{
+      type:"bar",
+      data:{labels:gLabels,datasets:[{
+        data:gVals,
+        backgroundColor:["#3f6b3a","#5a8a4f","#88ad6f"],
+        borderRadius:8, barThickness:40
+      }]},
+      options:{
+        indexAxis:"y",
+        responsive:true, maintainAspectRatio:false,
+        plugins:{legend:{display:false},
+          tooltip:{callbacks:{label:c=>c.raw.toFixed(1)+"% completado"}}},
+        scales:{
+          x:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%",font:{family:"Outfit"}},grid:{color:"#eceadf"}},
+          y:{ticks:{font:{family:"Outfit",size:11}},grid:{display:false}}
+        }
+      }
+    });
+  }
+}
+
+/* ============================================================
+   ACCIONES
+   ============================================================ */
+function updateProg(gi,ii,val){
+  state.groups[gi].items[ii].prog=Number(val);
+  state.groups[gi].items[ii].done=(Number(val)===100);
+  render();
+}
+function toggleDone(gi,ii,checked){
+  state.groups[gi].items[ii].done=checked;
+  state.groups[gi].items[ii].prog=checked?100:0;
+  render();
+}
+function toggleGroup(gi,ev){
+  if(ev.target.closest("input,button,label,.slider")) return;
+  state.groups[gi].collapsed=!state.groups[gi].collapsed;
+  render();
+}
+function editItemName(gi,ii,val){ state.groups[gi].items[ii].name=val; saveState(); }
+function editItemCost(gi,ii,val){
+  state.groups[gi].items[ii].cost=Math.max(0,Number(val)||0);
+  render();
+}
+function addItem(gi){
+  const g=state.groups[gi];
+  g.items.push({id:"new"+Date.now(),code:"+",name:"Nueva partida",cost:0,prog:0,done:false});
+  render();
+}
+function deleteItem(gi,ii){
+  if(confirm("¿Eliminar esta partida?")){
+    state.groups[gi].items.splice(ii,1);
+    render();
+  }
+}
+function addPayment(){
+  const amt=document.getElementById("pay-amount").value;
+  const date=document.getElementById("pay-date").value;
+  const note=document.getElementById("pay-note").value;
+  if(!amt||Number(amt)<=0){ alert("Ingresa un monto válido."); return; }
+  state.payments.push({amount:Number(amt),date:date,note:note});
+  document.getElementById("pay-amount").value="";
+  document.getElementById("pay-note").value="";
+  render();
+}
+function deletePayment(idx){
+  if(confirm("¿Eliminar este pago?")){
+    state.payments.splice(idx,1);
+    render();
+  }
+}
+function toggleEdit(){
+  document.body.classList.toggle("edit-mode");
+  const btn=document.getElementById("editToggle");
+  if(document.body.classList.contains("edit-mode")){
+    btn.textContent="✓ Terminar edición";
+    btn.classList.remove("btn-ghost"); btn.classList.add("btn-green");
+  }else{
+    btn.textContent="✎ Editar presupuesto";
+    btn.classList.add("btn-ghost"); btn.classList.remove("btn-green");
+  }
+}
+function resetData(){
+  if(confirm("Esto borrará TODOS los avances, pagos y cambios al presupuesto, y volverá a los datos originales del PDF. ¿Continuar?")){
+    state=JSON.parse(JSON.stringify(DEFAULT_DATA));
+    document.getElementById("proj-start").value="";
+    document.getElementById("proj-end").value="";
+    render();
+  }
+}
+
+/* utilidades */
+function escapeHTML(s){return (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
+function escapeAttr(s){return (s||"").replace(/"/g,"&quot;");}
+
+/* ============================================================
+   INICIO
+   ============================================================ */
+loadState();
+document.getElementById("proj-start").value=state.projStart||"";
+document.getElementById("proj-end").value=state.projEnd||"";
+document.getElementById("pay-date").value=new Date().toISOString().slice(0,10);
+document.getElementById("proj-start").addEventListener("change",renderSchedule);
+document.getElementById("proj-end").addEventListener("change",()=>{renderSchedule();saveState();});
+render();
+</script>
+</body>
+</html>
