@@ -478,7 +478,7 @@
               <div class="v" id="bal-earned">L 0</div>
             </div>
           </div>
-          <div class="alert" id="overpay-alert">⚠ Has pagado más de lo que el avance justifica. El contratista va adelantado en cobros respecto al trabajo terminado.</div>
+          <div class="alert" id="overpay-alert"></div>
         </div>
       </div>
     </div>
@@ -821,8 +821,14 @@ function renderKPIs(){
   document.getElementById("bal-bar").style.width = paidPct+"%";
 
   const alert=document.getElementById("overpay-alert");
-  if(paid - earned > 1){ alert.classList.add("show"); }
-  else{ alert.classList.remove("show"); }
+  if(paid - earned > 1){
+    alert.textContent = ROLE==='contractor'
+      ? `⚠ He recibido L ${Math.round(paid-earned).toLocaleString("es-HN")} más de lo que mi avance justifica. Voy adelantado en cobros respecto al trabajo terminado.`
+      : `⚠ Has pagado L ${Math.round(paid-earned).toLocaleString("es-HN")} más de lo que el avance justifica. El contratista va adelantado en cobros respecto al trabajo terminado.`;
+    alert.classList.add("show");
+  } else {
+    alert.classList.remove("show");
+  }
 }
 
 function renderGroups(){
