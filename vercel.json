@@ -1,9 +1,14 @@
 {
   "rewrites": [
     {
-      "source": "/:path*",
+      "source": "/",
       "has": [{ "type": "host", "value": "duplex.osmanventures.io" }],
-      "destination": "/duplex/:path*"
+      "destination": "/duplex/index.html"
+    },
+    {
+      "source": "/:path+",
+      "has": [{ "type": "host", "value": "duplex.osmanventures.io" }],
+      "destination": "/duplex/:path+"
     }
   ]
 }
