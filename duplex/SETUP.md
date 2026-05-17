@@ -25,6 +25,24 @@ Eso crea:
 Para cambiar el PIN del contratista, edita la línea
 `const CONTRACTOR_PIN` arriba del `<script>` principal en `duplex/index.html`.
 
+## 2.1. Migración 002 — base como 3 hitos
+
+Si ya corriste `schema.sql` antes del cambio a "3 hitos", también corre
+[`migration_002_base_milestones.sql`](./migration_002_base_milestones.sql)
+en el mismo SQL Editor.
+
+Esa migración borra las 22 partidas inventadas del PDF base y las
+reemplaza por las 3 partidas reales del contrato:
+
+- Entrada (50%) — L 196,250
+- Evaluación de avance (30%) — L 117,750
+- Finalización (20%) — L 78,500
+
+Total: L 392,500. Las adiciones (B y C) no se tocan.
+
+Si **nunca** corriste el `schema.sql` viejo, salta este paso —
+el `schema.sql` actual ya siembra las 3 hitos correctas.
+
 ## 3. Primera carga
 
 Al abrir la página por primera vez después del setup, el frontend
