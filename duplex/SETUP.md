@@ -61,6 +61,24 @@ por solo 50% de trabajo terminado. Mejor liberar el 30% al
 Esta migración solo cambia los nombres. No toca progreso ni
 historial. Idempotente.
 
+## 2.3. Migración 004 — tareas bajo hitos
+
+Si ya tienes la base sembrada, corre
+[`migration_004_tasks.sql`](./migration_004_tasks.sql)
+para agregar la tabla `duplex_tasks` con las 30 tareas del contrato
+distribuidas bajo los 3 hitos:
+
+- Hito 1 (Entrada 50%) → 11 tareas grueso/materiales
+- Hito 2 (Avance intermedio 30%) → 15 tareas instalaciones/acabados
+- Hito 3 (Finalización 20%) → 4 tareas de cierre
+
+Ahora cada tarea tiene 3 estados (Pendiente / En progreso / Terminado).
+El avance del hito = promedio de sus tareas. El "pago ganado" del hito
+= costo del hito × ese avance derivado.
+
+Idempotente. La distribución de tareas se puede editar después
+modificando el SQL o directamente en Supabase.
+
 ## 3. Primera carga
 
 Al abrir la página por primera vez después del setup, el frontend

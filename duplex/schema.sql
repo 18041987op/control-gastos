@@ -64,9 +64,21 @@ create table if not exists duplex_progress_images (
   created_at   timestamptz not null default now()
 );
 
+create table if not exists duplex_tasks (
+  id         text primary key,
+  item_id    text not null references duplex_items(id) on delete cascade,
+  code       text,
+  name       text not null,
+  prog       int  not null default 0,
+  done       boolean not null default false,
+  sort_order int  not null default 0,
+  updated_at timestamptz not null default now()
+);
+
 create index if not exists idx_duplex_items_group     on duplex_items(group_id);
 create index if not exists idx_duplex_log_item_recent on duplex_progress_log(item_id, created_at desc);
 create index if not exists idx_duplex_imgs_item       on duplex_progress_images(item_id, created_at desc);
+create index if not exists idx_duplex_tasks_item      on duplex_tasks(item_id, sort_order);
 
 -- ---------- RLS (mismo patrón abierto que tu app de gastos) ----------
 
@@ -76,13 +88,14 @@ alter table duplex_items           enable row level security;
 alter table duplex_payments        enable row level security;
 alter table duplex_progress_log    enable row level security;
 alter table duplex_progress_images enable row level security;
+alter table duplex_tasks           enable row level security;
 
 do $$
 declare t text;
 begin
   foreach t in array array[
     'duplex_meta','duplex_groups','duplex_items',
-    'duplex_payments','duplex_progress_log','duplex_progress_images'
+    'duplex_payments','duplex_progress_log','duplex_progress_images','duplex_tasks'
   ] loop
     execute format('drop policy if exists "anon_all" on public.%I', t);
     execute format(
@@ -121,7 +134,7 @@ declare t text;
 begin
   foreach t in array array[
     'duplex_items','duplex_payments','duplex_progress_log',
-    'duplex_progress_images','duplex_groups'
+    'duplex_progress_images','duplex_groups','duplex_tasks'
   ] loop
     if not exists (
       select 1 from pg_publication_tables

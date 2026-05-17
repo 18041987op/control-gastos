@@ -300,20 +300,31 @@
 
   .add-item-row{padding:12px 20px;background:#faf8f1}
 
-  .scope-block{padding:12px 20px 16px;background:#faf8f1;border-top:1px solid var(--line)}
-  .scope-block summary{
-    cursor:pointer;font-size:12.5px;font-weight:600;color:var(--green-deep);
-    padding:4px 0;list-style:none;user-select:none
+  /* Sub-tareas bajo hitos */
+  .task-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+  .task-row{
+    display:flex;gap:12px;align-items:center;justify-content:space-between;
+    background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 11px;
+    font-size:12.5px;line-height:1.3
   }
-  .scope-block summary::-webkit-details-marker{display:none}
-  .scope-block summary:hover{color:var(--green)}
-  .scope-list{
-    margin:10px 0 8px 22px;font-size:12.5px;line-height:1.5;color:var(--ink-soft);
-    columns:2;column-gap:24px
+  .task-row .task-name{flex:1;min-width:0}
+  .task-row .task-name b{color:var(--ink-soft);font-weight:600;margin-right:6px}
+  .task-controls{display:flex;gap:0;flex-shrink:0;background:var(--line);border-radius:8px;padding:2px}
+  .task-controls .t-st{
+    border:none;background:transparent;font-family:inherit;font-size:11.5px;font-weight:600;
+    padding:6px 11px;border-radius:6px;cursor:pointer;color:var(--ink-soft);transition:all .12s
   }
-  .scope-list li{margin-bottom:3px;break-inside:avoid}
-  .scope-note{font-size:11.5px;color:var(--clay);margin-top:8px;font-style:italic}
-  @media(max-width:860px){ .scope-list{columns:1} }
+  .task-controls .t-st:hover{color:var(--ink)}
+  .task-controls .t-st.on{background:#fff;color:var(--green-deep);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+  .task-controls .t-st.on:nth-child(1){color:var(--ink-soft)}
+  .task-controls .t-st.on:nth-child(2){color:var(--clay)}
+  .task-controls .t-st.on:nth-child(3){color:var(--green)}
+  @media(max-width:560px){
+    .task-row{flex-direction:column;align-items:stretch}
+    .task-controls{align-self:stretch}
+    .task-controls .t-st{flex:1}
+  }
+
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 
   .sched-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
@@ -364,6 +375,7 @@
   }
   .file-drop:hover{border-color:var(--green);color:var(--green)}
   .file-drop input{display:none}
+  .file-drop-sm{padding:10px;font-size:12.5px;margin:0 0 14px}
   .file-preview{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px;margin-bottom:14px}
   .file-preview .fp{
     aspect-ratio:1;background:#eee center/cover no-repeat;border-radius:7px;position:relative
@@ -628,9 +640,42 @@ const DEFAULT_DATA = {
       id:"base", code:"A", name:"Contrato Base (PDF Gómez & Rivera)",
       desc:"Remodelación completa · pago por 3 hitos · total L 392,500",
       items:[
-        {id:"base_h1", code:"1", name:"Entrada (50%) — al iniciar la obra (compra de materiales)", cost:196250},
-        {id:"base_h2", code:"2", name:"Avance intermedio (30%) — cuando la obra esté al 80%",     cost:117750},
-        {id:"base_h3", code:"3", name:"Finalización (20%) — al entregar la obra al 100%",          cost: 78500}
+        {id:"base_h1", code:"1", name:"Entrada (50%) — al iniciar la obra (compra de materiales)", cost:196250, tasks:[
+          {id:"t_h1_01", code:"14", name:"Demoler cocina"},
+          {id:"t_h1_02", code:"11", name:"Fundir plancha de concreto para lavadora y secadora"},
+          {id:"t_h1_03", code:"12", name:"Hacer acera peatonal de 0.10 cm total 40.79 ml"},
+          {id:"t_h1_04", code:"22", name:"Rellenar con selecto área frontal de terreno"},
+          {id:"t_h1_05", code:"13", name:"Subir pared divisoria de lavandería 2.20 m, repellar y pulir"},
+          {id:"t_h1_06", code:"26", name:"Extender techo de casa hacia muro"},
+          {id:"t_h1_07", code:"5",  name:"Instalación de panel eléctrico"},
+          {id:"t_h1_08", code:"6",  name:"Cambiar cable de acometida"},
+          {id:"t_h1_09", code:"7",  name:"Reparación de tubería sanitaria y potable"},
+          {id:"t_h1_10", code:"24", name:"Hacer estructura de tanque incluye tanque de 1,100 litros"},
+          {id:"t_h1_11", code:"25", name:"Hacer lavadero"}
+        ]},
+        {id:"base_h2", code:"2", name:"Avance intermedio (30%) — cuando la obra esté al 80%",     cost:117750, tasks:[
+          {id:"t_h2_01", code:"1",  name:"Instalación de 25 unidades de tomacorrientes 120v"},
+          {id:"t_h2_02", code:"2",  name:"Instalación de 6 unidades de tomacorrientes de 220v"},
+          {id:"t_h2_03", code:"3",  name:"Instalación de 14 spot light (sala/comedor/cocina/baños/lavandería/porch/lateral)"},
+          {id:"t_h2_04", code:"4",  name:"Instalar 1 ventilador de techo de 52\""},
+          {id:"t_h2_05", code:"8",  name:"Instalación de 2 duchas"},
+          {id:"t_h2_06", code:"9",  name:"Instalación de un sanitario de 2 piezas"},
+          {id:"t_h2_07", code:"10", name:"Enchapar con cerámica área de ducha (8.64 m² altura 2.10)"},
+          {id:"t_h2_08", code:"15", name:"Instalar cielo falso con tablilla PVC blanco 72 m²"},
+          {id:"t_h2_09", code:"16", name:"Hacer mueble de lavatrastes interior de cedro con MDF"},
+          {id:"t_h2_10", code:"17", name:"Instalación lavatrasto completo"},
+          {id:"t_h2_11", code:"18", name:"Instalar top de porcelánica (granito básico)"},
+          {id:"t_h2_12", code:"19", name:"Hacer torre de alacena 7 pies de alto (no incluye mueble aéreo)"},
+          {id:"t_h2_13", code:"20", name:"Hacer cerca de separación con rejilla color verde de 1.50 m de altura"},
+          {id:"t_h2_14", code:"21", name:"Hacer portón corredizo con portón peatonal incluido"},
+          {id:"t_h2_15", code:"23", name:"Cambiar ventanas por ventanas de PVC blanco con vidrio color bronce"}
+        ]},
+        {id:"base_h3", code:"3", name:"Finalización (20%) — al entregar la obra al 100%",          cost: 78500, tasks:[
+          {id:"t_h3_01", code:"27", name:"Cambiar 7 contramarco de laurel"},
+          {id:"t_h3_02", code:"28", name:"Instalar 7 puertas con sus respectivos llavines (no incluye puertas)"},
+          {id:"t_h3_03", code:"29", name:"Reparar fisuras en pared por los 2 lados"},
+          {id:"t_h3_04", code:"30", name:"Poner tablilla en aleros"}
+        ]}
       ]
     },
     {
@@ -657,43 +702,6 @@ const DEFAULT_DATA = {
   ]
 };
 
-/* Alcance completo del contrato base (30 tareas del PDF Gómez & Rivera).
-   No tienen precio individual — el contrato es un bundle de L 392,500.
-   Se muestran solo como referencia visual bajo el grupo base. */
-const PDF_SCOPE = [
-  "Instalación de 25 unidades de tomacorrientes 120v",
-  "Instalación de 6 unidades de tomacorrientes de 220v",
-  "Instalación de 14 spot light (2 sala, 2 comedor, 2 cocina, 1 por habitación, 1 por baño, 1 lavandería, 1 porch, 1 lateral)",
-  "Instalar 1 ventilador de techo de 52\"",
-  "Instalación de panel eléctrico",
-  "Cambiar cable de acometida",
-  "Reparación de tubería sanitaria y potable",
-  "Instalación de 2 duchas",
-  "Instalación de un sanitario de 2 piezas",
-  "Enchapar con cerámica área de ducha (8.64 m² altura 2.10)",
-  "Fundir plancha de concreto para lavadora y secadora",
-  "Hacer acera peatonal de 0.10 cm total 40.79 ml",
-  "Subir pared divisoria de lavandería altura total 2.20 m, repellar y pulir",
-  "Demoler cocina",
-  "Instalar cielo falso con tablilla PVC blanco 72 m²",
-  "Hacer mueble de lavatrastes interior de cedro con MDF",
-  "Instalación lavatrasto completo",
-  "Instalar top de porcelánica (granito básico)",
-  "Hacer torre de alacena 7 pies de alto (no incluye mueble aéreo)",
-  "Hacer cerca de separación con rejilla color verde de 1.50 m de altura",
-  "Hacer portón corredizo con portón peatonal incluido",
-  "Rellenar con selecto área frontal de terreno",
-  "Cambiar ventanas por ventanas de PVC blanco con vidrio color bronce",
-  "Hacer estructura de tanque incluye tanque de 1,100 litros",
-  "Hacer lavadero",
-  "Extender techo de casa hacia muro",
-  "Cambiar 7 contramarco de laurel",
-  "Instalar 7 puertas con sus respectivos llavines (no incluye puertas)",
-  "Reparar fisuras en pared por los 2 lados",
-  "Poner tablilla en aleros"
-];
-const PDF_NOTE = "TU compras puertas, llavines y bisagras. No incluidas en el contrato.";
-
 /* ============================================================
    ESTADO
    ============================================================ */
@@ -702,7 +710,8 @@ let state = {
   payments:[],
   projStart:"", projEnd:"",
   logs:[],          // all log entries (grouped per item on render)
-  images:[]         // all images (grouped per item on render)
+  images:[],        // all images (grouped per item on render)
+  tasks:[]          // sub-tareas bajo los hitos del contrato base
 };
 let expandedItem = null; // id of item with detail panel open
 
@@ -720,24 +729,33 @@ function setSync(kind, text){
 async function loadFromDB(){
   setSync('sync','Sincronizando…');
   try{
-    const [g, i, p, m, l, im] = await Promise.all([
+    const [g, i, p, m, l, im, tk] = await Promise.all([
       sb.from('duplex_groups').select('*').order('sort_order'),
       sb.from('duplex_items').select('*').order('sort_order'),
       sb.from('duplex_payments').select('*').order('created_at'),
       sb.from('duplex_meta').select('*'),
       sb.from('duplex_progress_log').select('*').order('created_at',{ascending:false}),
       sb.from('duplex_progress_images').select('*').order('created_at',{ascending:false}),
+      sb.from('duplex_tasks').select('*').order('sort_order'),
     ]);
-    for(const r of [g,i,p,m,l,im]) if(r.error) throw r.error;
+    for(const r of [g,i,p,m,l,im,tk]) if(r.error) throw r.error;
 
     if(!g.data || g.data.length===0){
       await seedDefaults();
       return loadFromDB();
     }
 
+    state.tasks = tk.data || [];
     state.groups = g.data.map(gr => ({
       ...gr,
-      items: (i.data||[]).filter(it => it.group_id === gr.id)
+      items: (i.data||[]).filter(it => it.group_id === gr.id).map(it => {
+        const tasks = state.tasks.filter(t => t.item_id === it.id);
+        if(tasks.length){
+          const avg = tasks.reduce((s,t)=>s+Number(t.prog),0) / tasks.length;
+          return { ...it, tasks, prog: avg, done: avg>=100 };
+        }
+        return { ...it, tasks: [] };
+      })
     }));
     state.payments = p.data || [];
     state.logs     = l.data || [];
@@ -764,15 +782,25 @@ async function seedDefaults(){
   }));
   const { error: ge } = await sb.from('duplex_groups').insert(grows);
   if(ge) throw ge;
-  const irows = [];
+  const irows = [], trows = [];
   DEFAULT_DATA.groups.forEach(g => g.items.forEach((it,ii)=>{
     irows.push({
       id:it.id, group_id:g.id, code:it.code, name:it.name,
       cost:it.cost, prog:0, done:false, sort_order:ii
     });
+    (it.tasks||[]).forEach((tk,ti)=>{
+      trows.push({
+        id:tk.id, item_id:it.id, code:tk.code, name:tk.name,
+        prog:0, done:false, sort_order:ti
+      });
+    });
   }));
   const { error: ie } = await sb.from('duplex_items').insert(irows);
   if(ie) throw ie;
+  if(trows.length){
+    const { error: te } = await sb.from('duplex_tasks').insert(trows);
+    if(te) throw te;
+  }
 }
 
 async function setMeta(key, value){
@@ -864,6 +892,46 @@ function renderKPIs(){
   }
 }
 
+function renderItemProgCell(it, lastTxt, imgs, expanded){
+  const itProg = Number(it.prog)||0;
+  return `<div class="prog-cell view-only">
+    <div class="ptop"><span>Avance</span><span class="pval">${itProg}%</span></div>
+    <input type="range" class="slider" min="0" max="100" step="5" value="${itProg}"
+      data-prev="${itProg}"
+      onchange="onSliderChange('${it.id}',this)">
+    <label class="done-check">
+      <input type="checkbox" ${it.done?"checked":""}
+        onchange="onDoneToggle('${it.id}',${itProg},this.checked,this)">
+      Marcar como 100% terminado
+    </label>
+    <div class="updated">${lastTxt}</div>
+    <div class="row-actions">
+      <button onclick="toggleDetail('${it.id}')" class="${imgs.length?'has-imgs':''}">
+        ${expanded?'▴ Ocultar':'▾ Ver'} historial${imgs.length?` · ${imgs.length} 📷`:''}
+      </button>
+    </div>
+  </div>`;
+}
+
+function renderHitoProgCell(it, imgs, expanded){
+  const tasks = it.tasks || [];
+  const done  = tasks.filter(t=>Number(t.prog)>=100).length;
+  const partial = tasks.filter(t=>Number(t.prog)>0 && Number(t.prog)<100).length;
+  const avg = tasks.length ? tasks.reduce((s,t)=>s+Number(t.prog),0)/tasks.length : 0;
+  return `<div class="prog-cell view-only">
+    <div class="ptop"><span>Avance</span><span class="pval">${avg.toFixed(0)}%</span></div>
+    <div class="bar-track" style="height:6px;border-radius:5px">
+      <div class="bar-fill" style="width:${avg}%"></div>
+    </div>
+    <div class="updated">${done} terminadas · ${partial} en progreso · ${tasks.length-done-partial} pendientes</div>
+    <div class="row-actions">
+      <button onclick="toggleDetail('${it.id}')" class="${imgs.length?'has-imgs':''}">
+        ${expanded?'▴ Ocultar':'▾ Ver/editar'} ${tasks.length} tareas${imgs.length?` · ${imgs.length} 📷`:''}
+      </button>
+    </div>
+  </div>`;
+}
+
 function renderGroups(){
   const cont=document.getElementById("groups-container");
   cont.innerHTML="";
@@ -878,13 +946,19 @@ function renderGroups(){
       </div>`;
 
     g.items.forEach((it,ii)=>{
-      const earned=Number(it.cost)*(Number(it.prog)/100);
+      const itProg = Number(it.prog)||0;
+      const earned = Number(it.cost) * (itProg/100);
       const imgs = imagesForItem(it.id);
       const lastLog = lastUpdateFor(it.id);
       const lastTxt = lastLog
         ? `Última: ${fmtDate(lastLog.created_at)} · ${lastLog.changed_by==='owner'?'dueño':'contratista'}`
         : `Sin actualizaciones aún`;
       const expanded = expandedItem === it.id;
+      const hasTasks = (it.tasks||[]).length > 0;
+      const progCell = hasTasks
+        ? renderHitoProgCell(it, imgs, expanded)
+        : renderItemProgCell(it, lastTxt, imgs, expanded);
+
       itemsHTML += `<div class="item" data-item="${it.id}">
         <div class="iname">
           <span class="view-only">${escapeHTML(it.name)}</span>
@@ -898,23 +972,7 @@ function renderGroups(){
           <input type="number" class="edit-input edit-only" value="${it.cost}"
             onchange="editItemCost('${it.id}',this.value)">
         </div>
-        <div class="prog-cell view-only">
-          <div class="ptop"><span>Avance</span><span class="pval">${it.prog}%</span></div>
-          <input type="range" class="slider" min="0" max="100" step="5" value="${it.prog}"
-            data-prev="${it.prog}"
-            onchange="onSliderChange('${it.id}',this)">
-          <label class="done-check">
-            <input type="checkbox" ${it.done?"checked":""}
-              onchange="onDoneToggle('${it.id}',${it.prog},this.checked,this)">
-            Marcar como 100% terminado
-          </label>
-          <div class="updated">${lastTxt}</div>
-          <div class="row-actions">
-            <button onclick="toggleDetail('${it.id}')" class="${imgs.length?'has-imgs':''}">
-              ${expanded?'▴ Ocultar':'▾ Ver'} historial${imgs.length?` · ${imgs.length} 📷`:''}
-            </button>
-          </div>
-        </div>
+        ${progCell}
         <div class="ipay view-only">
           <span class="ip-lbl">Ganado</span>
           <span class="amt">${L(earned)}</span>
@@ -927,16 +985,6 @@ function renderGroups(){
     itemsHTML += `<div class="add-item-row edit-only">
       <button class="btn btn-ghost btn-sm" onclick="addItem('${g.id}')">+ Agregar partida a este grupo</button>
     </div>`;
-
-    if(g.id === 'base'){
-      itemsHTML += `<details class="scope-block">
-        <summary>📋 Ver alcance del contrato (30 tareas incluidas en los L 392,500)</summary>
-        <ol class="scope-list">
-          ${PDF_SCOPE.map(t=>`<li>${escapeHTML(t)}</li>`).join('')}
-        </ol>
-        <div class="scope-note">⚠ Nota del contrato: ${escapeHTML(PDF_NOTE)}</div>
-      </details>`;
-    }
 
     div.innerHTML = `
       <div class="group-head" onclick="toggleGroup('${g.id}',event)">
@@ -965,6 +1013,11 @@ function renderItemDetail(it){
           onclick="openViewer('${escapeAttr(im.public_url)}')" title="${escapeAttr(im.caption||'')}"></div>
       `).join('')}</div>`
     : `<div style="font-size:12px;color:var(--ink-soft);margin-bottom:12px">Aún no hay fotos para esta partida.</div>`;
+  const uploadBtn = `<label class="file-drop file-drop-sm">
+      <input type="file" accept="image/*" capture="environment" multiple
+        onchange="uploadItemPhotos('${it.id}', this)">
+      📷 Subir fotos para esta partida
+    </label>`;
 
   let logsHTML = logs.length
     ? `<div class="log-list">${logs.map(lg=>{
@@ -981,12 +1034,55 @@ function renderItemDetail(it){
       }).join('')}</div>`
     : `<div style="font-size:12px;color:var(--ink-soft)">Sin historial de cambios.</div>`;
 
+  let tasksHTML = '';
+  if((it.tasks||[]).length){
+    tasksHTML = `<h4>✅ Tareas del hito (${it.tasks.length})</h4>
+      <div class="task-list">
+        ${it.tasks.map(tk=>{
+          const p = Number(tk.prog)||0;
+          return `<div class="task-row">
+            <div class="task-name"><b>${escapeHTML(tk.code||'')}</b> · ${escapeHTML(tk.name)}</div>
+            <div class="task-controls" role="group" aria-label="estado">
+              <button class="t-st ${p===0?'on':''}"   onclick="setTaskProg('${tk.id}',0)">Pendiente</button>
+              <button class="t-st ${p>0&&p<100?'on':''}" onclick="setTaskProg('${tk.id}',50)">En progreso</button>
+              <button class="t-st ${p>=100?'on':''}" onclick="setTaskProg('${tk.id}',100)">Terminado</button>
+            </div>
+          </div>`;
+        }).join('')}
+      </div>`;
+  }
   return `<div class="item-detail">
+    ${tasksHTML}
     <h4>📷 Fotos del avance</h4>
     ${imgsHTML}
+    ${uploadBtn}
     <h4>📋 Historial de cambios</h4>
     ${logsHTML}
   </div>`;
+}
+
+async function uploadItemPhotos(itemId, inputEl){
+  const files = Array.from(inputEl.files||[]);
+  inputEl.value = '';
+  if(!files.length) return;
+  setSync('sync','Subiendo fotos…');
+  try{
+    for(const f of files){
+      if(f.size > 5*1024*1024){ alert(`"${f.name}" pasa de 5 MB`); continue; }
+      const safe = f.name.replace(/[^\w.\-]+/g,'_').slice(0,60);
+      const path = `${itemId}/${Date.now()}_${Math.random().toString(36).slice(2,8)}_${safe}`;
+      const up = await sb.storage.from(BUCKET).upload(path, f, { contentType: f.type || 'image/jpeg' });
+      if(up.error){ console.error(up.error); continue; }
+      const { data: pub } = sb.storage.from(BUCKET).getPublicUrl(path);
+      await sb.from('duplex_progress_images').insert({
+        item_id: itemId, storage_path: path, public_url: pub.publicUrl, uploaded_by: ROLE
+      });
+    }
+    await loadFromDB(); render();
+  }catch(err){
+    console.error(err); alert('Error subiendo fotos: '+(err.message||err));
+    setSync('err','Error subiendo');
+  }
 }
 
 function renderPayments(){
@@ -1279,6 +1375,45 @@ async function deletePayment(id){
   await sb.from('duplex_payments').delete().eq('id', id);
   await loadFromDB(); render();
 }
+
+async function setTaskProg(taskId, newProg){
+  const task = state.tasks.find(t=>t.id===taskId);
+  if(!task) return;
+  const oldProg = Number(task.prog)||0;
+  if(oldProg === newProg) return;
+  task.prog = newProg;
+  task.done = newProg>=100;
+  // optimistic re-render so el feedback es inmediato
+  recomputeHitoProgs();
+  render();
+  try{
+    const { error } = await sb.from('duplex_tasks')
+      .update({prog:newProg, done:newProg>=100, updated_at:new Date().toISOString()})
+      .eq('id', taskId);
+    if(error) throw error;
+    await sb.from('duplex_progress_log').insert({
+      item_id: task.item_id,
+      prog_old: oldProg, prog_new: newProg,
+      changed_by: ROLE,
+      note: `Tarea: ${task.name}`
+    });
+    await loadFromDB(); render();
+  }catch(err){
+    console.error(err);
+    alert('No se pudo guardar el cambio: '+(err.message||err));
+    await loadFromDB(); render();
+  }
+}
+
+function recomputeHitoProgs(){
+  state.groups.forEach(g => g.items.forEach(it => {
+    if((it.tasks||[]).length){
+      const avg = it.tasks.reduce((s,t)=>s+Number(t.prog),0) / it.tasks.length;
+      it.prog = avg;
+      it.done = avg>=100;
+    }
+  }));
+}
 function toggleEdit(){
   if(ROLE!=='owner') return;
   document.body.classList.toggle("edit-mode");
@@ -1354,6 +1489,7 @@ function subscribeRealtime(){
     .on('postgres_changes', {event:'*', schema:'public', table:'duplex_progress_log'},   softRefetch)
     .on('postgres_changes', {event:'*', schema:'public', table:'duplex_progress_images'},softRefetch)
     .on('postgres_changes', {event:'*', schema:'public', table:'duplex_groups'},         softRefetch)
+    .on('postgres_changes', {event:'*', schema:'public', table:'duplex_tasks'},          softRefetch)
     .subscribe();
 }
 function softRefetch(){
