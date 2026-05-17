@@ -300,30 +300,18 @@
 
   .add-item-row{padding:12px 20px;background:#faf8f1}
 
-  /* Sub-tareas bajo hitos */
-  .task-list{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+  /* Trabajos del contrato base (con slider y weight) */
+  .task-list{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
   .task-row{
-    display:flex;gap:12px;align-items:center;justify-content:space-between;
-    background:#fff;border:1px solid var(--line);border-radius:9px;padding:8px 11px;
-    font-size:12.5px;line-height:1.3
+    background:#fff;border:1px solid var(--line);border-radius:9px;padding:10px 12px;
+    font-size:12.5px;line-height:1.3;display:flex;flex-direction:column;gap:6px
   }
-  .task-row .task-name{flex:1;min-width:0}
-  .task-row .task-name b{color:var(--ink-soft);font-weight:600;margin-right:6px}
-  .task-controls{display:flex;gap:0;flex-shrink:0;background:var(--line);border-radius:8px;padding:2px}
-  .task-controls .t-st{
-    border:none;background:transparent;font-family:inherit;font-size:11.5px;font-weight:600;
-    padding:6px 11px;border-radius:6px;cursor:pointer;color:var(--ink-soft);transition:all .12s
-  }
-  .task-controls .t-st:hover{color:var(--ink)}
-  .task-controls .t-st.on{background:#fff;color:var(--green-deep);box-shadow:0 1px 3px rgba(0,0,0,.08)}
-  .task-controls .t-st.on:nth-child(1){color:var(--ink-soft)}
-  .task-controls .t-st.on:nth-child(2){color:var(--clay)}
-  .task-controls .t-st.on:nth-child(3){color:var(--green)}
-  @media(max-width:560px){
-    .task-row{flex-direction:column;align-items:stretch}
-    .task-controls{align-self:stretch}
-    .task-controls .t-st{flex:1}
-  }
+  .task-head{display:flex;justify-content:space-between;gap:12px;align-items:flex-start}
+  .task-name{flex:1;min-width:0}
+  .task-name b{color:var(--ink-soft);font-weight:600;margin-right:6px}
+  .task-meta{font-size:11px;color:var(--ink-soft);text-align:right;flex-shrink:0;white-space:nowrap}
+  .task-meta .t-prog-val{font-weight:700;color:var(--green-deep);font-size:13px;margin-left:3px}
+  .t-slider{margin-top:2px}
 
   .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 
@@ -638,43 +626,39 @@ const DEFAULT_DATA = {
   groups:[
     {
       id:"base", code:"A", name:"Contrato Base (PDF Gómez & Rivera)",
-      desc:"Remodelación completa · pago por 3 hitos · total L 392,500",
+      desc:"Remodelación completa · L 392,500 · pago 50% entrada + 30% al 80% avance + 20% al cierre",
       items:[
-        {id:"base_h1", code:"1", name:"Entrada (50%) — al iniciar la obra (compra de materiales)", cost:196250, tasks:[
-          {id:"t_h1_01", code:"14", name:"Demoler cocina"},
-          {id:"t_h1_02", code:"11", name:"Fundir plancha de concreto para lavadora y secadora"},
-          {id:"t_h1_03", code:"12", name:"Hacer acera peatonal de 0.10 cm total 40.79 ml"},
-          {id:"t_h1_04", code:"22", name:"Rellenar con selecto área frontal de terreno"},
-          {id:"t_h1_05", code:"13", name:"Subir pared divisoria de lavandería 2.20 m, repellar y pulir"},
-          {id:"t_h1_06", code:"26", name:"Extender techo de casa hacia muro"},
-          {id:"t_h1_07", code:"5",  name:"Instalación de panel eléctrico"},
-          {id:"t_h1_08", code:"6",  name:"Cambiar cable de acometida"},
-          {id:"t_h1_09", code:"7",  name:"Reparación de tubería sanitaria y potable"},
-          {id:"t_h1_10", code:"24", name:"Hacer estructura de tanque incluye tanque de 1,100 litros"},
-          {id:"t_h1_11", code:"25", name:"Hacer lavadero"}
-        ]},
-        {id:"base_h2", code:"2", name:"Avance intermedio (30%) — cuando la obra esté al 80%",     cost:117750, tasks:[
-          {id:"t_h2_01", code:"1",  name:"Instalación de 25 unidades de tomacorrientes 120v"},
-          {id:"t_h2_02", code:"2",  name:"Instalación de 6 unidades de tomacorrientes de 220v"},
-          {id:"t_h2_03", code:"3",  name:"Instalación de 14 spot light (sala/comedor/cocina/baños/lavandería/porch/lateral)"},
-          {id:"t_h2_04", code:"4",  name:"Instalar 1 ventilador de techo de 52\""},
-          {id:"t_h2_05", code:"8",  name:"Instalación de 2 duchas"},
-          {id:"t_h2_06", code:"9",  name:"Instalación de un sanitario de 2 piezas"},
-          {id:"t_h2_07", code:"10", name:"Enchapar con cerámica área de ducha (8.64 m² altura 2.10)"},
-          {id:"t_h2_08", code:"15", name:"Instalar cielo falso con tablilla PVC blanco 72 m²"},
-          {id:"t_h2_09", code:"16", name:"Hacer mueble de lavatrastes interior de cedro con MDF"},
-          {id:"t_h2_10", code:"17", name:"Instalación lavatrasto completo"},
-          {id:"t_h2_11", code:"18", name:"Instalar top de porcelánica (granito básico)"},
-          {id:"t_h2_12", code:"19", name:"Hacer torre de alacena 7 pies de alto (no incluye mueble aéreo)"},
-          {id:"t_h2_13", code:"20", name:"Hacer cerca de separación con rejilla color verde de 1.50 m de altura"},
-          {id:"t_h2_14", code:"21", name:"Hacer portón corredizo con portón peatonal incluido"},
-          {id:"t_h2_15", code:"23", name:"Cambiar ventanas por ventanas de PVC blanco con vidrio color bronce"}
-        ]},
-        {id:"base_h3", code:"3", name:"Finalización (20%) — al entregar la obra al 100%",          cost: 78500, tasks:[
-          {id:"t_h3_01", code:"27", name:"Cambiar 7 contramarco de laurel"},
-          {id:"t_h3_02", code:"28", name:"Instalar 7 puertas con sus respectivos llavines (no incluye puertas)"},
-          {id:"t_h3_03", code:"29", name:"Reparar fisuras en pared por los 2 lados"},
-          {id:"t_h3_04", code:"30", name:"Poner tablilla en aleros"}
+        {id:"base_main", code:"★", name:"Contrato base completo · 30 trabajos", cost:392500, tasks:[
+          {id:"t01", code:"1",  name:"Instalación de 25 unidades de tomacorrientes 120v",                       weight:17125},
+          {id:"t02", code:"2",  name:"Instalación de 6 unidades de tomacorrientes de 220v",                      weight:5010},
+          {id:"t03", code:"3",  name:"Instalación de 14 spot light (sala/comedor/cocina/baños/lavandería/porch/lateral)", weight:9100},
+          {id:"t04", code:"4",  name:"Instalar 1 ventilador de techo de 52\"",                                   weight:4375},
+          {id:"t05", code:"5",  name:"Instalación de panel eléctrico",                                           weight:11000},
+          {id:"t06", code:"6",  name:"Cambiar cable de acometida",                                               weight:4000},
+          {id:"t07", code:"7",  name:"Reparación de tubería sanitaria y potable",                                weight:5870},
+          {id:"t08", code:"8",  name:"Instalación de 2 duchas",                                                  weight:2200},
+          {id:"t09", code:"9",  name:"Instalación de 2 sanitarios",                                              weight:8500},
+          {id:"t10", code:"10", name:"Enchapar con cerámica área de ducha (8.64 m² altura 2.10)",                weight:7214},
+          {id:"t11", code:"11", name:"Fundir plancha de concreto para lavadora y secadora",                      weight:4500},
+          {id:"t12", code:"12", name:"Hacer acera peatonal de 0.10 cm total 40.79 ml",                           weight:18954},
+          {id:"t13", code:"13", name:"Subir pared divisoria de lavandería 2.20 m, repellar y pulir",             weight:2600},
+          {id:"t14", code:"14", name:"Demoler cocina",                                                            weight:900},
+          {id:"t15", code:"15", name:"Instalar cielo falso con tablilla PVC blanco 72 m²",                       weight:56160},
+          {id:"t16", code:"16", name:"Hacer mueble de lavatrastes interior de cedro con MDF",                    weight:36000},
+          {id:"t17", code:"17", name:"Instalación lavatrasto completo",                                          weight:4500},
+          {id:"t18", code:"18", name:"Instalar top de porcelánica (granito básico)",                             weight:16500},
+          {id:"t19", code:"19", name:"Hacer torre de alacena 7 pies de alto (no incluye mueble aéreo)",          weight:22000},
+          {id:"t20", code:"20", name:"Hacer cerca de separación con rejilla color verde de 1.50 m de altura",    weight:20154},
+          {id:"t21", code:"21", name:"Hacer portón corredizo con portón peatonal incluido",                      weight:28552},
+          {id:"t22", code:"22", name:"Rellenar con selecto área frontal de terreno",                             weight:17200},
+          {id:"t23", code:"23", name:"Cambiar ventanas por ventanas de PVC blanco con vidrio color bronce",      weight:49500},
+          {id:"t24", code:"24", name:"Hacer estructura de tanque incluye tanque de 1,100 litros",                weight:21135},
+          {id:"t25", code:"25", name:"Hacer lavadero",                                                            weight:4000},
+          {id:"t26", code:"26", name:"Extender techo de casa hacia muro",                                        weight:14000},
+          {id:"t27", code:"27", name:"Cambiar 7 contramarco de laurel",                                          weight:10500},
+          {id:"t28", code:"28", name:"Instalar 7 puertas con sus respectivos llavines (no incluye puertas)",     weight:12000},
+          {id:"t29", code:"29", name:"Reparar fisuras en pared por los 2 lados",                                 weight:6451},
+          {id:"t30", code:"30", name:"Poner tablilla en aleros",                                                 weight:8000}
         ]}
       ]
     },
@@ -751,7 +735,7 @@ async function loadFromDB(){
       items: (i.data||[]).filter(it => it.group_id === gr.id).map(it => {
         const tasks = state.tasks.filter(t => t.item_id === it.id);
         if(tasks.length){
-          const avg = tasks.reduce((s,t)=>s+Number(t.prog),0) / tasks.length;
+          const avg = weightedAvg(tasks);
           return { ...it, tasks, prog: avg, done: avg>=100 };
         }
         return { ...it, tasks: [] };
@@ -791,7 +775,7 @@ async function seedDefaults(){
     (it.tasks||[]).forEach((tk,ti)=>{
       trows.push({
         id:tk.id, item_id:it.id, code:tk.code, name:tk.name,
-        prog:0, done:false, sort_order:ti
+        prog:0, done:false, weight:tk.weight||0, sort_order:ti
       });
     });
   }));
@@ -917,16 +901,16 @@ function renderHitoProgCell(it, imgs, expanded){
   const tasks = it.tasks || [];
   const done  = tasks.filter(t=>Number(t.prog)>=100).length;
   const partial = tasks.filter(t=>Number(t.prog)>0 && Number(t.prog)<100).length;
-  const avg = tasks.length ? tasks.reduce((s,t)=>s+Number(t.prog),0)/tasks.length : 0;
+  const avg = tasks.length ? weightedAvg(tasks) : 0;
   return `<div class="prog-cell view-only">
-    <div class="ptop"><span>Avance</span><span class="pval">${avg.toFixed(0)}%</span></div>
+    <div class="ptop"><span>Avance</span><span class="pval">${avg.toFixed(1)}%</span></div>
     <div class="bar-track" style="height:6px;border-radius:5px">
       <div class="bar-fill" style="width:${avg}%"></div>
     </div>
     <div class="updated">${done} terminadas · ${partial} en progreso · ${tasks.length-done-partial} pendientes</div>
     <div class="row-actions">
       <button onclick="toggleDetail('${it.id}')" class="${imgs.length?'has-imgs':''}">
-        ${expanded?'▴ Ocultar':'▾ Ver/editar'} ${tasks.length} tareas${imgs.length?` · ${imgs.length} 📷`:''}
+        ${expanded?'▴ Ocultar':'▾ Ver/editar'} ${tasks.length} trabajos${imgs.length?` · ${imgs.length} 📷`:''}
       </button>
     </div>
   </div>`;
@@ -1036,17 +1020,22 @@ function renderItemDetail(it){
 
   let tasksHTML = '';
   if((it.tasks||[]).length){
-    tasksHTML = `<h4>✅ Tareas del hito (${it.tasks.length})</h4>
+    const totalW = it.tasks.reduce((s,t)=>s+(Number(t.weight)||0),0);
+    tasksHTML = `<h4>✅ Trabajos del contrato (${it.tasks.length}) · avance ponderado <b>${(Number(it.prog)||0).toFixed(1)}%</b></h4>
       <div class="task-list">
         ${it.tasks.map(tk=>{
           const p = Number(tk.prog)||0;
+          const w = Number(tk.weight)||0;
+          const wPct = totalW>0 ? (w/totalW*100) : 0;
           return `<div class="task-row">
-            <div class="task-name"><b>${escapeHTML(tk.code||'')}</b> · ${escapeHTML(tk.name)}</div>
-            <div class="task-controls" role="group" aria-label="estado">
-              <button class="t-st ${p===0?'on':''}"   onclick="setTaskProg('${tk.id}',0)">Pendiente</button>
-              <button class="t-st ${p>0&&p<100?'on':''}" onclick="setTaskProg('${tk.id}',50)">En progreso</button>
-              <button class="t-st ${p>=100?'on':''}" onclick="setTaskProg('${tk.id}',100)">Terminado</button>
+            <div class="task-head">
+              <div class="task-name"><b>${escapeHTML(tk.code||'')}</b> · ${escapeHTML(tk.name)}</div>
+              <div class="task-meta">peso ${wPct.toFixed(1)}% · <span class="t-prog-val">${p}%</span></div>
             </div>
+            <input type="range" class="slider t-slider" min="0" max="100" step="5" value="${p}"
+              data-prev="${p}"
+              oninput="this.parentNode.querySelector('.t-prog-val').textContent = this.value + '%'"
+              onchange="setTaskProg('${tk.id}', Number(this.value))">
           </div>`;
         }).join('')}
       </div>`;
@@ -1405,10 +1394,18 @@ async function setTaskProg(taskId, newProg){
   }
 }
 
+function weightedAvg(tasks){
+  const totalW = tasks.reduce((s,t)=>s+(Number(t.weight)||0),0);
+  if(totalW > 0){
+    return tasks.reduce((s,t)=>s + Number(t.prog)*(Number(t.weight)||0), 0) / totalW;
+  }
+  // fallback: promedio simple si todos los weights son 0
+  return tasks.reduce((s,t)=>s+Number(t.prog),0) / tasks.length;
+}
 function recomputeHitoProgs(){
   state.groups.forEach(g => g.items.forEach(it => {
     if((it.tasks||[]).length){
-      const avg = it.tasks.reduce((s,t)=>s+Number(t.prog),0) / it.tasks.length;
+      const avg = weightedAvg(it.tasks);
       it.prog = avg;
       it.done = avg>=100;
     }

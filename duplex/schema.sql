@@ -71,6 +71,7 @@ create table if not exists duplex_tasks (
   name       text not null,
   prog       int  not null default 0,
   done       boolean not null default false,
+  weight     numeric not null default 0,
   sort_order int  not null default 0,
   updated_at timestamptz not null default now()
 );
