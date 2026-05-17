@@ -22,9 +22,9 @@ delete from duplex_items where group_id = 'base';
 
 -- 2) Inserta las 3 partidas de hito reales
 insert into duplex_items (id, group_id, code, name, cost, prog, done, sort_order) values
-  ('base_h1', 'base', '1', 'Entrada (50%) — al iniciar la obra',                196250, 0, false, 0),
-  ('base_h2', 'base', '2', 'Evaluación de avance (30%) — a mitad de obra',      117750, 0, false, 1),
-  ('base_h3', 'base', '3', 'Finalización (20%) — al entregar la obra',           78500, 0, false, 2);
+  ('base_h1', 'base', '1', 'Entrada (50%) — al iniciar la obra (compra de materiales)', 196250, 0, false, 0),
+  ('base_h2', 'base', '2', 'Avance intermedio (30%) — cuando la obra esté al 80%',      117750, 0, false, 1),
+  ('base_h3', 'base', '3', 'Finalización (20%) — al entregar la obra al 100%',           78500, 0, false, 2);
 
 -- 3) Actualiza la descripción y nombre del grupo base
 update duplex_groups
