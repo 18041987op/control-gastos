@@ -61,6 +61,47 @@ por solo 50% de trabajo terminado. Mejor liberar el 30% al
 Esta migración solo cambia los nombres. No toca progreso ni
 historial. Idempotente.
 
+## 2.3. Migración 004 — tareas bajo hitos
+
+Si ya tienes la base sembrada, corre
+[`migration_004_tasks.sql`](./migration_004_tasks.sql)
+para agregar la tabla `duplex_tasks` con las 30 tareas del contrato
+distribuidas bajo los 3 hitos:
+
+- Hito 1 (Entrada 50%) → 11 tareas grueso/materiales
+- Hito 2 (Avance intermedio 30%) → 15 tareas instalaciones/acabados
+- Hito 3 (Finalización 20%) → 4 tareas de cierre
+
+Ahora cada tarea tiene 3 estados (Pendiente / En progreso / Terminado).
+El avance del hito = promedio de sus tareas. El "pago ganado" del hito
+= costo del hito × ese avance derivado.
+
+Idempotente. La distribución de tareas se puede editar después
+modificando el SQL o directamente en Supabase.
+
+## 2.4. Migración 005 — tareas con weight + base unificado
+
+Si ya corriste `migration_004` con las 30 tareas bajo 3 hitos, corre
+también [`migration_005_weighted_tasks.sql`](./migration_005_weighted_tasks.sql).
+
+Cambio importante:
+
+- Las 30 tareas dejan de estar bajo 3 hitos. Ahora cuelgan de UNA
+  sola partida "Contrato base completo" (L 392,500).
+- Cada tarea tiene un **weight** (precio estimado del contratista)
+  usado solo para calcular el % de avance ponderado.
+- El esquema 50/30/20 ya no son items billables — queda solo como
+  descripción del grupo.
+- Cada tarea tiene slider 0-100% (en lugar de 3 botones), para
+  marcar exactamente el avance de cada trabajo.
+
+Pesos suman ~L 428,000 (estimados aproximados), pero el "pago ganado"
+del base se calcula como `L 392,500 × avance_ponderado / 100`. El
+contrato real sigue siendo L 392,500.
+
+Idempotente. Resetea el progreso de las tareas (cambio estructural).
+Las adiciones (B/C) no se tocan.
+
 ## 3. Primera carga
 
 Al abrir la página por primera vez después del setup, el frontend
