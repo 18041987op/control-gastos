@@ -1040,13 +1040,15 @@ function renderItemDetail(it){
         }).join('')}
       </div>`;
   }
+  const historyBlock = ROLE==='owner'
+    ? `<h4>📋 Historial de cambios</h4>${logsHTML}`
+    : '';
   return `<div class="item-detail">
     ${tasksHTML}
     <h4>📷 Fotos del avance</h4>
     ${imgsHTML}
     ${uploadBtn}
-    <h4>📋 Historial de cambios</h4>
-    ${logsHTML}
+    ${historyBlock}
   </div>`;
 }
 
