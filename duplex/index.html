@@ -358,13 +358,13 @@
   .prog-preview .ppnew{color:var(--green-deep)}
   .prog-preview .pparrow{font-size:22px;color:var(--green)}
   .file-drop{
-    border:1px solid var(--line);border-radius:12px;padding:18px;text-align:center;
-    color:var(--ink-soft);font-size:13px;cursor:pointer;background:#fff;margin-bottom:14px;
-    transition:background .15s
+    background:var(--green-soft);border:none;border-radius:10px;padding:14px 16px;
+    text-align:center;color:var(--green-deep);font-size:13.5px;font-weight:600;
+    cursor:pointer;display:block;margin-bottom:14px;transition:filter .15s
   }
-  .file-drop:hover{background:#faf8f1}
+  .file-drop:hover{filter:brightness(.96)}
   .file-drop input{display:none}
-  .file-drop-sm{padding:10px;font-size:12.5px;margin:0 0 14px}
+  .file-drop-sm{padding:11px 14px;font-size:12.5px;margin:0 0 14px}
   .file-preview{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:6px;margin-bottom:14px}
   .file-preview .fp{
     aspect-ratio:1;background:#eee center/cover no-repeat;border-radius:7px;position:relative
@@ -586,8 +586,8 @@
       </div>
       <label class="file-drop" id="pm-drop">
         <input type="file" id="pm-files" accept="image/*" multiple>
-        📷 <b>Toca para tomar fotos</b> o adjuntar imágenes
-        <div style="font-size:11px;margin-top:4px">Puedes subir varias · opcional · máx 5 MB c/u</div>
+        📷 Tomar fotos o adjuntar imágenes
+        <div style="font-size:11px;font-weight:400;margin-top:3px;opacity:.75">Puedes subir varias · opcional · máx 5 MB c/u</div>
       </label>
       <div class="file-preview" id="pm-preview"></div>
       <div class="field" style="margin:0">
